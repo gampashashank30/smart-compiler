@@ -1,0 +1,27 @@
+.divider {
+  flex-shrink: 0;
+  transition: background 0.15s;
+  z-index: 10;
+}
+
+.vertical {
+  width: 5px;
+  cursor: col-resize;
+  background: #e2e0d8;
+}
+
+.vertical:hover,
+.vertical:active {
+  background: #5c5fee44;
+}
+
+.horizontal {
+  height: 5px;
+  cursor: row-resize;
+  background: #e2e0d8;
+}
+
+.horizontal:hover,
+.horizontal:active {
+  background: #5c5fee44;
+}

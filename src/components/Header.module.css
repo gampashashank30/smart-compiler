@@ -1,0 +1,227 @@
+/* ================================================================
+   SmartCompiler — Header Styles
+   
+   Design research notes:
+   ──────────────────────
+   LeetCode      → White bg, distinct orange brand, clean sans-serif
+   GeeksForGeeks → Green identity, left logo + horizontal nav
+   HackerRank    → Green rounded logo, "HR" initials, pill badges
+   JetBrains     → Gradient rounded-square logo, bold Inter wordmark
+   PyCharm       → Logo visually separated from name with clear gap
+   Replit        → Compact, clear hierarchy, no element crowding
+   
+   Our choices:
+   - White bg (#ffffff) — no dark, no black, no violet
+   - Logo: 40×40 green→teal gradient rounded square, lightning bolt
+   - Brand: Inter 800, split-color (slate + emerald)
+   - Accent: 3px gradient bottom border (emerald→teal)
+   - Height: 64px — substantial enough to breathe
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ─── Shell ─────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 64px;
+  flex-shrink: 0;
+  z-index: 20;
+
+  background: #ffffff;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Crisp separator + subtle brand underline */
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow:
+    0 1px 0 #e2e8f0,
+    0 3px 12px rgba(16, 185, 129, 0.06),
+    inset 0 -3px 0 0 transparent;
+
+  /* Gradient bottom accent — painted via border-image */
+  border-image: linear-gradient(
+    90deg,
+    #10b981 0%,
+    #0ea5e9 55%,
+    #06b6d4 100%
+  ) 1 0 1 0; /* top, right, bottom, left — only top/bottom */
+}
+
+/* ─── Left brand cluster ──────────────────────────────────────── */
+.brand {
+  display: flex;
+  align-items: center;
+  /* 
+    Explicit gap between the logo SVG box and the wordmark.
+    This is the primary fix for the "text merging" issue.
+  */
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+/* Logo box: just hosts the SVG, adds the glow shadow */
+.logoBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  /* Soft glow matching the gradient */
+  filter: drop-shadow(0 2px 10px rgba(16, 185, 129, 0.35));
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.logoBox:hover {
+  filter: drop-shadow(0 4px 16px rgba(14, 165, 233, 0.45));
+  transform: translateY(-1px);
+}
+
+/* ─── Wordmark (name + tagline) ───────────────────────────────── */
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  /* Tight vertical stack — name on top, tagline below */
+  gap: 2px;
+  /* Hard boundary — text must not collapse into logo */
+  min-width: 0;
+}
+
+.brandName {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* "Smart" — strong slate, not pure black */
+.wordSmart {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #1e293b;
+}
+
+/* "Compiler" — brand emerald, clearly differentiated */
+.wordCompiler {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #059669;
+}
+
+/* Tagline below the name */
+.tagline {
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ─── Center navigation ───────────────────────────────────────── */
+.navCenter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  /* Allow center nav to flex-shrink if viewport is narrow */
+  flex-shrink: 1;
+}
+
+.navItem {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: default;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+  letter-spacing: -0.01em;
+}
+.navItem:hover {
+  background: #f0fdf4;
+  color: #059669;
+}
+
+/* Thin separator dots between nav items */
+.navSep {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+/* ─── Right section ───────────────────────────────────────────── */
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* "⬤ AI Ready" pulsing pill */
+.aiBadge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 13px;
+  border-radius: 20px;
+  background: #f0fdf4;
+  border: 1.5px solid #a7f3d0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #15803d;
+  white-space: nowrap;
+}
+
+.aiBadgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  animation: heartbeat 2.2s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%   { box-shadow: 0 0 0 0   rgba(34, 197, 94, 0.6); }
+  40%  { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.0); }
+  100% { box-shadow: 0 0 0 0   rgba(34, 197, 94, 0.0); }
+}
+
+/* "C Language" chip — outlined teal */
+.langChip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1.5px solid #bae6fd;
+  background: #f0f9ff;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0369a1;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* Version pill */
+.versionPill {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 5px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  white-space: nowrap;
+}

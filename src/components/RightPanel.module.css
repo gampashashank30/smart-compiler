@@ -1,0 +1,45 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.tabBar {
+  display: flex;
+  border-bottom: 1px solid #e2e0d8;
+  background: #f8f8f5;
+  flex-shrink: 0;
+}
+
+.tab {
+  background: transparent;
+  color: #8a8880;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 9px 16px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  transition: color 0.12s, border-color 0.12s;
+  letter-spacing: 0.01em;
+  position: relative;
+  top: 1px;
+}
+
+.tab:hover {
+  color: #3d3c39;
+}
+
+.tabActive {
+  color: #2c2c2a;
+  border-bottom: 2px solid #5c5fee;
+  font-weight: 500;
+}
+
+.tabContent {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

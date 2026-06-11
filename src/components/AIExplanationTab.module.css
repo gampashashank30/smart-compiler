@@ -1,0 +1,250 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+/* Trigger section */
+.triggerSection {
+  padding: 20px 18px 14px;
+  border-bottom: 1px solid #f0eeea;
+  flex-shrink: 0;
+  background: #fafaf8;
+}
+
+.analyzeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #2c2c2a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 20px;
+  border-radius: 6px;
+  transition: background 0.15s, opacity 0.15s;
+  letter-spacing: 0.01em;
+}
+
+.analyzeBtn:hover:not(:disabled) {
+  background: #3d3c39;
+}
+
+.analyzeBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.analyzeSubtitle {
+  margin-top: 7px;
+  font-size: 11px;
+  color: #8a8880;
+  line-height: 1.5;
+}
+
+/* Error */
+.errorMsg {
+  margin: 12px 18px;
+  font-size: 12px;
+  color: #b83c3c;
+  background: #fef0ef;
+  border: 1px solid #f5c4c0;
+  border-radius: 5px;
+  padding: 8px 12px;
+}
+
+/* Results area */
+.resultsArea {
+  flex: 1;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.issueCount {
+  font-size: 11px;
+  color: #8a8880;
+  letter-spacing: 0.03em;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.issueList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Clean state */
+.cleanCard {
+  border: 1px solid #e2e0d8;
+  border-radius: 7px;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fafaf8;
+}
+
+.cleanBadge {
+  font-size: 10px;
+  font-weight: 500;
+  background: #eefbf0;
+  color: #276b3d;
+  border: 1px solid #c3eacc;
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cleanText {
+  font-size: 13px;
+  color: #4a4a47;
+  line-height: 1.5;
+}
+
+/* Generate section */
+.generateSection {
+  margin-top: 4px;
+}
+
+.generateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  color: #5c5fee;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 0;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid #5c5fee44;
+  transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+  letter-spacing: 0.01em;
+}
+
+.generateBtn:hover:not(:disabled) {
+  color: #4545dd;
+  border-bottom-color: #4545dd;
+}
+
+.generateBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Corrected code */
+.correctedSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+  border-top: 1px solid #f0eeea;
+  padding-top: 14px;
+}
+
+.correctedHeader {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2c2c2a;
+  letter-spacing: 0.01em;
+}
+
+.correctedCode {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 14px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre;
+  border: 1px solid #313244;
+}
+
+.correctedCode code {
+  font-family: inherit;
+}
+
+.applyBtn {
+  align-self: flex-start;
+  background: #2d7d4f;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 5px;
+  transition: background 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.applyBtn:hover:not(:disabled) {
+  background: #276b43;
+}
+
+.applyBtnApplied {
+  background: #276b43;
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Learning notes */
+.learningNotes {
+  background: #fafaf8;
+  border: 1px solid #e2e0d8;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.notesHeader {
+  font-size: 12px;
+  font-weight: 500;
+  color: #3d3c39;
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+.notesList {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.noteItem {
+  font-size: 12px;
+  color: #4a4a47;
+  line-height: 1.55;
+  padding-left: 14px;
+  position: relative;
+}
+
+.noteItem::before {
+  content: '\2022';
+  position: absolute;
+  left: 0;
+  color: #8a8880;
+}
+
+/* Spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
