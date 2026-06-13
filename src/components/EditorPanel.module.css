@@ -241,6 +241,67 @@
   font-size: 11px;
 }
 
+/* ─── Running state ─────────────────────────────────────── */
+.runBtnRunning {
+  background: #1a6626;
+  cursor: not-allowed;
+  animation: pulse-green 1.4s ease-in-out infinite;
+}
+
+.runBtnRunning:hover {
+  background: #1a6626;
+}
+
+@keyframes pulse-green {
+  0%, 100% { background: #1a6626; }
+  50%       { background: #238636; }
+}
+
+/* Spinner icon — pure CSS circle */
+.spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Disabled state (shared) */
+.clearBtn:disabled,
+.runBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Stop button (shown while program is running) ────────── */
+.stopBtn {
+  background: #da3633 !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+  animation: none !important;
+}
+
+.stopBtn:hover {
+  background: #f85149 !important;
+}
+
+.stopBtn:active {
+  background: #b91c1c !important;
+}
+
+.stopIcon {
+  font-size: 11px;
+  line-height: 1;
+}
+
+
 /* ================================================================
    SYNTAX HIGHLIGHT TOKEN COLOURS  (global because they live in
    dangerouslySetInnerHTML — CSS Modules can't scope them)

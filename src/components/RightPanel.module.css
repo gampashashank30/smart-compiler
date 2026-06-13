@@ -1,45 +1,116 @@
+/* ============================================================
+   RightPanel — tab bar + terminal/AI content
+   ============================================================ */
+
 .panel {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #ffffff;
+  background: #0d1117;
   overflow: hidden;
 }
 
+/* ── Tab bar ─────────────────────────────────────────────── */
 .tabBar {
   display: flex;
-  border-bottom: 1px solid #e2e0d8;
-  background: #f8f8f5;
+  align-items: center;
+  border-bottom: 1px solid #21262d;
+  background: #161b22;
   flex-shrink: 0;
+  gap: 0;
+  padding: 0 8px;
+  min-height: 38px;
 }
 
 .tab {
   background: transparent;
-  color: #8a8880;
+  color: #8b949e;
   font-size: 12px;
   font-weight: 400;
-  padding: 9px 16px;
+  padding: 8px 14px;
   border-bottom: 2px solid transparent;
   border-radius: 0;
   transition: color 0.12s, border-color 0.12s;
   letter-spacing: 0.01em;
   position: relative;
   top: 1px;
+  white-space: nowrap;
+  cursor: pointer;
+  border-top: none;
+  border-left: none;
+  border-right: none;
 }
 
 .tab:hover {
-  color: #3d3c39;
+  color: #e6edf3;
 }
 
 .tabActive {
-  color: #2c2c2a;
-  border-bottom: 2px solid #5c5fee;
+  color: #e6edf3;
+  border-bottom: 2px solid #58a6ff;
   font-weight: 500;
 }
 
+/* ── Status area (right side of tab bar) ─────────────────── */
+.statusArea {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+}
+
+.statusCompiling {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #58a6ff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.statusRunning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #3fb950;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #1f3a5f;
+  border-top-color: #58a6ff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.runDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #3fb950;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Tab content area ────────────────────────────────────── */
 .tabContent {
   flex: 1;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  position: relative; /* needed for absolute-positioned TerminalPane */
 }

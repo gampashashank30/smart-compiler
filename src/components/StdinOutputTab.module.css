@@ -1,8 +1,15 @@
+/* ============================================================
+   StdinOutputTab — stdin input + rich compiler output display
+   Designed to match the UX of professional online compilers
+   (OnlineGDB, Ideone, Compiler Explorer style)
+   ============================================================ */
+
 .container {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background: #f8f7f5;
 }
 
 .section {
@@ -12,59 +19,388 @@
   min-height: 0;
 }
 
-.sectionLabel {
-  font-size: 10px;
-  font-weight: 500;
-  color: #8a8880;
-  letter-spacing: 0.06em;
-  text-transform: lowercase;
-  padding: 6px 14px 4px;
-  border-bottom: 1px solid #f0eeea;
-  background: #fafaf8;
+/* ── Section header bar (like OnlineGDB tabs) ─────────────── */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  height: 32px;
+  background: #1e1e2e;
+  border-bottom: 1px solid #313149;
   flex-shrink: 0;
+  gap: 8px;
 }
 
+.sectionHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sectionHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sectionIcon {
+  font-size: 12px;
+  opacity: 0.7;
+  color: #a8b4ff;
+  line-height: 1;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #c9d1f5;
+  letter-spacing: 0.04em;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  text-transform: uppercase;
+}
+
+.inputStatus {
+  font-size: 10px;
+  color: #6b7280;
+  font-family: 'JetBrains Mono', monospace;
+  background: #2a2a3e;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #7c8db0;
+}
+
+.inputStatusEmpty {
+  font-size: 10px;
+  color: #454560;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: italic;
+}
+
+.clearBtn {
+  background: transparent;
+  border: 1px solid #3a3a55;
+  color: #7c8db0;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.clearBtn:hover:not(:disabled) {
+  background: #3a2a2a;
+  border-color: #7f3a3a;
+  color: #f87171;
+}
+
+.clearBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.copyBtn {
+  background: transparent;
+  border: 1px solid #3a3a55;
+  color: #7c8db0;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.copyBtn:hover {
+  background: #2a3a2a;
+  border-color: #2d6a4f;
+  color: #6ee7b7;
+}
+
+/* ── Stdin textarea — matches terminal style ───────────────── */
 .stdinArea {
   flex: 1;
   width: 100%;
-  background: #ffffff;
-  color: #2c2c2a;
+  background: #1a1a2e;
+  color: #e2e8f0;
   font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 12px 16px;
   border: none;
   resize: none;
   outline: none;
   overflow-y: auto;
+  transition: opacity 0.2s, background 0.2s;
+  tab-size: 4;
+  caret-color: #a8b4ff;
+  box-sizing: border-box;
+}
+
+.stdinArea:focus {
+  background: #16162a;
+  box-shadow: inset 0 0 0 1px #3d3d6b;
+}
+
+.stdinArea:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .stdinArea::placeholder {
-  color: #c4c1ba;
+  color: #3a3a60;
+  font-style: italic;
+  white-space: pre;
 }
 
+/* ── Output container ─────────────────────────────────────── */
 .outputArea {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 14px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  background: #0f0f1a;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Empty / idle state ──────────────────────────────────── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  color: #3a3a60;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 12px;
+  text-align: center;
+  padding: 24px;
+}
+
+.emptyIcon {
+  font-size: 28px;
+  color: #2a2a4a;
+  line-height: 1;
+}
+
+.emptyHint {
+  font-size: 11px;
+  color: #2e2e50;
+}
+
+.emptyHint strong {
+  color: #5a5a90;
+}
+
+.emptyHint kbd {
+  background: #2a2a40;
+  border: 1px solid #3d3d60;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  color: #7878aa;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Compiling / running state ───────────────────────────── */
+.compilingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  color: #6868aa;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.compilingSpinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #2a2a50;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Meta bar (badges row) ───────────────────────────────── */
+.metaBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 14px 6px;
+  border-bottom: 1px solid #1e1e35;
+  flex-shrink: 0;
+  background: #13131f;
+}
+
+/* Shared badge base */
+.badgeSuccess,
+.badgeError,
+.badgeTle,
+.badgeRunning {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.badgeSuccess { background: #052e16; color: #4ade80; border: 1px solid #14532d; }
+.badgeError   { background: #2d0a0a; color: #f87171; border: 1px solid #7f1d1d; }
+.badgeTle     { background: #2a1800; color: #fbbf24; border: 1px solid #92400e; }
+.badgeRunning { background: #0a1628; color: #60a5fa; border: 1px solid #1e3a8a; }
+
+.exitBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #6b7280;
+  background: #1a1a2a;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid #2a2a40;
+}
+
+.timeBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #4b5563;
+  background: #111120;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid #1e1e30;
+}
+
+.killedBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #fbbf24;
+  background: #2a1800;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-weight: 600;
+  border: 1px solid #92400e;
+}
+
+.compileBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #a78bfa;
+  background: #1a0a2e;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid #4c1d95;
+}
+
+.engineDockerBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #38bdf8;
+  background: #0a1e2e;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: help;
+  border: 1px solid #075985;
+}
+
+.enginePistonBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #6b7280;
+  background: #111120;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: help;
+  border: 1px solid #1e1e30;
+}
+
+.engineWandboxBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #34d399;
+  background: #022c22;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: help;
+  border: 1px solid #065f46;
+}
+
+/* ── TLE explanation ─────────────────────────────────────── */
+.tleExplain {
+  margin: 10px 14px 0;
+  padding: 10px 14px;
+  background: #1a0f00;
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 4px 4px 0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11.5px;
+  color: #fbbf24;
   line-height: 1.6;
-  color: #8a8880;
+  white-space: pre-wrap;
+  flex-shrink: 0;
+}
+
+/* ── Program stdout ──────────────────────────────────────── */
+.outputPre {
+  margin: 10px 14px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
-  background: #fafaf8;
+  overflow-x: auto;
+  flex-shrink: 0;
+  border: 1px solid transparent;
 }
 
-.outputError {
-  color: #f38ba8;
+.bodySuccess { background: #052e16; color: #86efac; border-color: #14532d; }
+.bodyError   { background: #2d0a0a; color: #fca5a5; border-color: #7f1d1d; }
+.bodyTle     { background: #1a0f00; color: #fcd34d; border-color: #92400e; }
+.bodyRunning { background: #0a1628; color: #93c5fd; border-color: #1e3a8a; }
+.bodyMuted   { background: #0f0f1a; color: #374151; font-style: italic; border-color: #1e1e30; }
+
+/* ── Stderr / GCC warnings block ────────────────────────── */
+.stderrBlock {
+  margin: 4px 14px 14px;
+  border: 1px solid #2a1800;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.outputSuccess {
-  color: #a6e3a1;
+.stderrLabel {
+  background: #1a0f00;
+  color: #d97706;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 5px 12px;
+  border-bottom: 1px solid #2a1800;
 }
 
-.outputInfo {
-  color: #8a8880;
-  font-style: italic;
+.stderrPre {
+  margin: 0;
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.65;
+  color: #fbbf24;
+  background: #0f0900;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
 }

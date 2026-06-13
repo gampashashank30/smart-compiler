@@ -6,34 +6,42 @@ import RightPanel from './components/RightPanel.jsx';
 import { STARTER_CODE } from './constants.js';
 import styles from './App.module.css';
 
+// WebSocket URL — Vite proxies /ws → ws://localhost:3001 in dev
+const WS_URL = (() => {
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${proto}//${window.location.host}/ws/run`;
+})();
+
 export default function App() {
-  const [code, setCode] = useState(STARTER_CODE);
-  const [stdin, setStdin] = useState('');
-  const [output, setOutput] = useState(null); // { type: 'info'|'success'|'error', text: string }
-  const [activeTab, setActiveTab] = useState('stdin');
+  const [code, setCode]           = useState(STARTER_CODE);
+  const [runStatus, setRunStatus] = useState('idle'); // 'idle' | 'compiling' | 'running'
+  const [activeTab, setActiveTab] = useState('terminal');
 
   // Panel width: left panel percent of total workspace width
   const [leftWidth, setLeftWidth] = useState(55);
   const containerRef = useRef(null);
-  const draggingRef = useRef(false);
+  const draggingRef  = useRef(false);
+
+  // Ref to the TerminalPane's imperative API
+  const terminalRef = useRef(null);
 
   // Vertical drag divider
   const onDividerMouseDown = useCallback((e) => {
     e.preventDefault();
     draggingRef.current = true;
-    document.body.style.cursor = 'col-resize';
+    document.body.style.cursor    = 'col-resize';
     document.body.style.userSelect = 'none';
 
     const onMove = (ev) => {
       if (!draggingRef.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      const pct  = ((ev.clientX - rect.left) / rect.width) * 100;
       setLeftWidth(Math.max(25, Math.min(75, pct)));
     };
 
     const onUp = () => {
       draggingRef.current = false;
-      document.body.style.cursor = '';
+      document.body.style.cursor    = '';
       document.body.style.userSelect = '';
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
@@ -43,38 +51,51 @@ export default function App() {
     document.addEventListener('mouseup', onUp);
   }, []);
 
-  // Run handler — browser-mode simulation
+  // ── Run — connect WebSocket and send code for interactive execution ─────
   const handleRun = useCallback(() => {
     if (!code.trim()) {
-      setOutput({ type: 'error', text: 'Editor is empty. Write some C code first.' });
+      // Write error to terminal
+      terminalRef.current?.clear();
       return;
     }
+    if (runStatus === 'compiling' || runStatus === 'running') return;
 
-    const simulatedMsg =
-      `[Browser Mode] Live C execution requires a backend compiler (e.g., gcc via a server).\n\n` +
-      `Your code has been received (${code.split('\n').length} lines).\n` +
-      (stdin.trim()
-        ? `Stdin provided:\n${stdin}\n\n`
-        : '') +
-      `To run C code in production, connect this interface to a backend\n` +
-      `running gcc or use a WebAssembly-compiled compiler like WasmGCC.\n\n` +
-      `Tip: Use the AI Explanation tab to check your code for errors before compiling.`;
+    // Switch to terminal tab
+    setActiveTab('terminal');
 
-    setOutput({ type: 'info', text: simulatedMsg });
-  }, [code, stdin]);
+    // Connect terminal to WebSocket
+    terminalRef.current?.connect(WS_URL, code);
+  }, [code, runStatus]);
 
-  // Clear editor
+  // ── Kill running program ──────────────────────────────────────────────────
+  const handleKill = useCallback(() => {
+    terminalRef.current?.kill();
+    setRunStatus('idle');
+  }, []);
+
+  // ── Clear editor ──────────────────────────────────────────────────────────
   const handleClear = useCallback(() => {
     if (window.confirm('Clear the editor? This cannot be undone.')) {
       setCode('');
-      setOutput(null);
+      terminalRef.current?.clear();
     }
   }, []);
 
-  // Apply corrected code from AI
+  // ── Apply AI fix ──────────────────────────────────────────────────────────
   const handleApplyFix = useCallback((newCode) => {
     setCode(newCode);
   }, []);
+
+  // ── Status callbacks from TerminalPane ───────────────────────────────────
+  const handleStatusChange = useCallback((status) => {
+    setRunStatus(status);
+  }, []);
+
+  const handleDone = useCallback((_result) => {
+    setRunStatus('idle');
+  }, []);
+
+  const isRunning = runStatus === 'compiling' || runStatus === 'running';
 
   return (
     <div className={styles.appShell}>
@@ -90,26 +111,30 @@ export default function App() {
             code={code}
             onChange={setCode}
             onRun={handleRun}
+            onKill={handleKill}
             onClear={handleClear}
+            isRunning={isRunning}
+            runStatus={runStatus}
           />
         </div>
 
         {/* Vertical drag divider */}
         <DragDivider orientation="vertical" onMouseDown={onDividerMouseDown} />
 
-        {/* Right — Tabbed output */}
+        {/* Right — Terminal / AI */}
         <div
           className={styles.rightPane}
           style={{ width: `${100 - leftWidth}%` }}
         >
           <RightPanel
-            stdin={stdin}
-            onStdinChange={setStdin}
-            output={output}
+            ref={terminalRef}
             activeTab={activeTab}
             onTabChange={setActiveTab}
             code={code}
             onApplyFix={handleApplyFix}
+            isRunning={runStatus}
+            onStatusChange={handleStatusChange}
+            onDone={handleDone}
           />
         </div>
       </div>

@@ -1,0 +1,18 @@
+# Use minimal Alpine Linux — tiny image (~5 MB base)
+FROM alpine:3.19
+
+# Install GCC, G++, binutils, musl-dev (C standard library headers)
+# No network tools, no shell utilities beyond /bin/sh
+RUN apk add --no-cache gcc g++ musl-dev binutils
+
+# Create a non-root user for security
+RUN adduser -D -H -s /sbin/nologin runner
+
+# Working directory — code will be mounted here
+WORKDIR /sandbox
+
+# Switch to non-root user
+USER runner
+
+# Default command (overridden by docker run args)
+CMD ["/bin/sh"]

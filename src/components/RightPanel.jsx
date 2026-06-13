@@ -1,20 +1,24 @@
-import { useState, useRef, useCallback } from 'react';
-import StdinOutputTab from './StdinOutputTab.jsx';
+import { forwardRef } from 'react';
+import TerminalPane from './TerminalPane.jsx';
 import AIExplanationTab from './AIExplanationTab.jsx';
 import styles from './RightPanel.module.css';
 
 const TABS = [
-  { id: 'stdin', label: 'Stdin / Output' },
-  { id: 'ai', label: 'AI Explanation' },
+  { id: 'terminal', label: '▶ Console' },
+  { id: 'ai',       label: '✦ AI Explanation' },
 ];
 
-export default function RightPanel({
-  stdin, onStdinChange,
-  output,
-  activeTab, onTabChange,
-  code,
-  onApplyFix,
-}) {
+const RightPanel = forwardRef(function RightPanel(
+  {
+    activeTab, onTabChange,
+    code,
+    onApplyFix,
+    isRunning,
+    onStatusChange,
+    onDone,
+  },
+  terminalRef
+) {
   return (
     <div className={styles.panel}>
       <div className={styles.tabBar}>
@@ -30,24 +34,45 @@ export default function RightPanel({
             {tab.label}
           </button>
         ))}
+
+        {/* Status indicator */}
+        <div className={styles.statusArea}>
+          {isRunning === 'compiling' && (
+            <span className={styles.statusCompiling}>
+              <span className={styles.spinner} /> Compiling…
+            </span>
+          )}
+          {isRunning === 'running' && (
+            <span className={styles.statusRunning}>
+              <span className={styles.runDot} /> Running
+            </span>
+          )}
+        </div>
       </div>
 
       <div className={styles.tabContent}>
-        {activeTab === 'stdin' && (
-          <StdinOutputTab
-            stdin={stdin}
-            onStdinChange={onStdinChange}
-            output={output}
+        {/* Terminal is always mounted (so it persists), just hidden when on AI tab */}
+        <div style={{
+          display:  activeTab === 'terminal' ? 'block' : 'none',
+          position: 'absolute',
+          inset:    0,
+        }}>
+          <TerminalPane
+            ref={terminalRef}
+            onStatusChange={onStatusChange}
+            onDone={onDone}
           />
-        )}
+        </div>
+
         {activeTab === 'ai' && (
           <AIExplanationTab
             code={code}
             onApplyFix={onApplyFix}
-            onSwitchTab={() => onTabChange('stdin')}
           />
         )}
       </div>
     </div>
   );
-}
+});
+
+export default RightPanel;

@@ -1,8 +1,12 @@
-import { useRef, useCallback, useMemo, useState } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 import { highlightC } from '../highlight.js';
 import styles from './EditorPanel.module.css';
 
-export default function EditorPanel({ code, onChange, onRun, onClear }) {
+export default function EditorPanel({
+  code, onChange, onRun, onKill, onClear,
+  isRunning = false,
+  runStatus = 'idle',  // 'idle' | 'compiling' | 'running'
+}) {
   const textareaRef = useRef(null);
   const preRef      = useRef(null);
   const gutterRef   = useRef(null);
@@ -23,7 +27,7 @@ export default function EditorPanel({ code, onChange, onRun, onClear }) {
     }
   }, []);
 
-  // Tab key → 4 spaces
+  // Tab key → 4 spaces | Ctrl+Enter → Run
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -35,8 +39,11 @@ export default function EditorPanel({ code, onChange, onRun, onClear }) {
       requestAnimationFrame(() => {
         ta.selectionStart = ta.selectionEnd = start + 4;
       });
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!isRunning) onRun();
     }
-  }, [code, onChange]);
+  }, [code, onChange, onRun, isRunning]);
 
   const lineCount = code.split('\n').length;
 
@@ -92,22 +99,41 @@ export default function EditorPanel({ code, onChange, onRun, onClear }) {
         </div>
       </div>
 
-      {/* ── Bottom run bar ───────────────────────────────────────────────── */}
+      {/* ── Bottom run bar ────────────────────────────────────────────────── */}
       <div className={styles.runBar}>
         <button
           id="clear-btn"
           className={styles.clearBtn}
           onClick={onClear}
+          disabled={isRunning}
         >
           CLEAR
         </button>
-        <button
-          id="run-btn"
-          className={styles.runBtn}
-          onClick={onRun}
-        >
-          <span className={styles.runIcon}>&#9654;</span> RUN
-        </button>
+
+        {/* Show STOP when running, RUN when idle */}
+        {runStatus === 'running' ? (
+          <button
+            id="stop-btn"
+            className={`${styles.runBtn} ${styles.stopBtn}`}
+            onClick={onKill}
+            aria-label="Stop running program"
+          >
+            <span className={styles.stopIcon}>■</span> STOP
+          </button>
+        ) : (
+          <button
+            id="run-btn"
+            className={`${styles.runBtn} ${isRunning ? styles.runBtnRunning : ''}`}
+            onClick={onRun}
+            disabled={isRunning}
+            aria-label={isRunning ? 'Compiling…' : 'Run program (Ctrl+Enter)'}
+            title="Run (Ctrl+Enter)"
+          >
+            {runStatus === 'compiling'
+              ? <><span className={styles.spinner} aria-hidden="true" /> COMPILING…</>
+              : <><span className={styles.runIcon}>&#9654;</span> RUN</>}
+          </button>
+        )}
       </div>
 
     </div>
