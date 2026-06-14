@@ -1,31 +1,21 @@
-// API utility — Groq (AI) + Piston (real C execution)
+// API utility — Groq (AI) + C execution
 
 // ─── Groq / AI ──────────────────────────────────────────────────────────────
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL   = 'llama-3.3-70b-versatile';
-const API_KEY      = import.meta.env.VITE_GROQ_API_KEY || '';
+// The Groq API key lives on the SERVER (process.env.GROQ_API_KEY).
+// The frontend calls our own /api/ai endpoint — never Groq directly.
+// This keeps the key off the frontend bundle and works without rebuilding.
 
 /**
- * Call the Groq API (OpenAI-compatible)
+ * Call the Groq API via the server-side proxy (/api/ai)
  * @param {string} systemPrompt
  * @param {string} userMessage
  * @returns {Promise<string>}
  */
 export async function callClaude(systemPrompt, userMessage) {
-  const response = await fetch(GROQ_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      max_tokens: 4096,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user',   content: userMessage  },
-      ],
-    }),
+  const response = await fetch('/api/ai', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ systemPrompt, userMessage }),
   });
 
   if (!response.ok) {
@@ -34,8 +24,9 @@ export async function callClaude(systemPrompt, userMessage) {
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content ?? '';
+  return data.content ?? '';
 }
+
 
 /**
  * Parse JSON safely from AI response.

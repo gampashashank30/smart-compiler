@@ -57,6 +57,48 @@ const limiter = rateLimit({
 });
 app.use('/api/compile', limiter);
 
+// ── AI proxy endpoint ─────────────────────────────────────────────────────────
+// Calls Groq from the server so the API key stays off the frontend bundle.
+app.post('/api/ai', async (req, res) => {
+  const { systemPrompt, userMessage } = req.body ?? {};
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) {
+    return res.status(503).json({ error: 'AI service not configured (missing GROQ_API_KEY)' });
+  }
+  if (!systemPrompt || !userMessage) {
+    return res.status(400).json({ error: 'systemPrompt and userMessage are required' });
+  }
+
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model:      'llama-3.3-70b-versatile',
+        max_tokens: 4096,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userMessage  },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data?.error?.message || 'Groq API error' });
+    }
+    return res.json({ content: data.choices?.[0]?.message?.content ?? '' });
+  } catch (err) {
+    console.error('[/api/ai] Error:', err);
+    return res.status(500).json({ error: 'Failed to reach AI service' });
+  }
+});
+
+
 // ── Health endpoint ───────────────────────────────────────────────────────────
 app.get('/api/health', async (req, res) => {
   resetDockerCache();
