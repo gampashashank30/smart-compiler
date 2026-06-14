@@ -34,7 +34,9 @@ const TerminalPane = forwardRef(function TerminalPane(
   const termRef      = useRef(null);
   const fitRef       = useRef(null);
   const wsRef        = useRef(null);
-  const runningRef   = useRef(false);
+  const runningRef    = useRef(false);
+  // Local echo buffer — chars we've shown immediately; stripped when server PTY echo arrives
+  const localEchoRef  = useRef('');
 
   // ── Initialise xterm.js once ─────────────────────────────────────────────
   useEffect(() => {
@@ -88,13 +90,42 @@ const TerminalPane = forwardRef(function TerminalPane(
     term.writeln('\x1b[38;5;240m# Ctrl+C to interrupt  ·  Ctrl+D to send EOF\x1b[0m');
     term.writeln('');
 
-    // ── Input: forward ALL raw keystrokes to server PTY ──────────────────
-    // The server PTY handles: echo, backspace editing, Ctrl+C (SIGINT),
-    // Ctrl+D (EOF), arrow keys. We do NOT echo locally.
+    // ── Input: local echo + forward to server PTY ───────────────────────
+    // We echo printable chars immediately so typing feels instant regardless
+    // of network latency. The server PTY also echoes back — we strip that
+    // duplicate in the 'output' handler using localEchoRef.
+    //
+    // Rules:
+    //   Printable (code 32-126, >127) → echo locally, track in localEchoRef
+    //   Backspace (\x7f)              → erase locally, shrink localEchoRef
+    //   Enter (\r)                    → echo \r\n locally, track \r\n
+    //   Control chars (Ctrl+C etc.)   → send only, never echo locally
     term.onData((data) => {
       if (!runningRef.current) return;
       const ws = wsRef.current;
       if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+      for (const ch of data) {
+        const code = ch.codePointAt(0);
+
+        if (code === 0x7f) {
+          // Backspace — erase the last locally-echoed char
+          if (localEchoRef.current.length > 0) {
+            localEchoRef.current = localEchoRef.current.slice(0, -1);
+            term.write('\b \b'); // move back, blank, move back
+          }
+        } else if (ch === '\r') {
+          // Enter — PTY will echo back \r\n
+          term.write('\r\n');
+          localEchoRef.current += '\r\n';
+        } else if ((code >= 32 && code !== 127)) {
+          // Printable character — show instantly
+          term.write(ch);
+          localEchoRef.current += ch;
+        }
+        // Control sequences (arrows, Ctrl+C, Ctrl+D …) — server handles, no local echo
+      }
+
       ws.send(JSON.stringify({ type: 'stdin', data }));
     });
 
@@ -129,7 +160,8 @@ const TerminalPane = forwardRef(function TerminalPane(
       wsRef.current = null;
     }
 
-    runningRef.current = false;
+    runningRef.current   = false;
+    localEchoRef.current = '';
 
     // Reset terminal and show compile banner
     term.write('\x1bc');
@@ -168,9 +200,30 @@ const TerminalPane = forwardRef(function TerminalPane(
           break;
 
         // ── Primary output path: raw PTY bytes (stdout + stderr + echo) ──
-        case 'output':
-          term.write(msg.data);
+        // Strip server-side PTY echo that we already displayed locally.
+        case 'output': {
+          let output = msg.data;
+          if (localEchoRef.current) {
+            // Try to consume a matching prefix from our locally-echoed buffer
+            let matchLen = 0;
+            while (
+              matchLen < localEchoRef.current.length &&
+              matchLen < output.length &&
+              output[matchLen] === localEchoRef.current[matchLen]
+            ) {
+              matchLen++;
+            }
+            if (matchLen > 0) {
+              output = output.slice(matchLen);
+              localEchoRef.current = localEchoRef.current.slice(matchLen);
+            } else {
+              // No match — program output arrived before echo; clear buffer
+              localEchoRef.current = '';
+            }
+          }
+          if (output) term.write(output);
           break;
+        }
 
         // ── Compile error: format GCC output with colours ─────────────
         case 'compile-error': {
@@ -185,6 +238,7 @@ const TerminalPane = forwardRef(function TerminalPane(
             else                                  term.writeln(line);
           }
           term.writeln('');
+          localEchoRef.current = '';
           runningRef.current = false;
           onStatusChange?.('idle');
           onDone?.({ success: false, compileError: true });
@@ -197,6 +251,7 @@ const TerminalPane = forwardRef(function TerminalPane(
 
         // ── Program finished ──────────────────────────────────────────
         case 'done': {
+          localEchoRef.current = '';
           runningRef.current = false;
           const { exitCode, timeMs, killed } = msg;
 
@@ -220,6 +275,7 @@ const TerminalPane = forwardRef(function TerminalPane(
         case 'error':
           term.writeln('');
           term.writeln(`\x1b[1;31m✗  Error: ${msg.data}\x1b[0m`);
+          localEchoRef.current = '';
           runningRef.current = false;
           onStatusChange?.('idle');
           onDone?.({ success: false, error: msg.data });
@@ -259,6 +315,7 @@ const TerminalPane = forwardRef(function TerminalPane(
       term.writeln('');
       term.writeln('\x1b[1;33m[Killed by user]\x1b[0m');
     }
+    localEchoRef.current = '';
     runningRef.current = false;
     onStatusChange?.('idle');
   }, [onStatusChange]);
