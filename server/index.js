@@ -16,6 +16,10 @@
 const http           = require('http');
 const path           = require('path');
 const fs             = require('fs');
+
+// Load root .env for local dev (no-op on Render where env vars come from the dashboard)
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
 const express        = require('express');
 const rateLimit      = require('express-rate-limit');
 const { execute, isDockerReady, isLocalGccReady, resetDockerCache } = require('./executor');
