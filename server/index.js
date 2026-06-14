@@ -61,7 +61,8 @@ app.use('/api/compile', limiter);
 // Calls Groq from the server so the API key stays off the frontend bundle.
 app.post('/api/ai', async (req, res) => {
   const { systemPrompt, userMessage } = req.body ?? {};
-  const apiKey = process.env.GROQ_API_KEY;
+  // Accept both names: GROQ_API_KEY (Render) and VITE_GROQ_API_KEY (local dev)
+  const apiKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
 
   if (!apiKey) {
     return res.status(503).json({ error: 'AI service not configured (missing GROQ_API_KEY)' });
