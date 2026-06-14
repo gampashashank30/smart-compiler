@@ -62,6 +62,29 @@ Common logical errors to watch for (not exhaustive):
 
 IMPORTANT: Only return JSON. No markdown, no explanation outside the JSON array.`;
 
+// System prompt for converting other languages to C
+export const LANG_TO_C_PROMPT = `You are an expert C programmer. The user has provided a program written in another language. Your task is to translate it faithfully into standard C99, preserving the exact logic, algorithms, and behaviour.
+
+Return ONLY a JSON object in this exact format:
+{
+  "c_code": "<the full translated C program as a string>",
+  "notes": [
+    "brief note 1 about the translation",
+    "brief note 2 about any language-specific differences",
+    "brief note 3 (optional)"
+  ]
+}
+
+Rules:
+- c_code must be the ENTIRE runnable C program, not just snippets
+- Include all necessary #include directives
+- Use standard C library functions (printf, scanf, malloc, etc.)
+- Do not include markdown code fences inside c_code — plain text only
+- Translate ALL functions and classes faithfully
+- If the source used OOP, restructure to procedural C with structs
+- notes must have 2 to 4 entries, concise and student-friendly
+- IMPORTANT: Only return JSON. No markdown, no explanation outside the JSON.`;
+
 // System prompt for generating corrected full code
 export const CORRECTION_SYSTEM_PROMPT = `You are a C programming tutor. Given a list of issues found in C code, generate the complete corrected version of the program. 
 

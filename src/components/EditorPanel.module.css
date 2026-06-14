@@ -25,50 +25,169 @@
   background: #010409;
   border-bottom: 1px solid #21262d;
   flex-shrink: 0;
-  padding: 0 12px;
+  padding: 0 8px 0 0;
+  overflow: hidden;
 }
 
-.tabLeft {
+/* Scrollable list of file tabs + the "+" button */
+.tabList {
   display: flex;
   align-items: flex-end;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;           /* Firefox */
 }
+.tabList::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
-/* Active file tab — sits on the border like a real editor tab */
+/* ── Base tab (shared) ────────────────────────────────────── */
 .fileTab {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 18px;
+  gap: 6px;
+  padding: 0 12px;
   height: 38px;
-  background: #0d1117;
-  border: 1px solid #21262d;
-  border-bottom: 2px solid #0d1117; /* "lifts" off the bottom border */
   border-radius: 6px 6px 0 0;
-  cursor: default;
+  cursor: pointer;
   user-select: none;
+  flex-shrink: 0;
+  max-width: 200px;
+  min-width: 80px;
+  transition: background 0.13s;
+  position: relative;
+  border: 1px solid transparent;
+  border-bottom: none;
 }
 
+/* ── Active tab ───────────────────────────────────────────── */
+.fileTabActive {
+  background: #0d1117;
+  border-color: #21262d;
+  /* bottom gap hides tab-bar bottom border so tab "lifts" */
+  box-shadow: 0 2px 0 #0d1117;
+  cursor: default;
+}
+
+/* ── Inactive tab ─────────────────────────────────────────── */
+.fileTabInactive {
+  background: transparent;
+  color: #484f58;
+}
+.fileTabInactive:hover {
+  background: #0d111799;
+}
+
+/* ── Dot indicator ────────────────────────────────────────── */
 .fileDot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #58a6ff;
   flex-shrink: 0;
   box-shadow: 0 0 6px #58a6ff88;
+  transition: background 0.13s, box-shadow 0.13s;
+}
+.fileDotInactive {
+  background: #3d444d;
+  box-shadow: none;
 }
 
+/* ── File name ────────────────────────────────────────────── */
 .fileName {
   font-size: 12.5px;
   font-weight: 500;
   color: #c9d1d9;
   letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.fileTabInactive .fileName {
+  color: #6e7681;
+}
+
+/* ── × Close button ───────────────────────────────────────── */
+.tabClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #6e7681;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s, opacity 0.12s;
+  opacity: 1;          /* always visible */
+}
+.fileTabInactive .tabClose {
+  opacity: 0.5;        /* slightly dimmer on inactive tabs */
+}
+.fileTabInactive:hover .tabClose {
+  opacity: 1;
+}
+.tabClose:hover {
+  background: #da363344;
+  color: #f85149;
+}
+
+/* ── + Add-tab button ─────────────────────────────────────── */
+.tabAdd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #30363d;   /* always-visible border */
+  border-radius: 6px;
+  background: #161b22;          /* subtle fill so it stands out */
+  color: #8b949e;               /* bright enough to see clearly */
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: 6px;
+  transition: background 0.12s, color 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.tabAdd:hover {
+  background: #238636;
+  border-color: #3fb950;
+  color: #ffffff;
+  box-shadow: 0 0 8px #23863666;
+}
+
+/* ── Inline rename input ──────────────────────────────────── */
+.tabRenameInput {
+  background: #161b22;
+  border: 1px solid #58a6ff;
+  border-radius: 4px;
+  color: #c9d1d9;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  outline: none;
+  min-width: 60px;
+  max-width: 140px;
+  width: 100%;
+  box-shadow: 0 0 0 2px #58a6ff33;
 }
 
 .tabRight {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-right: 4px;
+  padding: 0 8px;
+  flex-shrink: 0;
 }
 
 .langDot {
@@ -83,7 +202,9 @@
   font-size: 11.5px;
   color: #484f58;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
+
 
 /* ─── Editor body (gutter + code) ───────────────────────── */
 .editorBody {
@@ -180,6 +301,7 @@
   background: #444c56;
 }
 
+
 /* ─── Run bar ────────────────────────────────────────────── */
 .runBar {
   display: flex;
@@ -187,6 +309,41 @@
   flex-shrink: 0;
   background: #010409;
   border-top: 1px solid #21262d;
+}
+
+
+/* ─── Download button ────────────────────────────────────── */
+.downloadBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: #0d1117;
+  color: #58a6ff;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border: none;
+  border-right: 1px solid #21262d;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.downloadBtn:hover {
+  background: #1f3a5f;
+  color: #79c0ff;
+  box-shadow: inset 0 0 0 1px #388bfd44;
+}
+
+.downloadBtn:active {
+  background: #162a45;
+}
+
+.downloadBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .clearBtn {
@@ -202,6 +359,7 @@
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
+
 
 .clearBtn:hover {
   background: #21262d;

@@ -14,6 +14,8 @@
  */
 
 const http           = require('http');
+const path           = require('path');
+const fs             = require('fs');
 const express        = require('express');
 const rateLimit      = require('express-rate-limit');
 const { execute, isDockerReady, isLocalGccReady, resetDockerCache } = require('./executor');
@@ -106,10 +108,20 @@ app.post('/api/compile', async (req, res) => {
   }
 });
 
-// ── 404 catch-all ─────────────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({ error: `No route: ${req.method} ${req.path}` });
-});
+// ── Serve built React app in production ──────────────────────────────────────
+const distDir = path.join(__dirname, '..', 'dist');
+if (fs.existsSync(distDir)) {
+  app.use(express.static(distDir));
+  // SPA fallback — any non-API route serves index.html
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
+} else {
+  // Dev fallback — Vite handles the frontend
+  app.use((req, res) => {
+    res.status(404).json({ error: `No route: ${req.method} ${req.path}` });
+  });
+}
 
 // ── Create HTTP server and attach WebSocket ───────────────────────────────────
 const server = http.createServer(app);

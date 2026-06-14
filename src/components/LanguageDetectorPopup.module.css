@@ -1,0 +1,566 @@
+/* ============================================================
+   LanguageDetectorPopup — Premium redesign
+   Matches SmartCompiler design system:
+   · White surface cards (like the header)
+   · Emerald → teal brand gradient (#10b981 → #06b6d4)
+   · Inter for UI text, JetBrains Mono for code labels
+   · Subtle frosted-glass feel with layered shadows
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ─── Overlay ──────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 76px 20px 0 0;
+  pointer-events: none;
+}
+
+/* ─── Popup card ───────────────────────────────────────────── */
+.popup {
+  pointer-events: all;
+  width: 360px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.08),
+    0 4px 6px -1px rgba(0,0,0,0.07),
+    0 20px 60px -8px rgba(0,0,0,0.18),
+    0 0 0 4px rgba(16, 185, 129, 0.06);
+  overflow: hidden;
+  outline: none;
+  animation: popIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.95);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* ─── Gradient top accent bar ──────────────────────────────── */
+.popup::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981 0%, #0ea5e9 55%, #06b6d4 100%);
+}
+
+/* ─── Header ───────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radarIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #e0f2fe 100%);
+  border: 1px solid #a7f3d0;
+  font-size: 13px;
+  animation: scanPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes scanPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); }
+  50%       { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+}
+
+.title {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.closeBtn:hover {
+  color: #1e293b;
+  background: #f1f5f9;
+}
+
+/* ─── Body ─────────────────────────────────────────────────── */
+.body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Language hero row ─────────────────────────────────────── */
+.langHero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.langIconWrap {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--lang-bg-from, #ecfdf5), var(--lang-bg-to, #e0f2fe));
+  border: 1.5px solid var(--lang-border, #a7f3d0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px var(--lang-glow, rgba(16,185,129,0.2));
+}
+
+.langIconDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--lang-color, #10b981);
+  box-shadow: 0 0 10px var(--lang-color, #10b981);
+}
+
+.langTextStack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.langName {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--lang-color, #10b981);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.langSubtitle {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Confidence section ────────────────────────────────────── */
+.confidenceCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confidenceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.confidenceLabel {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.confidenceVal {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #10b981, #0ea5e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.confidenceTrack {
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.confidenceFill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #10b981 0%, #0ea5e9 100%);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+/* ─── Signals ──────────────────────────────────────────────── */
+.signalsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.signalsLabel {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.signalsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.signalPill {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  padding: 3px 9px;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Language score mini bars ─────────────────────────── */
+.scoresWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Wrapper for each row + its expand panel */
+.scoreBlock {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.scoreLang {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.scoreTrack {
+  flex: 1;
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.scoreFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+  opacity: 0.85;
+}
+
+.scorePct {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ─── ⓘ Info / expand button ───────────────────────────── */
+.infoBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 50%;
+  background: #f8fafc;
+  font-size: 10px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.infoBtn:hover:not(:disabled) {
+  border-color: var(--info-color, #10b981);
+  background: color-mix(in srgb, var(--info-color, #10b981) 10%, white);
+  color: var(--info-color, #10b981);
+  transform: scale(1.1);
+}
+
+.infoBtnActive {
+  border-color: var(--info-color, #10b981) !important;
+  background: color-mix(in srgb, var(--info-color, #10b981) 12%, white) !important;
+  color: var(--info-color, #10b981) !important;
+  font-size: 8px;
+}
+
+.infoBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── Expandable signals panel ──────────────────────────── */
+.expandPanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.22s ease,
+              padding 0.22s ease;
+  opacity: 0;
+  padding: 0 10px;
+  background: #f8fafc;
+  border-radius: 0 0 8px 8px;
+  border: 0px solid #e2e8f0;
+  border-top: none;
+}
+
+.expandPanel > * {
+  overflow: hidden;
+}
+
+.expandPanelOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  padding: 10px 10px 11px;
+  border-width: 1px;
+  border-top-width: 0;
+}
+
+.expandLabel {
+  display: block;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+.expandPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.expandPill {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--pill-color, #059669);
+  background: color-mix(in srgb, var(--pill-color, #059669) 8%, white);
+  border: 1px solid color-mix(in srgb, var(--pill-color, #059669) 28%, white);
+  border-radius: 5px;
+  padding: 2px 8px;
+  letter-spacing: 0.01em;
+  transition: transform 0.1s ease;
+}
+
+.expandPill:hover {
+  transform: scale(1.04);
+}
+
+.expandEmpty {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+
+
+/* ─── Question row ─────────────────────────────────────────── */
+.questionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+}
+
+.questionLogoSmall {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+}
+
+.questionText {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.questionLang {
+  font-weight: 700;
+  color: var(--lang-color, #10b981);
+}
+
+/* ─── Action row ───────────────────────────────────────────── */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 8px;
+  padding: 14px 18px 18px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.wrongBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.01em;
+}
+
+.wrongBtn:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.wrongIcon {
+  font-size: 11px;
+  color: #f43f5e;
+}
+
+.correctBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.correctBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #0284c7 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
+  transform: translateY(-1px);
+}
+
+.correctBtn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.correctIcon {
+  font-size: 13px;
+}
+
+.wrongBtn:disabled,
+.correctBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ─── Spinner ──────────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

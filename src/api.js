@@ -41,10 +41,72 @@ export async function callClaude(systemPrompt, userMessage) {
  * Parse JSON safely from AI response.
  * Strips markdown code fences if the model wraps the JSON.
  */
+/**
+ * Fix raw control characters (newlines, tabs, carriage returns) that some LLMs
+ * mistakenly place inside JSON string values — which makes JSON.parse throw
+ * "Bad control character in string literal".
+ * Uses a simple state machine to track when we're inside a string.
+ */
+function sanitizeRawControlChars(text) {
+  let result = '';
+  let inString = false;
+  let escaped  = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+
+    if (escaped) {
+      // Previous char was a backslash inside a string — emit as-is, clear flag
+      result  += ch;
+      escaped  = false;
+      continue;
+    }
+
+    if (ch === '\\' && inString) {
+      // Start of an escape sequence — emit backslash and set flag
+      result  += ch;
+      escaped  = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      // Toggle string-mode on every unescaped double-quote
+      inString = !inString;
+      result   += ch;
+      continue;
+    }
+
+    if (inString) {
+      // Inside a JSON string — raw control chars are illegal; escape them
+      if (ch === '\n') { result += '\\n';  continue; }
+      if (ch === '\r') { result += '\\r';  continue; }
+      if (ch === '\t') { result += '\\t';  continue; }
+    }
+
+    result += ch;
+  }
+
+  return result;
+}
+
+/**
+ * Parse JSON safely from AI response.
+ * Strips markdown code fences if the model wraps the JSON,
+ * then falls back to sanitization if the first parse attempt fails.
+ */
 export function parseJSON(raw) {
   let text = raw.trim();
+  // Strip markdown code fences the model may have added
   text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-  return JSON.parse(text);
+
+  // Fast path: try normal parse first — avoids any modification for valid JSON
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    // Slow path: LLM inserted raw newlines/tabs inside a string value.
+    // Sanitize with the state machine and retry.
+    return JSON.parse(sanitizeRawControlChars(text));
+  }
 }
 
 // ─── C Code Execution — via smart-compiler backend ──────────────────────────
