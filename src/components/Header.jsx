@@ -72,55 +72,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* ── CENTER: Nav ──────────────────────────────────────── */}
-      <nav className={styles.navCenter} aria-label="Primary navigation">
-        <span className={styles.navItem}>Editor</span>
-        <span className={styles.navSep} aria-hidden="true" />
-        <span className={styles.navItem}>AI&nbsp;Analysis</span>
-        <span className={styles.navSep} aria-hidden="true" />
-        <span className={styles.navItem}>Learn&nbsp;C</span>
-      </nav>
-
-      {/* ── RIGHT: Status badges ─────────────────────────────── */}
-      <div className={styles.rightSection} aria-label="Status">
-        {/* Pulsing "AI Ready" indicator */}
-        <div className={styles.aiBadge}>
-          <span className={styles.aiBadgeDot} />
-          <span>AI&nbsp;Ready</span>
-        </div>
-
-        {/* Language chip */}
-        <div className={styles.langChip}>
-          {/* Stacked layers icon — represents code layers/language */}
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M12 2L2 7l10 5 10-5-10-5z"
-              stroke="#0891b2"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M2 12l10 5 10-5"
-              stroke="#0891b2"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M2 17l10 5 10-5"
-              stroke="#0891b2"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span>C&nbsp;Language</span>
-        </div>
-
-        {/* Version */}
-        <div className={styles.versionPill}>v 1.0</div>
-      </div>
 
     </header>
   );
