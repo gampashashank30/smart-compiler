@@ -252,6 +252,43 @@ export default function EditorPanel({
         });
         return;
       }
+      // Delete <> pair on #include lines
+      if (charBefore === '<' && charAfter === '>') {
+        const ls = code.lastIndexOf('\n', start - 2) + 1;
+        if (/^\s*#\s*include\s*$/.test(code.slice(ls, start - 1))) {
+          e.preventDefault();
+          const next = code.substring(0, start - 1) + code.substring(start + 1);
+          const pos  = start - 1;
+          pushHistory(next, pos, pos);
+          onChange(next);
+          requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = pos; });
+          return;
+        }
+      }
+    }
+
+    // ── #include< → auto-insert matching > ─────────────────────────────────
+    if (key === '<' && start === end) {
+      const ls = code.lastIndexOf('\n', start - 1) + 1;
+      if (/^\s*#\s*include\s*$/.test(code.slice(ls, start))) {
+        e.preventDefault();
+        const next = code.substring(0, start) + '<>' + code.substring(start);
+        const pos  = start + 1;
+        pushHistory(next, pos, pos);
+        onChange(next);
+        requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = pos; });
+        return;
+      }
+    }
+
+    // ── Skip over > typed inside an #include<…> pair ──────────────────────
+    if (key === '>' && start === end && code[start] === '>') {
+      const ls = code.lastIndexOf('\n', start - 1) + 1;
+      if (code.slice(ls, start).includes('#include')) {
+        e.preventDefault();
+        requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = start + 1; });
+        return;
+      }
     }
 
     // ── Skip over closing bracket/quote ──────────────────────────────────────

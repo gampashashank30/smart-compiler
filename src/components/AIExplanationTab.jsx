@@ -257,7 +257,13 @@ export default function AIExplanationTab({ code, onApplyFix }) {
       const raw    = await callClaude(CORRECTION_SYSTEM_PROMPT,
         `Code:\n\n${code}\n\nIssues:\n${issuesSummary}\n\nGenerate corrected program and 3-5 short learning notes.`);
       const parsed = parseJSON(raw);
-      setCorrectedCode(parsed.corrected_code ?? '');
+      const rawCode = parsed.corrected_code ?? '';
+      // Some LLMs emit literal \n (two chars) instead of real newlines.
+      // If the code has no actual newlines but has literal \n sequences, convert them.
+      const cleanCode = rawCode.includes('\n')
+        ? rawCode
+        : rawCode.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+      setCorrectedCode(cleanCode);
       setLearningNotes(parsed.learning_notes ?? []);
     } catch (err) {
       console.error('Generate error:', err);

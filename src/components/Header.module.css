@@ -225,3 +225,96 @@
   background: #f8fafc;
   white-space: nowrap;
 }
+
+/* ─── Bug Tracker button ──────────────────────────────────────── */
+.bugTrackerBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px 7px 12px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #1e293b;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  transition:
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform   0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.bugTrackerBtn:hover {
+  box-shadow:
+    0 4px 16px rgba(16, 185, 129, 0.18),
+    0 2px 8px  rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  border-color: #a7f3d0;
+  color: #059669;
+}
+
+.bugTrackerBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.bugTrackerBtnIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bugTrackerBtn:hover .bugTrackerBtnIcon {
+  transform: rotate(-10deg) scale(1.1);
+}
+
+.bugTrackerBtnLabel {
+  flex-shrink: 0;
+}
+
+/* Pulsing error count badge */
+.bugTrackerBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 12px;
+  letter-spacing: 0.02em;
+  min-width: 20px;
+  justify-content: center;
+  margin-left: 2px;
+  animation: badgePop 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes badgePop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.bugTrackerBadgeDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  flex-shrink: 0;
+  animation: pulseDot 1.8s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}

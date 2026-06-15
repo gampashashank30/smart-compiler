@@ -4,6 +4,8 @@ import EditorPanel from './components/EditorPanel.jsx';
 import DragDivider from './components/DragDivider.jsx';
 import RightPanel from './components/RightPanel.jsx';
 import LanguageDetectorPopup from './components/LanguageDetectorPopup.jsx';
+import BugTrackerPanel from './components/BugTrackerPanel.jsx';
+import { bugTrackerStore } from './bugTracker.js';
 import { STARTER_CODE, LANG_TO_C_PROMPT } from './constants.js';
 import { detectLanguage } from './languageDetector.js';
 import { callClaude, parseJSON } from './api.js';
@@ -76,6 +78,34 @@ function unescapeStructuralNewlines(code) {
 
 
 export default function App() {
+  // ── Bug Tracker state ────────────────────────────────────────────────────
+  const [bugPanelOpen, setBugPanelOpen] = useState(false);
+  const [bugErrorCount, setBugErrorCount] = useState(
+    () => bugTrackerStore.getStats().errors
+  );
+
+  // Listen for bugtracker:record events dispatched by TerminalPane
+  useEffect(() => {
+    const onRecord = (e) => {
+      bugTrackerStore.record(e.detail);
+      setBugErrorCount(bugTrackerStore.getStats().errors);
+    };
+    window.addEventListener('bugtracker:record', onRecord);
+    return () => window.removeEventListener('bugtracker:record', onRecord);
+  }, []);
+
+  // Keep badge count in sync when store is reset externally
+  useEffect(() => {
+    const unsub = bugTrackerStore.subscribe((stats) => {
+      setBugErrorCount(stats.errors);
+    });
+    return unsub;
+  }, []);
+
+  const handleBugTrackerToggle = useCallback(() => {
+    setBugPanelOpen(prev => !prev);
+  }, []);
+
   // ── Multi-tab state ────────────────────────────────────────────────────────
   const [tabs, setTabs]               = useState([{ id: 1, name: 'main.c', code: STARTER_CODE }]);
   const [activeTabId, setActiveTabId] = useState(1);
@@ -289,7 +319,10 @@ export default function App() {
 
   return (
     <div className={styles.appShell}>
-      <Header />
+      <Header
+        onBugTrackerToggle={handleBugTrackerToggle}
+        bugTrackerErrorCount={bugErrorCount}
+      />
 
       <div className={styles.workspace} ref={containerRef}>
         {/* Left — Editor */}
@@ -347,6 +380,11 @@ export default function App() {
           onDismiss={handleDismissPopup}
           converting={converting}
         />
+      )}
+
+      {/* Bug Tracker Panel — slides in from right */}
+      {bugPanelOpen && (
+        <BugTrackerPanel onClose={() => setBugPanelOpen(false)} />
       )}
     </div>
   );
