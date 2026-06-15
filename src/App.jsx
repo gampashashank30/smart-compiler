@@ -5,7 +5,9 @@ import DragDivider from './components/DragDivider.jsx';
 import RightPanel from './components/RightPanel.jsx';
 import LanguageDetectorPopup from './components/LanguageDetectorPopup.jsx';
 import BugTrackerPanel from './components/BugTrackerPanel.jsx';
+import CompilationHistoryPanel from './components/CompilationHistoryPanel.jsx';
 import { bugTrackerStore } from './bugTracker.js';
+import { compilationHistoryStore } from './compilationHistory.js';
 import { STARTER_CODE, LANG_TO_C_PROMPT } from './constants.js';
 import { detectLanguage } from './languageDetector.js';
 import { callClaude, parseJSON } from './api.js';
@@ -78,6 +80,23 @@ function unescapeStructuralNewlines(code) {
 
 
 export default function App() {
+  // ── History panel state ──────────────────────────────────────────────────
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
+  const [historyCount, setHistoryCount] = useState(
+    () => compilationHistoryStore.getAll().length
+  );
+
+  useEffect(() => {
+    const unsub = compilationHistoryStore.subscribe((entries) => {
+      setHistoryCount(entries.length);
+    });
+    return unsub;
+  }, []);
+
+  const handleHistoryToggle = useCallback(() => {
+    setHistoryPanelOpen(prev => !prev);
+  }, []);
+
   // ── Bug Tracker state ────────────────────────────────────────────────────
   const [bugPanelOpen, setBugPanelOpen] = useState(false);
   const [bugErrorCount, setBugErrorCount] = useState(
@@ -117,6 +136,11 @@ export default function App() {
     (newCode) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, code: newCode } : t)),
     [activeTabId]
   );
+
+  // Load code from history into the active editor tab (defined after setCode)
+  const handleLoadFromHistory = useCallback((historyCode) => {
+    setCode(historyCode);
+  }, [setCode]);
   const [runStatus, setRunStatus] = useState('idle'); // 'idle' | 'compiling' | 'running'
   const [activeTab, setActiveTab] = useState('terminal');
 
@@ -322,6 +346,8 @@ export default function App() {
       <Header
         onBugTrackerToggle={handleBugTrackerToggle}
         bugTrackerErrorCount={bugErrorCount}
+        onHistoryToggle={handleHistoryToggle}
+        historyCount={historyCount}
       />
 
       <div className={styles.workspace} ref={containerRef}>
@@ -385,6 +411,14 @@ export default function App() {
       {/* Bug Tracker Panel — slides in from right */}
       {bugPanelOpen && (
         <BugTrackerPanel onClose={() => setBugPanelOpen(false)} />
+      )}
+
+      {/* Compilation History Panel — slides in from right */}
+      {historyPanelOpen && (
+        <CompilationHistoryPanel
+          onClose={() => setHistoryPanelOpen(false)}
+          onLoadInEditor={handleLoadFromHistory}
+        />
       )}
     </div>
   );

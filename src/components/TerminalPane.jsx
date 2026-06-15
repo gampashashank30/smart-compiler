@@ -4,10 +4,20 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import styles from './TerminalPane.module.css';
 import { classifyCompileError, extractLineHint } from '../bugTracker.js';
+import { compilationHistoryStore } from '../compilationHistory.js';
 
 /** Dispatch a bugtracker:record custom event — handled by App.jsx → bugTrackerStore */
 function dispatchBugEvent(payload) {
   window.dispatchEvent(new CustomEvent('bugtracker:record', { detail: payload }));
+}
+
+/**
+ * Strip ANSI escape sequences from a string so we store clean text in history.
+ * Covers: CSI sequences (ESC [ ... m), OSC, simple ESC codes.
+ */
+function stripAnsi(str) {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[^[\]]/g, '');
 }
 
 /**
@@ -43,6 +53,12 @@ const TerminalPane = forwardRef(function TerminalPane(
   const runningRef = useRef(false);
   // Local echo buffer — chars we've shown immediately; stripped when server PTY echo arrives
   const localEchoRef = useRef('');
+  // ── Stdout capture buffer for history ─────────────────────────────────
+  // Accumulates clean (ANSI-stripped) program output during a run.
+  // Reset at the start of every new connect() call.
+  const outputBufRef = useRef('');
+  // Track whether we're past the compile banner so we don't capture compile noise
+  const capturingRef = useRef(false);
 
   // ── Initialise xterm.js once ─────────────────────────────────────────────
   useEffect(() => {
@@ -97,15 +113,6 @@ const TerminalPane = forwardRef(function TerminalPane(
     term.writeln('');
 
     // ── Input: local echo + forward to server PTY ───────────────────────
-    // We echo printable chars immediately so typing feels instant regardless
-    // of network latency. The server PTY also echoes back — we strip that
-    // duplicate in the 'output' handler using localEchoRef.
-    //
-    // Rules:
-    //   Printable (code 32-126, >127) → echo locally, track in localEchoRef
-    //   Backspace (\x7f)              → erase locally, shrink localEchoRef
-    //   Enter (\r)                    → echo \r\n locally, track \r\n
-    //   Control chars (Ctrl+C etc.)   → send only, never echo locally
     term.onData((data) => {
       if (!runningRef.current) return;
       const ws = wsRef.current;
@@ -118,18 +125,15 @@ const TerminalPane = forwardRef(function TerminalPane(
           // Backspace — erase the last locally-echoed char
           if (localEchoRef.current.length > 0) {
             localEchoRef.current = localEchoRef.current.slice(0, -1);
-            term.write('\b \b'); // move back, blank, move back
+            term.write('\b \b');
           }
         } else if (ch === '\r') {
-          // Enter — PTY will echo back \r\n
           term.write('\r\n');
           localEchoRef.current += '\r\n';
         } else if ((code >= 32 && code !== 127)) {
-          // Printable character — show instantly
           term.write(ch);
           localEchoRef.current += ch;
         }
-        // Control sequences (arrows, Ctrl+C, Ctrl+D …) — server handles, no local echo
       }
 
       ws.send(JSON.stringify({ type: 'stdin', data }));
@@ -168,6 +172,9 @@ const TerminalPane = forwardRef(function TerminalPane(
 
     runningRef.current = false;
     localEchoRef.current = '';
+    // Reset output capture buffer
+    outputBufRef.current = '';
+    capturingRef.current = false;
 
     // Reset terminal and show compile banner
     term.write('\x1bc');
@@ -180,7 +187,6 @@ const TerminalPane = forwardRef(function TerminalPane(
     wsRef.current = ws;
 
     ws.onopen = () => {
-      // Send run command with current terminal size so PTY is sized correctly
       ws.send(JSON.stringify({
         type: 'run',
         code,
@@ -200,17 +206,16 @@ const TerminalPane = forwardRef(function TerminalPane(
             term.writeln('\x1b[38;5;240m# ─────────────────────────────────────────────\x1b[0m');
             term.writeln('');
             runningRef.current = true;
+            capturingRef.current = true; // start capturing program stdout now
             onStatusChange?.('running');
             term.focus();
           }
           break;
 
         // ── Primary output path: raw PTY bytes (stdout + stderr + echo) ──
-        // Strip server-side PTY echo that we already displayed locally.
         case 'output': {
           let output = msg.data;
           if (localEchoRef.current) {
-            // Try to consume a matching prefix from our locally-echoed buffer
             let matchLen = 0;
             while (
               matchLen < localEchoRef.current.length &&
@@ -223,11 +228,18 @@ const TerminalPane = forwardRef(function TerminalPane(
               output = output.slice(matchLen);
               localEchoRef.current = localEchoRef.current.slice(matchLen);
             } else {
-              // No match — program output arrived before echo; clear buffer
               localEchoRef.current = '';
             }
           }
-          if (output) term.write(output);
+          if (output) {
+            term.write(output);
+            // Capture clean text for history
+            if (capturingRef.current) {
+              // Strip ANSI + normalize \r\n → \n
+              const clean = stripAnsi(output).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+              outputBufRef.current += clean;
+            }
+          }
           break;
         }
 
@@ -236,16 +248,18 @@ const TerminalPane = forwardRef(function TerminalPane(
           term.writeln('\x1b[1;31m\u2717 Compile Error\x1b[0m');
           term.writeln('');
           const errorLines = msg.data.split('\n');
+          let errorOutputText = '';
           for (const line of errorLines) {
             if (!line.trim()) { term.writeln(''); continue; }
-            if (line.includes(': error:'))   term.writeln(`\x1b[31m${line}\x1b[0m`);
-            else if (line.includes(': warning:')) term.writeln(`\x1b[33m${line}\x1b[0m`);
-            else if (line.includes(': note:'))    term.writeln(`\x1b[36m${line}\x1b[0m`);
-            else                                  term.writeln(line);
+            if (line.includes(': error:'))        { term.writeln(`\x1b[31m${line}\x1b[0m`); errorOutputText += line + '\n'; }
+            else if (line.includes(': warning:')) { term.writeln(`\x1b[33m${line}\x1b[0m`); errorOutputText += line + '\n'; }
+            else if (line.includes(': note:'))    { term.writeln(`\x1b[36m${line}\x1b[0m`); errorOutputText += line + '\n'; }
+            else                                  { term.writeln(line); errorOutputText += line + '\n'; }
           }
           term.writeln('');
           localEchoRef.current = '';
           runningRef.current = false;
+          capturingRef.current = false;
           onStatusChange?.('idle');
           onDone?.({ success: false, compileError: true });
           // ── Bug tracker ──
@@ -258,17 +272,30 @@ const TerminalPane = forwardRef(function TerminalPane(
             lineHint:  extractLineHint(msg.data),
             stderr:    msg.data ?? '',
           });
+          // ── Compilation history ──
+          compilationHistoryStore.record({
+            code,
+            status:    'error',
+            exitCode:  null,
+            timeMs:    null,
+            output:    errorOutputText.trim(),
+            stdout:    '',           // no stdout for compile errors
+            errorType: 'compile-error',
+            killed:    false,
+          });
           break;
         }
 
         case 'engine':
-          // Engine info (docker / wandbox) — no UI action needed
           break;
 
         // ── Program finished ──────────────────────────────────────────
         case 'done': {
+          const capturedStdout = outputBufRef.current;
           localEchoRef.current = '';
           runningRef.current = false;
+          capturingRef.current = false;
+          outputBufRef.current = '';
           const { exitCode, timeMs, killed } = msg;
 
           term.writeln('');
@@ -284,6 +311,7 @@ const TerminalPane = forwardRef(function TerminalPane(
 
           onStatusChange?.('idle');
           onDone?.({ success: exitCode === 0 && !killed, exitCode, timeMs, killed });
+
           // ── Bug tracker ──
           let runtimeSubtype;
           if (killed || timeMs > 9500) {
@@ -304,6 +332,19 @@ const TerminalPane = forwardRef(function TerminalPane(
             lineHint:  null,
             stderr:    msg.stderr ?? '',
           });
+
+          // ── Compilation history — pass real stdout ──
+          const isSuccess = exitCode === 0 && !killed;
+          compilationHistoryStore.record({
+            code,
+            status:    isSuccess ? 'success' : 'error',
+            exitCode:  exitCode ?? null,
+            timeMs:    timeMs ?? null,
+            stdout:    capturedStdout.trim(),  // real program output
+            output:    capturedStdout.trim(),  // same — kept for backwards compat
+            errorType: isSuccess ? null : (killed ? 'infinite-loop' : 'runtime'),
+            killed:    killed ?? false,
+          });
           break;
         }
 
@@ -313,6 +354,7 @@ const TerminalPane = forwardRef(function TerminalPane(
           term.writeln(`\x1b[1;31m✗  Error: ${msg.data}\x1b[0m`);
           localEchoRef.current = '';
           runningRef.current = false;
+          capturingRef.current = false;
           onStatusChange?.('idle');
           onDone?.({ success: false, error: msg.data });
           break;
@@ -327,6 +369,7 @@ const TerminalPane = forwardRef(function TerminalPane(
       term.writeln('\x1b[1;31m✗  WebSocket connection failed.\x1b[0m');
       term.writeln('\x1b[38;5;240m   Make sure the server is running on port 3001.\x1b[0m');
       runningRef.current = false;
+      capturingRef.current = false;
       onStatusChange?.('idle');
     };
 
@@ -335,6 +378,7 @@ const TerminalPane = forwardRef(function TerminalPane(
         term.writeln('');
         term.writeln('\x1b[38;5;240m[Connection closed]\x1b[0m');
         runningRef.current = false;
+        capturingRef.current = false;
         onStatusChange?.('idle');
       }
     };
@@ -353,6 +397,7 @@ const TerminalPane = forwardRef(function TerminalPane(
     }
     localEchoRef.current = '';
     runningRef.current = false;
+    capturingRef.current = false;
     onStatusChange?.('idle');
   }, [onStatusChange]);
 

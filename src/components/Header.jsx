@@ -13,7 +13,7 @@ import styles from './Header.module.css';
  *   onBugTrackerToggle — called when the Bug Tracker button is clicked
  *   bugTrackerErrorCount — number to show in the red badge (0 = hide badge)
  */
-export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0 }) {
+export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, onHistoryToggle, historyCount = 0 }) {
   return (
     <header className={styles.header}>
 
@@ -76,8 +76,35 @@ export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0 })
         </div>
       </div>
 
-      {/* ── RIGHT: Bug Tracker button ──────────────────────────── */}
+      {/* ── RIGHT: History + Bug Tracker buttons ───────────────── */}
       <div className={styles.rightSection}>
+
+        {/* History button */}
+        <button
+          id="history-toggle-btn"
+          className={styles.historyBtn}
+          onClick={onHistoryToggle}
+          aria-label="Open Compilation History panel"
+          title="Compilation History"
+        >
+          {/* Clock icon */}
+          <span className={styles.historyBtnIcon} aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="8.5" stroke="currentColor" strokeWidth="1.6"/>
+              <path d="M10 5.5v5l3 2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="10" cy="10" r="1" fill="currentColor"/>
+            </svg>
+          </span>
+          <span className={styles.historyBtnLabel}>History</span>
+          {/* Count badge — shows total compilations */}
+          {historyCount > 0 && (
+            <span className={styles.historyBadge} aria-label={`${historyCount} compilations recorded`}>
+              {historyCount > 99 ? '99+' : historyCount}
+            </span>
+          )}
+        </button>
+
+        {/* Bug Tracker button */}
         <button
           id="bug-tracker-toggle-btn"
           className={styles.bugTrackerBtn}

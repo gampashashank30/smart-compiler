@@ -226,6 +226,79 @@
   white-space: nowrap;
 }
 
+/* ─── History button ──────────────────────────────────────────── */
+.historyBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px 7px 12px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #1e293b;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  transition:
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform   0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.historyBtn:hover {
+  box-shadow:
+    0 4px 16px rgba(14, 165, 233, 0.18),
+    0 2px 8px  rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  border-color: #bae6fd;
+  color: #0284c7;
+}
+
+.historyBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.historyBtnIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Rotate clock hand on hover */
+.historyBtn:hover .historyBtnIcon {
+  transform: rotate(20deg) scale(1.1);
+}
+
+.historyBtnLabel {
+  flex-shrink: 0;
+}
+
+/* History count badge — blue tinted */
+.historyBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 12px;
+  letter-spacing: 0.02em;
+  min-width: 20px;
+  margin-left: 2px;
+  animation: badgePop 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* ─── Bug Tracker button ──────────────────────────────────────── */
 .bugTrackerBtn {
   display: flex;
