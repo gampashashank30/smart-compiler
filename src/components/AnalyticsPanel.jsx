@@ -2,23 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { bugTrackerStore, ERROR_TYPES, TIPS } from '../bugTracker.js';
 import styles from './AnalyticsPanel.module.css';
 
-// ─── Scroll-reveal hook ───────────────────────────────────────────────────────
-function useScrollReveal() {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.1, rootMargin: '0px 0px -20px 0px' }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return [ref, visible];
-}
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function toDateStr(ts) {
@@ -171,7 +154,7 @@ function HeroStats({ stats, sessions }) {
   );
 }
 
-// ─── 2. 14-day Activity Heatmap (2 rows × 7 cols) ────────────────────────────
+// ─── 2. 14-day Activity Heatmap ───────────────────────────────────────────────
 function Heatmap({ sessions }) {
   const [tooltip, setTooltip] = useState(null);
 
@@ -185,7 +168,7 @@ function Heatmap({ sessions }) {
     else dailyMap[d].error++;
   });
 
-  // Last 14 days — row0 = days 0-6 (older), row1 = days 7-13 (recent)
+  // Last 14 days
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (13 - i));
@@ -194,109 +177,73 @@ function Heatmap({ sessions }) {
     return { str, info, d };
   });
 
-  // row 0 = first 7 days, row 1 = last 7 days
-  const row0 = days.slice(0, 7);
-  const row1 = days.slice(7, 14);
-
   const maxTotal = Math.max(...days.map(d => d.info.total), 1);
 
-  function getCellColor(info) {
-    if (info.total === 0) return '#f1f5f9';
-    // Perfect day = has runs AND zero errors
-    if (info.error === 0 && info.total > 0) return '#059669';
-    const intensity = info.total / maxTotal;
+  function getCellColor(total) {
+    if (total === 0) return '#f1f5f9';
+    const intensity = total / maxTotal;
     if (intensity < 0.33) return '#bbf7d0';
     if (intensity < 0.66) return '#34d399';
-    return '#10b981';
+    return '#059669';
   }
 
   function formatDate(d) {
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
 
-  function isPerfectDay(info) {
-    return info.total > 0 && info.error === 0;
-  }
-
-  const HeatRow = ({ rowDays }) => (
-    <div className={styles.heatRow}>
-      {rowDays.map((day, i) => (
-        <div
-          key={day.str}
-          className={`${styles.heatCell} ${isPerfectDay(day.info) ? styles.heatCellPerfect : ''}`}
-          style={{ background: getCellColor(day.info), animationDelay: `${i * 40}ms` }}
-          onMouseEnter={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            setTooltip({ day, rect });
-          }}
-          onMouseLeave={() => setTooltip(null)}
-          aria-label={`${day.str}: ${day.info.total} runs`}
-        />
-      ))}
-    </div>
-  );
+  const weekdays = ['S','M','T','W','T','F','S'];
 
   return (
     <div className={styles.heatmapWrap}>
-      {/* Week labels */}
-      <div className={styles.heatWeekLabels}>
-        <span className={styles.heatWeekLabel}>
-          {formatDate(row0[0].d)} – {formatDate(row0[6].d)}
-        </span>
-        <span className={styles.heatWeekLabel}>
-          {formatDate(row1[0].d)} – {formatDate(row1[6].d)}
-        </span>
-      </div>
-
-      {/* 2 rows of 7 */}
-      <div className={styles.heatGrid2Row}>
-        <HeatRow rowDays={row0} />
-        <HeatRow rowDays={row1} />
-      </div>
-
-      {/* Weekday labels under each col */}
-      <div className={styles.heatDayLabels}>
-        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-          <div key={d} className={styles.heatDayLabel}>{d}</div>
+      <div className={styles.heatmapGrid}>
+        {days.map((day, i) => (
+          <div
+            key={day.str}
+            className={styles.heatCell}
+            style={{ background: getCellColor(day.info.total) }}
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTooltip({ day, x: rect.left, y: rect.top });
+            }}
+            onMouseLeave={() => setTooltip(null)}
+            aria-label={`${day.str}: ${day.info.total} runs`}
+          />
         ))}
       </div>
-
-      {/* Legend */}
+      <div className={styles.heatLabels}>
+        {days.map((day, i) => (
+          <div key={i} className={styles.heatDayLabel}>
+            {weekdays[day.d.getDay()]}
+          </div>
+        ))}
+      </div>
       <div className={styles.heatLegend}>
-        <span className={styles.heatLegendLabel}>None</span>
-        {['#f1f5f9','#bbf7d0','#34d399','#10b981','#059669'].map(c => (
+        <span className={styles.heatLegendLabel}>Less</span>
+        {['#f1f5f9','#bbf7d0','#34d399','#059669'].map(c => (
           <div key={c} className={styles.heatLegendCell} style={{ background: c }} />
         ))}
-        <span className={styles.heatLegendLabel}>Max</span>
-        <span className={styles.heatPerfectLegend}>⭐ Perfect Day</span>
+        <span className={styles.heatLegendLabel}>More</span>
       </div>
 
       {/* Tooltip */}
       {tooltip && (
         <div
           className={styles.heatTooltip}
-          style={{
-            top: tooltip.rect.top - 120,
-            left: Math.min(Math.max(tooltip.rect.left - 60, 8), window.innerWidth - 200),
-          }}
+          style={{ top: tooltip.y - 90, left: Math.min(tooltip.x - 20, window.innerWidth - 180) }}
         >
-          <div className={styles.heatTooltipDate}>
-            {tooltip.day.d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          <div className={styles.heatTooltipDate}>{formatDate(tooltip.day.d)}</div>
+          <div className={styles.heatTooltipRow}>
+            <span className={styles.heatTooltipDot} style={{ background: '#0ea5e9' }} />
+            Total: <b>{tooltip.day.info.total}</b>
+          </div>
+          <div className={styles.heatTooltipRow}>
+            <span className={styles.heatTooltipDot} style={{ background: '#059669' }} />
+            Success: <b>{tooltip.day.info.success}</b>
           </div>
           <div className={styles.heatTooltipRow}>
             <span className={styles.heatTooltipDot} style={{ background: '#ef4444' }} />
-            <span>{tooltip.day.info.error} mistake{tooltip.day.info.error !== 1 ? 's' : ''}</span>
+            Errors: <b>{tooltip.day.info.error}</b>
           </div>
-          <div className={styles.heatTooltipRow}>
-            <span className={styles.heatTooltipDot} style={{ background: '#0ea5e9' }} />
-            <span>{tooltip.day.info.total} run{tooltip.day.info.total !== 1 ? 's' : ''}</span>
-          </div>
-          {isPerfectDay(tooltip.day.info) && (
-            <div className={styles.heatPerfectDay}>Perfect Day! ☀️</div>
-          )}
-          {tooltip.day.info.total === 0 && (
-            <div className={styles.heatNoActivity}>No activity</div>
-          )}
         </div>
       )}
     </div>
@@ -815,15 +762,10 @@ function EmptyState() {
   );
 }
 
-// ─── Section Wrapper — with scroll-reveal animation ─────────────────────────
-function Section({ title, children, delay = 0 }) {
-  const [ref, visible] = useScrollReveal();
+// ─── Section Wrapper ─────────────────────────────────────────────────────────
+function Section({ title, children }) {
   return (
-    <div
-      ref={ref}
-      className={`${styles.section} ${visible ? styles.sectionVisible : styles.sectionHidden}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
+    <div className={styles.section}>
       <div className={styles.sectionLabel}>{title}</div>
       {children}
     </div>
@@ -848,12 +790,6 @@ export default function AnalyticsPanel({ onClose }) {
     setClosing(true);
     setTimeout(onClose, 270);
   }, [onClose]);
-
-  const handleClear = useCallback(() => {
-    if (window.confirm('Clear all analytics data? This cannot be undone.')) {
-      bugTrackerStore.reset();
-    }
-  }, []);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') handleClose(); };
@@ -887,16 +823,6 @@ export default function AnalyticsPanel({ onClose }) {
             Analytics
           </div>
           <div className={styles.headerActions}>
-            {hasData && (
-              <button
-                className={styles.clearBtn}
-                onClick={handleClear}
-                id="analytics-clear-btn"
-                title="Clear all analytics data"
-              >
-                Clear
-              </button>
-            )}
             <button
               className={styles.closeBtn}
               onClick={handleClose}
@@ -913,30 +839,30 @@ export default function AnalyticsPanel({ onClose }) {
           ) : (
             <>
               {/* 1 — Hero KPIs */}
-              <Section title="Overview" delay={0}>
+              <Section title="Overview">
                 <HeroStats stats={stats} sessions={sessions} />
               </Section>
 
               {/* 2 — Heatmap */}
-              <Section title="14-Day Activity" delay={60}>
+              <Section title="14-Day Activity">
                 <Heatmap sessions={sessions} />
               </Section>
 
               {/* 3 — Donut */}
               {stats.errors > 0 && (
-                <Section title="Error Breakdown" delay={120}>
+                <Section title="Error Breakdown">
                   <DonutChart byType={stats.byType} totalErrors={stats.errors} />
                 </Section>
               )}
 
               {/* 4 — Compile Timeline */}
-              <Section title="Compile History (Last 20)" delay={180}>
+              <Section title="Compile History (Last 20)">
                 <CompileTimeline sessions={sessions} />
               </Section>
 
               {/* 5 — Radar */}
               {stats.errors > 0 && (
-                <Section title="Error Profile" delay={0}>
+                <Section title="Error Profile">
                   <div className={styles.radarWrap}>
                     <RadarChart byType={stats.byType} totalRuns={stats.totalRuns} />
                     <div className={styles.radarLegend}>
@@ -954,29 +880,29 @@ export default function AnalyticsPanel({ onClose }) {
               )}
 
               {/* 6 — Streak & Milestones */}
-              <Section title="Streak & Milestones" delay={0}>
+              <Section title="Streak & Milestones">
                 <Milestones sessions={sessions} stats={stats} />
               </Section>
 
               {/* 7 — Velocity */}
-              <Section title="Learning Velocity" delay={0}>
+              <Section title="Learning Velocity">
                 <VelocityGraph sessions={sessions} />
               </Section>
 
               {/* 8 — Error Tags */}
               {stats.errors > 0 && (
-                <Section title="Error Frequency (click to see tips)" delay={0}>
+                <Section title="Error Frequency (click to see tips)">
                   <ErrorTags byType={stats.byType} />
                 </Section>
               )}
 
               {/* 9 — Session Summary */}
-              <Section title="Today's Session" delay={0}>
+              <Section title="Today's Session">
                 <SessionSummary sessions={sessions} />
               </Section>
 
               {/* 10 — AI Insights */}
-              <Section title="💡 Personalized Insights" delay={0}>
+              <Section title="💡 Personalized Insights">
                 <InsightCards sessions={sessions} stats={stats} />
               </Section>
             </>

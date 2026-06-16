@@ -137,21 +137,11 @@
 .panelBody::-webkit-scrollbar-track { background: transparent; }
 .panelBody::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
 
-/* ─── Section wrapper — scroll-reveal ───────────────────────────────────────────── */
+/* ─── Section wrapper ───────────────────────────────────────────── */
 .section {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: opacity 500ms ease, transform 500ms cubic-bezier(0.16,1,0.3,1);
-  will-change: opacity, transform;
-}
-.sectionHidden {
-  opacity: 0;
-  transform: translateY(20px);
-}
-.sectionVisible {
-  opacity: 1;
-  transform: translateY(0);
 }
 .sectionLabel {
   font-size: 10.5px;
@@ -159,33 +149,6 @@
   color: #94a3b8;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-
-/* ─── Clear button ──────────────────────────────────────────────────────────── */
-.clearBtn {
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 7px;
-  border: 1.5px solid #fca5a5;
-  background: #fff1f2;
-  color: #dc2626;
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.clearBtn:hover {
-  background: #fee2e2;
-  box-shadow: 0 2px 8px rgba(220,38,38,0.15);
-  transform: translateY(-1px);
-}
-.clearBtn:active {
-  transform: translateY(0);
 }
 
 /* ─── 1. Hero KPI Cards ─────────────────────────────────────────── */
@@ -241,76 +204,46 @@
   white-space: nowrap;
 }
 
-/* ─── 2. Heatmap (2 rows × 7 cols) ─────────────────────────────────────────────── */
+/* ─── 2. Heatmap ────────────────────────────────────────────────── */
 .heatmapWrap {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   position: relative;
 }
-.heatWeekLabels {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 2px;
-}
-.heatWeekLabel {
-  font-size: 10px;
-  font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: 0.04em;
-}
-.heatGrid2Row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.heatRow {
+.heatmapGrid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 5px;
 }
 .heatCell {
   aspect-ratio: 1;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
-  animation: heatPop 400ms cubic-bezier(0.16,1,0.3,1) both;
-}
-@keyframes heatPop {
-  from { opacity: 0; transform: scale(0.5); }
-  to   { opacity: 1; transform: scale(1); }
+  transition: transform 0.15s ease, filter 0.15s ease;
 }
 .heatCell:hover {
-  transform: scale(1.28);
-  filter: brightness(1.12);
+  transform: scale(1.25);
+  filter: brightness(1.1);
   z-index: 2;
 }
-/* Perfect day — golden glow ring */
-.heatCellPerfect {
-  box-shadow: 0 0 0 2.5px #fbbf24, 0 0 8px rgba(251,191,36,0.5);
-}
-.heatCellPerfect:hover {
-  box-shadow: 0 0 0 3px #f59e0b, 0 0 14px rgba(245,158,11,0.6);
-}
-.heatDayLabels {
+.heatLabels {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 5px;
 }
 .heatDayLabel {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   color: #cbd5e1;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 .heatLegend {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   margin-top: 2px;
-  flex-wrap: wrap;
 }
 .heatLegendLabel {
   font-size: 10px;
@@ -322,74 +255,44 @@
   height: 12px;
   border-radius: 3px;
 }
-.heatPerfectLegend {
-  font-size: 10px;
-  font-weight: 700;
-  color: #d97706;
-  margin-left: 6px;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
 
 /* Heatmap tooltip — fixed positioned */
 .heatTooltip {
   position: fixed;
   background: #1e293b;
   color: #f8fafc;
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-size: 12.5px;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
   z-index: 9999;
   pointer-events: none;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.22);
-  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  min-width: 150px;
   animation: tipPop 150ms ease;
 }
 @keyframes tipPop {
-  from { opacity: 0; transform: scale(0.9) translateY(4px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1);   }
 }
 .heatTooltipDate {
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: 12px;
   margin-bottom: 8px;
   color: #e2e8f0;
-  letter-spacing: -0.01em;
 }
 .heatTooltipRow {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 5px;
+  gap: 6px;
+  margin-bottom: 4px;
   color: #cbd5e1;
-  font-size: 12px;
+  font-size: 11px;
 }
 .heatTooltipDot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
-}
-/* Perfect Day banner inside tooltip */
-.heatPerfectDay {
-  margin-top: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #92400e;
-  font-weight: 800;
-  font-size: 13px;
-  text-align: center;
-  border: 1.5px solid #f59e0b;
-  letter-spacing: 0.01em;
-}
-.heatNoActivity {
-  margin-top: 6px;
-  font-size: 11px;
-  color: #64748b;
-  text-align: center;
-  font-style: italic;
 }
 
 /* ─── 3. Donut Chart ────────────────────────────────────────────── */
