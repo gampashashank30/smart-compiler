@@ -12,12 +12,22 @@ function dispatchBugEvent(payload) {
 }
 
 /**
- * Strip ANSI escape sequences from a string so we store clean text in history.
- * Covers: CSI sequences (ESC [ ... m), OSC, simple ESC codes.
+ * Strip ALL ANSI / VT100 escape sequences from a string.
+ * Covers: CSI (ESC [ ... final), OSC (ESC ] ... ST/BEL), DCS/PM/APC,
+ * private-mode sequences (ESC [ ? ... ), and lone ESC chars.
  */
 function stripAnsi(str) {
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[^[\]]/g, '');
+  return str
+    // CSI sequences: ESC [ <params> <final>  (covers ?, ;, digits, letters)
+    .replace(/\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]/g, '')
+    // OSC sequences: ESC ] ... BEL  or  ESC ] ... ESC \\'
+    .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    // DCS / PM / APC sequences
+    .replace(/\x1b[P_^][^\x1b]*\x1b\\/g, '')
+    // Single-char ESC sequences (ESC + one char that isn't [ ] P _ ^)
+    .replace(/\x1b[^\[\]P_^]/g, '')
+    // Lone ESC chars
+    .replace(/\x1b/g, '');
 }
 
 /**
@@ -120,9 +130,8 @@ const TerminalPane = forwardRef(function TerminalPane(
 
       for (const ch of data) {
         const code = ch.codePointAt(0);
-
         if (code === 0x7f) {
-          // Backspace — erase the last locally-echoed char
+          // Backspace
           if (localEchoRef.current.length > 0) {
             localEchoRef.current = localEchoRef.current.slice(0, -1);
             term.write('\b \b');
@@ -130,12 +139,11 @@ const TerminalPane = forwardRef(function TerminalPane(
         } else if (ch === '\r') {
           term.write('\r\n');
           localEchoRef.current += '\r\n';
-        } else if ((code >= 32 && code !== 127)) {
+        } else if (code >= 32 && code !== 127) {
           term.write(ch);
           localEchoRef.current += ch;
         }
       }
-
       ws.send(JSON.stringify({ type: 'stdin', data }));
     });
 
@@ -172,7 +180,6 @@ const TerminalPane = forwardRef(function TerminalPane(
 
     runningRef.current = false;
     localEchoRef.current = '';
-    // Reset output capture buffer
     outputBufRef.current = '';
     capturingRef.current = false;
 
@@ -214,16 +221,30 @@ const TerminalPane = forwardRef(function TerminalPane(
 
         // ── Primary output path: raw PTY bytes (stdout + stderr + echo) ──
         case 'output': {
-          let output = msg.data;
+          const rawData = msg.data;
+
+          // Capture into history BEFORE deduplication — PTY already echoes user input
+          // naturally interleaved with program output, so this matches the console exactly.
+          if (capturingRef.current) {
+            const clean = stripAnsi(rawData)
+              .replace(/\r\n/g, '\n')
+              .replace(/\r/g, '\n')
+              // Remove terminal control remnants (e.g. bracketed-paste sequences)
+              .replace(/\[\?2004[hl]/g, '')
+              .replace(/\[\d*[A-Z]/g, '') // cursor movement leftovers
+              ;
+            outputBufRef.current += clean;
+          }
+
+          // Deduplicate local echo for visual display only
+          let output = rawData;
           if (localEchoRef.current) {
             let matchLen = 0;
             while (
               matchLen < localEchoRef.current.length &&
               matchLen < output.length &&
               output[matchLen] === localEchoRef.current[matchLen]
-            ) {
-              matchLen++;
-            }
+            ) { matchLen++; }
             if (matchLen > 0) {
               output = output.slice(matchLen);
               localEchoRef.current = localEchoRef.current.slice(matchLen);
@@ -231,15 +252,7 @@ const TerminalPane = forwardRef(function TerminalPane(
               localEchoRef.current = '';
             }
           }
-          if (output) {
-            term.write(output);
-            // Capture clean text for history
-            if (capturingRef.current) {
-              // Strip ANSI + normalize \r\n → \n
-              const clean = stripAnsi(output).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-              outputBufRef.current += clean;
-            }
-          }
+          if (output) term.write(output);
           break;
         }
 

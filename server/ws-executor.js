@@ -85,6 +85,33 @@ static void __attribute__((constructor,used)) __sc_io_init__(void) {
 #line 1 "main.c"
 `;
 
+/**
+ * Strip PTY-only control sequences that node-pty / ConPTY inject into the
+ * output stream but that are never part of a user program's actual output.
+ * These sequences cause xterm.js to display artifacts like "[I" or "[?2004h"
+ * when they arrive split across WebSocket frames.
+ *
+ * Sequences removed:
+ *   ESC [ ? ... h/l  — private DEC modes (bracketed paste, alt screen, cursor keys)
+ *   ESC [ I          — CHT (Cursor Forward Tabulation) — PTY tab init
+ *   ESC [ 1 ; ... r  — DECSTBM (scroll region) — PTY window init
+ *   ESC =  / ESC >   — keypad application / numeric mode
+ *   ESC 7 / ESC 8    — save / restore cursor (DECSC/DECRC)
+ */
+function stripPtyNoise(data) {
+  return data
+    // Private DEC mode sequences: ESC [ ? <params> h/l  (e.g. ?2004h, ?1049h, ?1h)
+    .replace(/\x1b\[\?[\d;]*[hl]/g, '')
+    // CHT — Cursor Forward Tabulation: ESC [ <n> I
+    .replace(/\x1b\[\d*I/g, '')
+    // Scroll-region (DECSTBM): ESC [ <top> ; <bot> r
+    .replace(/\x1b\[\d*;\d*r/g, '')
+    // Keypad mode switches: ESC = and ESC >
+    .replace(/\x1b[=>]/g, '')
+    // Save/restore cursor (DECSC / DECRC): ESC 7 and ESC 8
+    .replace(/\x1b[78]/g, '');
+}
+
 // ── Docker probe ─────────────────────────────────────────────────────────────
 let _dockerReady = null;
 
@@ -296,7 +323,10 @@ function attachWebSocketServer(httpServer) {
             }
 
             ptyProc.onData(data => {
-              if (!cleaned) send({ type: 'output', data });
+              if (!cleaned) {
+                const out = stripPtyNoise(data);
+                if (out) send({ type: 'output', data: out });
+              }
             });
 
             ptyProc.onExit(({ exitCode: ec, signal: sig }) => {
@@ -442,7 +472,10 @@ function attachWebSocketServer(httpServer) {
         }
 
         ptyProc.onData(data => {
-          if (!cleaned) send({ type: 'output', data });
+          if (!cleaned) {
+            const out = stripPtyNoise(data);
+            if (out) send({ type: 'output', data: out });
+          }
         });
 
         ptyProc.onExit(({ exitCode: ec, signal: sig }) => {

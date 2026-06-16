@@ -22,8 +22,90 @@ function timeAgo(ts) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+// Strip ANSI / VT100 escape sequences (fixes garbage like Ø[?9001h in stored output)
+function stripAnsi(str) {
+  if (!str) return str;
+  return str
+    .replace(/\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]/g, '') // CSI sequences
+    .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')          // OSC sequences
+    .replace(/\x1b[^\[\]]/g, '')                                 // other ESC sequences
+    .replace(/\x1b/g, '');                                       // stray ESC chars
+}
+
 // Keep output to a sane preview length
 const MAX_PREVIEW_CHARS = 600;
+
+// ── C syntax highlighter (regex-based, no lib) ───────────────────────────────
+
+function escapeHtml(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Use RegExp constructors to avoid oxc/Vite JSX parse issues with complex regex literals
+const C_KEYWORDS = new RegExp(
+  '\\b(auto|break|case|const|continue|default|do|else|enum|extern|for|goto|if|inline|register|restrict|return|sizeof|static|struct|switch|typedef|union|volatile|while)\\b',
+  'g'
+);
+const C_TYPES = new RegExp(
+  '\\b(char|double|float|int|long|short|signed|unsigned|void)\\b',
+  'g'
+);
+const C_PREPROC = new RegExp(
+  '(^\\s*#(?:include|define|undef|ifdef|ifndef|endif|elif|pragma|error|warning)[^\\n]*)',
+  'gm'
+);
+// After escapeHtml, double-quotes become &quot; so match that
+const C_STRING = new RegExp(
+  '(&quot;(?:[^&]|&(?!quot;))*&quot;)',
+  'g'
+);
+const C_NUMBER = new RegExp(
+  '\\b(0x[0-9a-fA-F]+|\\d+(?:\\.\\d+)?(?:[eE][+\\-]?\\d+)?[uUlLfF]*)\\b',
+  'g'
+);
+// Block comments (/* */) only — line comments handled separately line-by-line
+const C_BLOCK_COMMENT = new RegExp(
+  '(/\\*(?:[^*]|\\*(?!/))*\\*/)',
+  'g'
+);
+const C_LINE_COMMENT = new RegExp(
+  '(//[^\\n]*)',
+  'g'
+);
+const C_FUNC = new RegExp(
+  '\\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\\()',
+  'g'
+);
+
+function highlightC(rawLine) {
+  let s = escapeHtml(rawLine);
+  // 1. Block comments first (rare in a single line but handle it)
+  s = s.replace(C_BLOCK_COMMENT, m => `<span class="hl-comment">${m}</span>`);
+  // 2. Line comments — everything after // is comment, stop other replacements
+  const lcIdx = s.indexOf('//');
+  let commentSuffix = '';
+  if (lcIdx !== -1) {
+    commentSuffix = `<span class="hl-comment">${s.slice(lcIdx)}</span>`;
+    s = s.slice(0, lcIdx);
+  }
+  // 3. Strings
+  s = s.replace(C_STRING,   m => `<span class="hl-string">${m}</span>`);
+  // 4. Preprocessor directives
+  s = s.replace(C_PREPROC,  m => `<span class="hl-preproc">${m}</span>`);
+  // 5. Types (before keywords so "unsigned int" both get styled)
+  s = s.replace(C_TYPES,    m => `<span class="hl-type">${m}</span>`);
+  // 6. Keywords
+  s = s.replace(C_KEYWORDS, m => `<span class="hl-keyword">${m}</span>`);
+  // 7. Numbers
+  s = s.replace(C_NUMBER,   m => `<span class="hl-number">${m}</span>`);
+  // 8. Function names
+  s = s.replace(C_FUNC,     (_, fn) => `<span class="hl-func">${fn}</span>`);
+  return s + commentSuffix;
+}
 
 // ── Status badge ─────────────────────────────────────────────────────────────
 
@@ -89,7 +171,7 @@ function InfiniteLoopOutput() {
 
 function OutputSection({ entry, maximized }) {
   const [showAll, setShowAll] = useState(false);
-  const stdout = entry.stdout ?? entry.output ?? '';
+  const stdout = stripAnsi(entry.stdout ?? entry.output ?? '');
 
   // Infinite loop — special display
   if (entry.killed) {
@@ -170,7 +252,11 @@ function OutputSection({ entry, maximized }) {
         )}
       </div>
       <div className={`${styles.stdoutBlock} ${entry.status === 'error' ? styles.stdoutBlockError : ''}`}>
-        <pre className={styles.stdoutPre}>{displayText}{!maximized && isLong && !showAll ? '…' : ''}</pre>
+        {displayText.split('\n').map((line, i) => (
+          <div key={i} className={styles.stdoutLine}>
+            <span className={styles.stdoutText}>{line}</span>
+          </div>
+        ))}
         {!maximized && isLong && (
           <button className={styles.showMoreBtn} onClick={() => setShowAll(v => !v)}>
             {showAll ? '▲ Collapse' : `▼ Show full output (${stdout.split('\n').length} lines)`}
@@ -321,12 +407,6 @@ function KebabMenu({ entryId, code, onDelete, onMaximize }) {
       </button>
       {open && (
         <div className={styles.menuDropdown} onClick={e => e.stopPropagation()}>
-          <button className={styles.menuItem} onClick={() => { onMaximize(); setOpen(false); }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M2 5V2h3M9 2h3v3M2 9v3h3M12 9v3h-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            View Full
-          </button>
           <button className={styles.menuItem} onClick={handleCopy}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <rect x="5" y="5" width="9" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
@@ -343,6 +423,7 @@ function KebabMenu({ entryId, code, onDelete, onMaximize }) {
           </button>
         </div>
       )}
+
     </div>
   );
 }
@@ -351,11 +432,6 @@ function KebabMenu({ entryId, code, onDelete, onMaximize }) {
 
 function HistoryCard({ entry, onLoadInEditor, onDelete }) {
   const [maximized, setMaximized] = useState(false);
-  const [codeExpanded, setCodeExpanded] = useState(false);
-
-  const codeLines = entry.code.split('\n');
-  const previewLines = codeLines.slice(0, 7);
-  const hasMoreCode = codeLines.length > 7;
 
   const borderClass = entry.killed
     ? styles.cardTLE
@@ -371,33 +447,6 @@ function HistoryCard({ entry, onLoadInEditor, onDelete }) {
           <StatusBadge entry={entry} />
 
           <div className={styles.cardHeaderRight}>
-            {/* Maximize button */}
-            <button
-              className={styles.maximizeBtn}
-              onClick={() => setMaximized(true)}
-              title="View full detail"
-              aria-label="Maximize"
-            >
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2 5V2h3M9 2h3v3M2 9v3h3M12 9v3h-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Expand
-            </button>
-
-            {/* Load in Editor */}
-            <button
-              className={styles.loadBtn}
-              onClick={() => onLoadInEditor(entry.code)}
-              title="Load this code into the editor"
-            >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M2 2h5v2H4v8h8v-3h2v5H2V2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-                <path d="M9 2h5v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M14 2L8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-              </svg>
-              Load in Editor
-            </button>
-
             {/* Date */}
             <span className={styles.cardDate}>
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -417,24 +466,49 @@ function HistoryCard({ entry, onLoadInEditor, onDelete }) {
           </div>
         </div>
 
-        {/* ── Code preview ─────────────────────────────────── */}
+        {/* ── Code block — macOS editor style ─────────────── */}
         <div className={styles.codeBlock}>
-          <pre className={styles.codePre}>
-            {previewLines.join('\n')}
-            {hasMoreCode && !codeExpanded ? '\n...' : ''}
-            {codeExpanded ? '\n' + codeLines.slice(7).join('\n') : ''}
-          </pre>
-          {hasMoreCode && (
-            <button
-              className={styles.expandCodeBtn}
-              onClick={() => setCodeExpanded(v => !v)}
-            >
-              {codeExpanded
-                ? '▲ Show less'
-                : `▼ Show all ${codeLines.length} lines`}
-            </button>
-          )}
+          {/* Title bar */}
+          <div className={styles.codeEditorBar}>
+            <span className={`${styles.trafficDot} ${styles.trafficRed}`}/>
+            <span className={`${styles.trafficDot} ${styles.trafficYellow}`}/>
+            <span className={`${styles.trafficDot} ${styles.trafficGreen}`}/>
+            <span className={styles.codeEditorFilename}>main.c</span>
+          </div>
+          {/* Code with line numbers */}
+          <div className={styles.codeScrollArea}>
+            <table className={styles.codeTable}>
+              <tbody>
+                {entry.code.split('\n').map((line, i) => (
+                  <tr key={i} className={styles.codeLine}>
+                    <td className={styles.codeLineNum}>{i + 1}</td>
+                    <td
+                      className={styles.codeLineContent}
+                      dangerouslySetInnerHTML={{ __html: highlightC(line) || '\u00a0' }}
+                    />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* ── Load in Editor button ────────────────────────── */}
+        <div className={styles.loadBtnRow}>
+          <button
+            className={styles.loadBtn}
+            onClick={() => onLoadInEditor(entry.code)}
+            title="Load this code into the editor"
+          >
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M3 3h6v2H5v10h10v-4h2v6H3V3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+              <path d="M11 3h6v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M17 3L10 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+            Load in Editor
+          </button>
+        </div>
+
 
         {/* ── Output section ───────────────────────────────── */}
         <OutputSection entry={entry} maximized={false} />
@@ -481,6 +555,7 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
   const [closing, setClosing]       = useState(false);
   const [search, setSearch]         = useState('');
   const [filter, setFilter]         = useState('all');
+  const [sort,   setSort]           = useState('newest');
   const [confirmClear, setConfirmClear] = useState(false);
   const confirmTimerRef = useRef(null);
 
@@ -531,8 +606,9 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
         (e.stdout ?? e.output ?? '').toLowerCase().includes(q)
       );
     }
+    if (sort === 'oldest') res = [...res].reverse();
     return res;
-  }, [entries, filter, search]);
+  }, [entries, filter, search, sort]);
 
   const successCount = entries.filter(e => e.status === 'success' && !e.killed).length;
   const errorCount   = entries.filter(e => e.status === 'error' || e.killed).length;
@@ -579,7 +655,7 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
           </div>
         </div>
 
-        {/* ── Search + Filter ─────────────────────────────── */}
+        {/* ── Search + Filter + Sort ───────────────────────── */}
         <div className={styles.searchBar}>
           <div className={styles.searchInputWrapper}>
             <svg className={styles.searchIcon} width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -613,6 +689,17 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
                 {f.label}
               </button>
             ))}
+            <div className={styles.filterSpacer}/>
+            {/* Sort dropdown */}
+            <select
+              className={styles.sortSelect}
+              value={sort}
+              onChange={e => setSort(e.target.value)}
+              aria-label="Sort order"
+            >
+              <option value="newest">↓ Newest</option>
+              <option value="oldest">↑ Oldest</option>
+            </select>
           </div>
         </div>
 

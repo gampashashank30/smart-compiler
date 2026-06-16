@@ -22,6 +22,24 @@ const MAX_ENTRIES = 100; // keep last 100 entries
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Strip all ANSI / VT100 escape sequences from a string.
+ * Covers: CSI sequences (\x1b[...m), OSC, DCS, PM, APC, SS2/SS3,
+ * and private-mode sequences like \x1b[?1004h used by terminals.
+ */
+function stripAnsi(str) {
+  if (!str) return str;
+  return str
+    // CSI sequences: ESC [ ... <final byte>  (covers colors, cursor, private modes)
+    .replace(/\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]/g, '')
+    // OSC sequences: ESC ] ... ST or BEL
+    .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    // Other two-char ESC sequences (ESC + single char)
+    .replace(/\x1b[^\[\]]/g, '')
+    // Lone ESC chars that remain
+    .replace(/\x1b/g, '');
+}
+
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -61,8 +79,10 @@ function createHistoryStore() {
         status: entry.status ?? 'error',
         exitCode: entry.exitCode ?? null,
         timeMs: entry.timeMs ?? null,
-        output: entry.output ?? '',
+        output: stripAnsi(entry.output ?? ''),
+        stdout: stripAnsi(entry.stdout ?? entry.output ?? ''),
         errorType: entry.errorType ?? null,
+        killed: entry.killed ?? false,
       };
 
       entries = [newEntry, ...entries].slice(0, MAX_ENTRIES);

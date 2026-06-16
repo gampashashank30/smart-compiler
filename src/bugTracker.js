@@ -14,35 +14,43 @@
 
 // ─── Error type definitions ──────────────────────────────────────────────────
 export const ERROR_TYPES = {
-  'Missing Semicolon':           { icon: ';',  color: '#f59e0b', bg: '#fffbeb' },
-  'Undeclared Variable':         { icon: 'x',  color: '#ef4444', bg: '#fef2f2' },
-  'Uninitialized Variable':      { icon: '!',  color: '#f97316', bg: '#fff7ed' },
-  'Unclosed String':             { icon: '"',  color: '#10b981', bg: '#ecfdf5' },
-  'Missing Brace/Bracket':       { icon: '}',  color: '#3b82f6', bg: '#eff6ff' },
-  'Missing < or >':              { icon: '<>', color: '#06b6d4', bg: '#ecfeff' },
-  'Missing # Directive':         { icon: '#',  color: '#7c3aed', bg: '#f5f3ff' },
-  'Implicit Declaration':        { icon: 'ƒ',  color: '#8b5cf6', bg: '#f5f3ff' },
-  'Type Mismatch':               { icon: '≠',  color: '#ec4899', bg: '#fdf2f8' },
-  'Array Out of Bounds':         { icon: '[]', color: '#6366f1', bg: '#eef2ff' },
-  'Unused Variable':             { icon: '~',  color: '#64748b', bg: '#f8fafc' },
-  'Format Specifier Mismatch':   { icon: '%',  color: '#0ea5e9', bg: '#f0f9ff' },
-  'Compilation Error':           { icon: '?',  color: '#6b7280', bg: '#f9fafb' },
+  // ── Compile-time errors ────────────────────────────────────────────────────
+  'Missing Semicolon':           { icon: ';',  color: '#f59e0b', bg: '#fffbeb' },  // amber
+  'Undeclared Variable':         { icon: 'x',  color: '#f97316', bg: '#fff7ed' },  // orange  (was red — too close to Runtime Crash)
+  'Uninitialized Variable':      { icon: '!',  color: '#fb923c', bg: '#fff7ed' },  // light orange
+  'Unclosed String':             { icon: '"',  color: '#10b981', bg: '#ecfdf5' },  // emerald green
+  'Missing Parenthesis':         { icon: '()', color: '#d946ef', bg: '#fdf4ff' },  // fuchsia/magenta (was rose-red — merged with Runtime Crash)
+  'Missing Brace/Bracket':       { icon: '}',  color: '#3b82f6', bg: '#eff6ff' },  // blue
+  'Missing < or >':              { icon: '<>', color: '#06b6d4', bg: '#ecfeff' },  // cyan
+  'Missing # Directive':         { icon: '#',  color: '#7c3aed', bg: '#f5f3ff' },  // violet
+  'Implicit Declaration':        { icon: 'ƒ',  color: '#8b5cf6', bg: '#f5f3ff' },  // purple
+  'Type Mismatch':               { icon: '≠',  color: '#ec4899', bg: '#fdf2f8' },  // pink
+  'Array Out of Bounds':         { icon: '[]', color: '#6366f1', bg: '#eef2ff' },  // indigo
+  'Unused Variable':             { icon: '~',  color: '#64748b', bg: '#f8fafc' },  // slate
+  'Format Specifier Mismatch':   { icon: '%',  color: '#0ea5e9', bg: '#f0f9ff' },  // sky blue
+  'Compilation Error':           { icon: '?',  color: '#6b7280', bg: '#f9fafb' },  // gray
 
-  // Runtime types
-  'Infinite Loop / TLE':         { icon: '∞',  color: '#d97706', bg: '#fffbeb' },
-  'Runtime Crash':               { icon: '💥', color: '#dc2626', bg: '#fef2f2' },
-  'Segmentation Fault':          { icon: '⚡', color: '#b91c1c', bg: '#fef2f2' },
-  'Successful Run':              { icon: '✓',  color: '#059669', bg: '#ecfdf5' },
+  // ── Runtime types ──────────────────────────────────────────────────────────
+  'Infinite Loop / TLE':         { icon: '∞',  color: '#eab308', bg: '#fefce8' },  // yellow
+  'Runtime Crash':               { icon: '💥', color: '#dc2626', bg: '#fef2f2' },  // red  (kept — canonical danger red)
+  'Segmentation Fault':          { icon: '⚡', color: '#9f1239', bg: '#fff1f2' },  // deep crimson (was too close to Runtime Crash red)
+  'Successful Run':              { icon: '✓',  color: '#059669', bg: '#ecfdf5' },  // emerald
 };
 
-// ─── Regex classifiers (compile-time) ────────────────────────────────────────
+// ─── Regex classifiers (compile-time) ────────────────────────────────────────────
 const COMPILE_CLASSIFIERS = [
+  // ── More specific patterns first — cascading errors often produce
+  //    generic "expected ';'" messages that hide the real root cause ──
+  { type: 'Missing Parenthesis',       re: /error:.*expected\s+'[()]/i },
+  { type: 'Missing Brace/Bracket',     re: /error:.*expected\s+'[}\]]/i },
   { type: 'Missing Semicolon',         re: /error:.*expected\s+'[;,]/i },
   { type: 'Undeclared Variable',       re: /error:.*undeclared/i },
   { type: 'Uninitialized Variable',    re: /warning:.*uninitiali/i },
-  { type: 'Unclosed String',           re: /error:.*missing terminating/i },
-  { type: 'Missing Brace/Bracket',     re: /error:.*expected\s+'[})\]]/i },
-  { type: 'Missing < or >',            re: /error:.*expected\s+'[<>]|error:.*missing '[<>]'|error:.*'[<>]'\s+expected/i },
+  // 'missing terminating > character' comes from #include <stdio.h missing the >
+  // It must be checked BEFORE 'Unclosed String' which also uses "missing terminating"
+  { type: 'Missing < or >',            re: /error:.*missing terminating\s+>|error:.*expected\s+'[<>]|error:.*missing '[<>]'|error:.*'[<>]'\s+expected/i },
+  // Only match " or ' variant — NOT the > variant (that's caught above)
+  { type: 'Unclosed String',           re: /error:.*missing terminating\s+["']/i },
   { type: 'Missing # Directive',       re: /error:.*\binclude\b.*undeclared|warning:.*implicit.*\binclude\b/i },
   { type: 'Implicit Declaration',      re: /warning:.*implicit declaration/i },
   { type: 'Type Mismatch',             re: /warning:.*incompatible|error:.*cannot convert/i },
@@ -52,13 +60,30 @@ const COMPILE_CLASSIFIERS = [
 ];
 
 /**
- * Classify a gcc stderr string → error subtype string
+ * Classify a gcc stderr string → error subtype string.
+ *
+ * Strategy: run classifiers only against the FIRST error/warning line.
+ * GCC cascades many secondary errors from one root cause — e.g. a missing ')'
+ * on line 14 causes a spurious "expected ';'" on line 26.
+ * By looking at only the first error line we get the true root cause.
  */
 export function classifyCompileError(stderr) {
   if (!stderr) return 'Compilation Error';
+
+  // Extract the first line that contains "error:" or "warning:"
+  const firstErrorLine = stderr
+    .split('\n')
+    .find(l => /error:|warning:/i.test(l)) ?? stderr;
+
+  for (const { type, re } of COMPILE_CLASSIFIERS) {
+    if (re.test(firstErrorLine)) return type;
+  }
+
+  // Fallback: check full stderr (covers multi-line patterns like Unused Variable)
   for (const { type, re } of COMPILE_CLASSIFIERS) {
     if (re.test(stderr)) return type;
   }
+
   return 'Compilation Error';
 }
 
@@ -88,6 +113,11 @@ export const TIPS = {
   'Unclosed String': [
     'Every opening double-quote needs a matching closing double-quote on the same line.',
     'Escape an actual quote inside a string with backslash: \\"',
+  ],
+  'Missing Parenthesis': [
+    'Every opening ( needs a matching closing ) — count them in each expression.',
+    'Function calls need parentheses: printf("hi") not printf "hi".',
+    'Condition in if/while/for must be wrapped in (): if (x > 0) not if x > 0.',
   ],
   'Missing Brace/Bracket': [
     'Use an editor with bracket matching to catch mismatched braces early.',

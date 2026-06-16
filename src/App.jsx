@@ -6,6 +6,7 @@ import RightPanel from './components/RightPanel.jsx';
 import LanguageDetectorPopup from './components/LanguageDetectorPopup.jsx';
 import BugTrackerPanel from './components/BugTrackerPanel.jsx';
 import CompilationHistoryPanel from './components/CompilationHistoryPanel.jsx';
+import AnalyticsPanel from './components/AnalyticsPanel.jsx';
 import { bugTrackerStore } from './bugTracker.js';
 import { compilationHistoryStore } from './compilationHistory.js';
 import { STARTER_CODE, LANG_TO_C_PROMPT } from './constants.js';
@@ -95,6 +96,12 @@ export default function App() {
 
   const handleHistoryToggle = useCallback(() => {
     setHistoryPanelOpen(prev => !prev);
+  }, []);
+
+  // ── Analytics state ──────────────────────────────────────────────────────
+  const [analyticsPanelOpen, setAnalyticsPanelOpen] = useState(false);
+  const handleAnalyticsToggle = useCallback(() => {
+    setAnalyticsPanelOpen(prev => !prev);
   }, []);
 
   // ── Bug Tracker state ────────────────────────────────────────────────────
@@ -348,6 +355,8 @@ export default function App() {
         bugTrackerErrorCount={bugErrorCount}
         onHistoryToggle={handleHistoryToggle}
         historyCount={historyCount}
+        onAnalyticsToggle={handleAnalyticsToggle}
+        analyticsOpen={analyticsPanelOpen}
       />
 
       <div className={styles.workspace} ref={containerRef}>
@@ -406,6 +415,11 @@ export default function App() {
           onDismiss={handleDismissPopup}
           converting={converting}
         />
+      )}
+
+      {/* Analytics Panel — slides in from right */}
+      {analyticsPanelOpen && (
+        <AnalyticsPanel onClose={() => setAnalyticsPanelOpen(false)} />
       )}
 
       {/* Bug Tracker Panel — slides in from right */}

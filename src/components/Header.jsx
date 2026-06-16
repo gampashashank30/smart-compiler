@@ -13,7 +13,7 @@ import styles from './Header.module.css';
  *   onBugTrackerToggle — called when the Bug Tracker button is clicked
  *   bugTrackerErrorCount — number to show in the red badge (0 = hide badge)
  */
-export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, onHistoryToggle, historyCount = 0 }) {
+export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, onHistoryToggle, historyCount = 0, onAnalyticsToggle, analyticsOpen = false }) {
   return (
     <header className={styles.header}>
 
@@ -76,8 +76,27 @@ export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, o
         </div>
       </div>
 
-      {/* ── RIGHT: History + Bug Tracker buttons ───────────────── */}
+      {/* ── RIGHT: Analytics + History + Bug Tracker buttons ──── */}
       <div className={styles.rightSection}>
+
+        {/* Analytics button */}
+        <button
+          id="analytics-toggle-btn"
+          className={`${styles.analyticsBtn} ${analyticsOpen ? styles.analyticsBtnActive : ''}`}
+          onClick={onAnalyticsToggle}
+          aria-label="Open Analytics Dashboard"
+          title="Analytics Dashboard"
+        >
+          <span className={styles.analyticsBtnIcon} aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="12" width="3" height="6" rx="1" fill="currentColor" opacity="0.6"/>
+              <rect x="7" y="8" width="3" height="10" rx="1" fill="currentColor" opacity="0.75"/>
+              <rect x="12" y="4" width="3" height="14" rx="1" fill="currentColor" opacity="0.9"/>
+              <rect x="17" y="1" width="3" height="17" rx="1" fill="currentColor"/>
+            </svg>
+          </span>
+          <span className={styles.analyticsBtnLabel}>Analytics</span>
+        </button>
 
         {/* History button */}
         <button
