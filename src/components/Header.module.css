@@ -446,3 +446,66 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.5; transform: scale(0.7); }
 }
+
+/* ─── AI Tutor button ─────────────────────────────────────────── */
+.aiTutorBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px 7px 12px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #1e293b;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  transition:
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform   0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.aiTutorBtn:hover {
+  box-shadow:
+    0 4px 16px rgba(139, 92, 246, 0.2),
+    0 2px 8px  rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  border-color: #ddd6fe;
+  color: #7c3aed;
+}
+
+.aiTutorBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.aiTutorBtnActive {
+  border-color: #c084fc;
+  color: #7c3aed;
+  background: #faf5ff;
+}
+
+.aiTutorBtnIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  font-size: 15px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aiTutorBtn:hover .aiTutorBtnIcon {
+  transform: scale(1.2) translateY(-1px);
+}
+
+.aiTutorBtnLabel {
+  flex-shrink: 0;
+}
+

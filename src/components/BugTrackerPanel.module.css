@@ -55,7 +55,7 @@
   to   { transform: translateX(100%); }
 }
 
-/* ─── Sticky header ─────────────────────────────────────────────── */
+/* ─── Sticky header ──────────────────────────────────────────── */
 .panelHeader {
   display: flex;
   align-items: center;
@@ -68,6 +68,17 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  position: relative;
+  overflow: hidden;
+}
+
+.headerGradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981 0%, #059669 40%, #34d399 100%);
 }
 
 .panelTitle {
@@ -157,9 +168,9 @@
   border-radius: 3px;
 }
 
-/* ─── Section labels ────────────────────────────────────────────── */
+/* ─── Section labels ──────────────────────────────────────────── */
 .sectionLabel {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #94a3b8;
   letter-spacing: 0.1em;
@@ -167,7 +178,24 @@
   margin-bottom: 12px;
 }
 
-/* ─── Summary stat cards (2×2 grid) ─────────────────────────────── */
+/* Scroll-reveal section wrapper */
+.sectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sectionHidden {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 500ms cubic-bezier(0.16,1,0.3,1), transform 500ms cubic-bezier(0.16,1,0.3,1);
+}
+.sectionVisible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms cubic-bezier(0.16,1,0.3,1), transform 500ms cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ─── Summary stat cards (2×2 grid) ─────────────────────────────────────── */
 .statsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -182,10 +210,16 @@
   display: flex;
   align-items: stretch;
   overflow: hidden;
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  animation: cardIn 500ms cubic-bezier(0.16,1,0.3,1) both;
 }
 .statCard:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+  transform: translateY(-2px);
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .statAccent {
@@ -232,8 +266,8 @@
 
 .donutWrapper {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 176px;
+  height: 176px;
   flex-shrink: 0;
 }
 
@@ -269,6 +303,27 @@
   margin-top: 2px;
 }
 
+/* Center label when a segment is hovered */
+.donutHovIcon {
+  font-size: 26px;
+  line-height: 1;
+  animation: centerFadeIn 150ms ease both;
+}
+.donutHovName {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  max-width: 90px;
+  word-break: break-word;
+  animation: centerFadeIn 150ms ease both;
+}
+@keyframes centerFadeIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
 .donutLegend {
   width: 100%;
   display: flex;
@@ -302,8 +357,7 @@
 .legendPct {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -390,6 +444,7 @@
   position: relative;
   cursor: default;
   transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease, border-color 0.2s ease;
+  animation: cardIn 500ms cubic-bezier(0.16,1,0.3,1) both;
 }
 .mistakeCard:hover {
   transform: translateY(-2px);

@@ -13,7 +13,7 @@ import styles from './Header.module.css';
  *   onBugTrackerToggle — called when the Bug Tracker button is clicked
  *   bugTrackerErrorCount — number to show in the red badge (0 = hide badge)
  */
-export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, onHistoryToggle, historyCount = 0, onAnalyticsToggle, analyticsOpen = false }) {
+export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, onHistoryToggle, historyCount = 0, onAnalyticsToggle, analyticsOpen = false, onAiTutorToggle, aiTutorOpen = false }) {
   return (
     <header className={styles.header}>
 
@@ -76,8 +76,20 @@ export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, o
         </div>
       </div>
 
-      {/* ── RIGHT: Analytics + History + Bug Tracker buttons ──── */}
+      {/* ── RIGHT: AI Tutor + Analytics + History + Bug Tracker buttons ──── */}
       <div className={styles.rightSection}>
+
+        {/* AI Tutor button */}
+        <button
+          id="ai-tutor-toggle-btn"
+          className={`${styles.aiTutorBtn} ${aiTutorOpen ? styles.aiTutorBtnActive : ''}`}
+          onClick={onAiTutorToggle}
+          aria-label="Open AI Tutor overlay"
+          title="AI Tutor"
+        >
+          <span className={styles.aiTutorBtnIcon} aria-hidden="true">🎓</span>
+          <span className={styles.aiTutorBtnLabel}>AI Tutor</span>
+        </button>
 
         {/* Analytics button */}
         <button

@@ -7,6 +7,7 @@ import LanguageDetectorPopup from './components/LanguageDetectorPopup.jsx';
 import BugTrackerPanel from './components/BugTrackerPanel.jsx';
 import CompilationHistoryPanel from './components/CompilationHistoryPanel.jsx';
 import AnalyticsPanel from './components/AnalyticsPanel.jsx';
+import AiTutorPanel from './components/AiTutorPanel.jsx';
 import { bugTrackerStore } from './bugTracker.js';
 import { compilationHistoryStore } from './compilationHistory.js';
 import { STARTER_CODE, LANG_TO_C_PROMPT } from './constants.js';
@@ -109,6 +110,12 @@ export default function App() {
   const [bugErrorCount, setBugErrorCount] = useState(
     () => bugTrackerStore.getStats().errors
   );
+
+  // ── AI Tutor state ───────────────────────────────────────────────────────
+  const [aiTutorOpen, setAiTutorOpen] = useState(false);
+  const handleAiTutorToggle = useCallback(() => {
+    setAiTutorOpen(prev => !prev);
+  }, []);
 
   // Listen for bugtracker:record events dispatched by TerminalPane
   useEffect(() => {
@@ -357,6 +364,8 @@ export default function App() {
         historyCount={historyCount}
         onAnalyticsToggle={handleAnalyticsToggle}
         analyticsOpen={analyticsPanelOpen}
+        onAiTutorToggle={handleAiTutorToggle}
+        aiTutorOpen={aiTutorOpen}
       />
 
       <div className={styles.workspace} ref={containerRef}>
@@ -433,6 +442,11 @@ export default function App() {
           onClose={() => setHistoryPanelOpen(false)}
           onLoadInEditor={handleLoadFromHistory}
         />
+      )}
+
+      {/* AI Tutor Panel — full screen overlay */}
+      {aiTutorOpen && (
+        <AiTutorPanel onClose={() => setAiTutorOpen(false)} />
       )}
     </div>
   );

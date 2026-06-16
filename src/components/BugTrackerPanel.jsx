@@ -1,14 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { bugTrackerStore, ERROR_TYPES, TIPS } from '../bugTracker.js';
 import styles from './BugTrackerPanel.module.css';
 
 // ─── Donut chart (pure SVG, no libs) ─────────────────────────────────────────
-function DonutChart({ byType, totalErrors }) {
-  const R = 60;
-  const STROKE = 14;
+// hoveredType / onHover are lifted to parent so MistakeCards react too
+function DonutChart({ byType, totalErrors, hoveredType, onHover }) {
+  const R = 68;
+  const STROKE = 16;
   const circumference = 2 * Math.PI * R;
-  const cx = 80;
-  const cy = 80;
+  const CX = 88;
+  const CY = 88;
 
   const sorted = Object.entries(byType)
     .filter(([k]) => k !== 'Successful Run')
@@ -30,8 +31,8 @@ function DonutChart({ byType, totalErrors }) {
     return (
       <div className={styles.donutSection}>
         <div className={styles.donutWrapper}>
-          <svg className={styles.donutSvg} width="160" height="160" viewBox="0 0 160 160">
-            <circle cx={cx} cy={cy} r={R} fill="none" stroke="#f1f5f9" strokeWidth={STROKE} />
+          <svg className={styles.donutSvg} width="176" height="176" viewBox="0 0 176 176">
+            <circle cx={CX} cy={CY} r={R} fill="none" stroke="#f1f5f9" strokeWidth={STROKE} />
           </svg>
           <div className={styles.donutCenter}>
             <span className={styles.donutCount}>0</span>
@@ -48,43 +49,76 @@ function DonutChart({ byType, totalErrors }) {
   return (
     <div className={styles.donutSection}>
       <div className={styles.donutWrapper}>
-        <svg className={styles.donutSvg} width="160" height="160" viewBox="0 0 160 160">
-          <circle cx={cx} cy={cy} r={R} fill="none" stroke="#f1f5f9" strokeWidth={STROKE} />
+        <svg className={styles.donutSvg} width="176" height="176" viewBox="0 0 176 176">
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#f1f5f9" strokeWidth={STROKE} />
           {segments.map((seg, i) => {
             const color = ERROR_TYPES[seg.type]?.color ?? '#94a3b8';
+            const isHov = hoveredType === seg.type;
+            const isAnyHov = hoveredType !== null;
             return (
               <circle
                 key={seg.type}
-                cx={cx} cy={cy} r={R}
+                cx={CX} cy={CY} r={R}
                 fill="none"
                 stroke={color}
-                strokeWidth={STROKE}
+                strokeWidth={isHov ? STROKE + 6 : STROKE}
                 strokeLinecap="round"
                 strokeDasharray={`${seg.len - 2} ${circumference - seg.len + 2}`}
                 strokeDashoffset={-seg.offset}
-                style={{ animation: `dashIn 600ms cubic-bezier(0.16,1,0.3,1) ${i * 80}ms both` }}
+                style={{
+                  transition: 'stroke-width 0.2s ease, opacity 0.2s ease',
+                  opacity: isAnyHov && !isHov ? 0.25 : 1,
+                  animation: `dashIn 600ms cubic-bezier(0.16,1,0.3,1) ${i * 80}ms both`,
+                  cursor: 'pointer',
+                  filter: isHov ? `drop-shadow(0 0 6px ${color}99)` : 'none',
+                }}
+                onMouseEnter={() => onHover(seg.type)}
+                onMouseLeave={() => onHover(null)}
               />
             );
           })}
-          <style>{`
-            @keyframes dashIn {
-              from { stroke-dashoffset: ${circumference}; opacity: 0; }
-            }
-          `}</style>
+          <style>{`@keyframes dashIn { from { stroke-dashoffset: ${circumference}; opacity: 0; } }`}</style>
         </svg>
+        {/* Center label: shows hovered type name or total count */}
         <div className={styles.donutCenter}>
-          <span className={styles.donutCount}>{totalErrors}</span>
-          <span className={styles.donutLabel}>Total</span>
+          {hoveredType ? (
+            <>
+              <span className={styles.donutHovIcon}>{ERROR_TYPES[hoveredType]?.icon ?? '?'}</span>
+              <span className={styles.donutHovName} style={{ color: ERROR_TYPES[hoveredType]?.color ?? '#1e293b' }}>
+                {hoveredType.length > 14 ? hoveredType.slice(0, 13) + '…' : hoveredType}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className={styles.donutCount}>{totalErrors}</span>
+              <span className={styles.donutLabel}>Total</span>
+            </>
+          )}
         </div>
       </div>
       <div className={styles.donutLegend}>
         {segments.map((seg) => {
           const color = ERROR_TYPES[seg.type]?.color ?? '#94a3b8';
+          const isHov = hoveredType === seg.type;
+          const isAnyHov = hoveredType !== null;
           return (
-            <div key={seg.type} className={styles.legendItem}>
-              <span className={styles.legendDot} style={{ background: color }} />
-              <span className={styles.legendName}>{seg.type}</span>
-              <span className={styles.legendPct}>{Math.round(seg.pct * 100)}%</span>
+            <div
+              key={seg.type}
+              className={styles.legendItem}
+              style={{ opacity: isAnyHov && !isHov ? 0.35 : 1, transition: 'opacity 0.2s', cursor: 'pointer' }}
+              onMouseEnter={() => onHover(seg.type)}
+              onMouseLeave={() => onHover(null)}
+            >
+              <span
+                className={styles.legendDot}
+                style={{
+                  background: color,
+                  transform: isHov ? 'scale(1.5)' : 'scale(1)',
+                  transition: 'transform 0.2s ease',
+                }}
+              />
+              <span className={styles.legendName} style={{ fontWeight: isHov ? 700 : 500 }}>{seg.type}</span>
+              <span className={styles.legendPct} style={{ color }}>{Math.round(seg.pct * 100)}%</span>
             </div>
           );
         })}
@@ -93,13 +127,40 @@ function DonutChart({ byType, totalErrors }) {
   );
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
-function StatCard({ number, label, color }) {
+// ─── Scroll-reveal section wrapper ───────────────────────────────────────────
+function Section({ title, children }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.08 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <div className={styles.statCard}>
+    <div
+      ref={ref}
+      className={`${styles.sectionBlock} ${visible ? styles.sectionVisible : styles.sectionHidden}`}
+    >
+      {title && <div className={styles.sectionLabel}>{title}</div>}
+      {children}
+    </div>
+  );
+}
+
+// ─── Stat card ────────────────────────────────────────────────────────────────
+function StatCard({ number, label, color, delay = 0 }) {
+  return (
+    <div className={styles.statCard} style={{ animationDelay: `${delay}ms` }}>
       <div className={styles.statAccent} style={{ background: color }} />
       <div className={styles.statBody}>
-        <div className={styles.statNumber}>{number ?? '—'}</div>
+        <div className={styles.statNumber} style={{ color }}>{number ?? '—'}</div>
         <div className={styles.statLabel}>{label}</div>
       </div>
     </div>
@@ -117,15 +178,28 @@ function RankBadge({ rank }) {
 }
 
 // ─── Common Mistakes card (clickable) ────────────────────────────────────────
-function MistakeCard({ type, count, rank, maxCount, isSelected, onSelect }) {
+function MistakeCard({ type, count, rank, maxCount, isSelected, onSelect, animDelay = 0, hoveredType, onHover }) {
   const meta = ERROR_TYPES[type] ?? { icon: '?', color: '#6b7280', bg: '#f9fafb' };
   const pct  = maxCount > 0 ? (count / maxCount) * 100 : 0;
   const hasTips = Boolean(TIPS[type]?.length);
 
+  const isHov    = hoveredType === type;
+  const isAnyHov = hoveredType !== null;
+
   return (
     <div
       className={`${styles.mistakeCard} ${isSelected ? styles.mistakeCardSelected : ''} ${hasTips ? styles.mistakeCardClickable : ''}`}
+      style={{
+        animationDelay: `${animDelay}ms`,
+        opacity: isAnyHov && !isHov ? 0.35 : 1,
+        transform: isHov ? 'translateY(-4px) scale(1.02)' : undefined,
+        boxShadow: isHov ? `0 0 0 2px ${meta.color}, 0 8px 28px ${meta.color}33` : undefined,
+        transition: 'opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease',
+        zIndex: isHov ? 2 : undefined,
+      }}
       onClick={() => hasTips && onSelect(type)}
+      onMouseEnter={() => onHover(type)}
+      onMouseLeave={() => onHover(null)}
       role={hasTips ? 'button' : undefined}
       tabIndex={hasTips ? 0 : undefined}
       aria-pressed={hasTips ? isSelected : undefined}
@@ -235,6 +309,8 @@ export default function BugTrackerPanel({ onClose }) {
   const [closing, setClosing]           = useState(false);
   // Which mistake card the user last clicked (null = auto — shows top error type's tips)
   const [selectedType, setSelectedType] = useState(null);
+  // Shared hover state — syncs donut segments ↔ mistake cards
+  const [hoveredType, setHoveredType]   = useState(null);
 
   // Subscribe to store updates
   useEffect(() => {
@@ -296,6 +372,7 @@ export default function BugTrackerPanel({ onClose }) {
       >
         {/* ── Sticky header ─────────────────────────────── */}
         <div className={styles.panelHeader}>
+          <div className={styles.headerGradient} />
           <div className={styles.panelTitle}>
             <div className={styles.panelTitleIcon}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -350,26 +427,30 @@ export default function BugTrackerPanel({ onClose }) {
           ) : (
             <>
               {/* ── 1. Summary stats ──────────────────── */}
-              <div>
-                <div className={styles.sectionLabel}>Overview</div>
+              <Section title="Overview">
                 <div className={styles.statsGrid}>
-                  <StatCard number={totalRuns}  label="Total Runs"      color="#3b82f6" />
-                  <StatCard number={errors}     label="Errors Found"    color="#ef4444" />
-                  <StatCard number={successes}  label="Successful Runs" color="#059669" />
+                  <StatCard number={totalRuns}  label="Total Runs"      color="#3b82f6" delay={0} />
+                  <StatCard number={errors}     label="Errors Found"    color="#ef4444" delay={60} />
+                  <StatCard number={successes}  label="Successful Runs" color="#059669" delay={120} />
                   <StatCard
                     number={accuracy !== null ? `${accuracy}%` : '—'}
                     label="Accuracy"
                     color="#f59e0b"
+                    delay={180}
                   />
                 </div>
-              </div>
+              </Section>
 
               {/* ── 2. Donut chart ────────────────────── */}
               {errors > 0 && (
-                <div>
-                  <div className={styles.sectionLabel}>Error Breakdown</div>
-                  <DonutChart byType={byType} totalErrors={errors} />
-                </div>
+                <Section title="Error Breakdown">
+                  <DonutChart
+                    byType={byType}
+                    totalErrors={errors}
+                    hoveredType={hoveredType}
+                    onHover={setHoveredType}
+                  />
+                </Section>
               )}
 
               {/* ── Infinite Loop Banner ──────────────── */}
@@ -394,7 +475,7 @@ export default function BugTrackerPanel({ onClose }) {
 
               {/* ── 3. Common Mistakes ────────────────── */}
               {sortedTypes.length > 0 && (
-                <div>
+                <Section>
                   <div className={styles.sectionHeading}>
                     <div className={styles.sectionHeadingTitle}>
                       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -416,17 +497,24 @@ export default function BugTrackerPanel({ onClose }) {
                         maxCount={maxCount}
                         isSelected={selectedType === type}
                         onSelect={handleCardSelect}
+                        animDelay={i * 60}
+                        hoveredType={hoveredType}
+                        onHover={setHoveredType}
                       />
                     ))}
                   </div>
-                </div>
+                </Section>
               )}
 
               {/* ── 4. Learning Tips ──────────────────── */}
-              <TipsSection
-                selectedType={selectedType}
-                defaultType={topType}
-              />
+              {errors > 0 && (
+                <Section>
+                  <TipsSection
+                    selectedType={selectedType}
+                    defaultType={topType}
+                  />
+                </Section>
+              )}
             </>
           )}
         </div>
