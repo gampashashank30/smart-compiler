@@ -122,6 +122,27 @@
   transform: rotate(90deg);
 }
 
+/* ─── Clear button ────────────────────────────────────────────────── */
+.clearBtn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.clearBtn:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
 /* ─── Scrollable body ───────────────────────────────────────────── */
 .panelBody {
   flex: 1;
@@ -137,11 +158,22 @@
 .panelBody::-webkit-scrollbar-track { background: transparent; }
 .panelBody::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
 
-/* ─── Section wrapper ───────────────────────────────────────────── */
+/* ─── Section wrapper ──────────────────────────────────────────── */
 .section {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+/* Scroll-reveal states */
+.sectionHidden {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.45s cubic-bezier(0.16,1,0.3,1);
+}
+.sectionVisible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.45s cubic-bezier(0.16,1,0.3,1);
 }
 .sectionLabel {
   font-size: 10.5px;
@@ -256,43 +288,46 @@
   border-radius: 3px;
 }
 
-/* Heatmap tooltip — fixed positioned */
+/* Heatmap tooltip — fixed, screenshot-style */
 .heatTooltip {
   position: fixed;
-  background: #1e293b;
-  color: #f8fafc;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 12px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 13px;
   z-index: 9999;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  min-width: 150px;
-  animation: tipPop 150ms ease;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  min-width: 140px;
+  animation: tipPop 160ms cubic-bezier(0.16,1,0.3,1);
 }
 @keyframes tipPop {
-  from { opacity: 0; transform: scale(0.9); }
-  to   { opacity: 1; transform: scale(1);   }
+  from { opacity: 0; transform: scale(0.9) translateY(4px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0);    }
 }
+/* Bold date line e.g. "Jun 13" */
 .heatTooltipDate {
+  font-weight: 800;
+  font-size: 14px;
+  color: #1e293b;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+/* Plain stat lines "0 mistakes" / "2 runs" */
+.heatTooltipStat {
+  font-size: 12.5px;
+  color: #475569;
+  margin-bottom: 3px;
+  line-height: 1.4;
+}
+/* Green bold "Perfect Day! 🌟" */
+.heatTooltipPerfect {
+  margin-top: 7px;
+  font-size: 13px;
   font-weight: 700;
-  font-size: 12px;
-  margin-bottom: 8px;
-  color: #e2e8f0;
-}
-.heatTooltipRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-  color: #cbd5e1;
-  font-size: 11px;
-}
-.heatTooltipDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
+  color: #059669;
+  letter-spacing: -0.01em;
 }
 
 /* ─── 3. Donut Chart ────────────────────────────────────────────── */

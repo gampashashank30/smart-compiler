@@ -179,16 +179,18 @@ function Heatmap({ sessions }) {
 
   const maxTotal = Math.max(...days.map(d => d.info.total), 1);
 
-  function getCellColor(total) {
+  function getCellColor(total, info) {
     if (total === 0) return '#f1f5f9';
+    // Perfect day (all runs successful) → vivid emerald
+    if (info.error === 0 && total > 0) return '#059669';
     const intensity = total / maxTotal;
     if (intensity < 0.33) return '#bbf7d0';
     if (intensity < 0.66) return '#34d399';
-    return '#059669';
+    return '#10b981';
   }
 
-  function formatDate(d) {
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  function formatShortDate(d) {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   const weekdays = ['S','M','T','W','T','F','S'];
@@ -196,14 +198,14 @@ function Heatmap({ sessions }) {
   return (
     <div className={styles.heatmapWrap}>
       <div className={styles.heatmapGrid}>
-        {days.map((day, i) => (
+        {days.map((day) => (
           <div
             key={day.str}
             className={styles.heatCell}
-            style={{ background: getCellColor(day.info.total) }}
+            style={{ background: getCellColor(day.info.total, day.info) }}
             onMouseEnter={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
-              setTooltip({ day, x: rect.left, y: rect.top });
+              setTooltip({ day, rect });
             }}
             onMouseLeave={() => setTooltip(null)}
             aria-label={`${day.str}: ${day.info.total} runs`}
@@ -225,27 +227,28 @@ function Heatmap({ sessions }) {
         <span className={styles.heatLegendLabel}>More</span>
       </div>
 
-      {/* Tooltip */}
-      {tooltip && (
-        <div
-          className={styles.heatTooltip}
-          style={{ top: tooltip.y - 90, left: Math.min(tooltip.x - 20, window.innerWidth - 180) }}
-        >
-          <div className={styles.heatTooltipDate}>{formatDate(tooltip.day.d)}</div>
-          <div className={styles.heatTooltipRow}>
-            <span className={styles.heatTooltipDot} style={{ background: '#0ea5e9' }} />
-            Total: <b>{tooltip.day.info.total}</b>
+      {/* Premium tooltip — styled like the screenshot */}
+      {tooltip && (() => {
+        const { day, rect } = tooltip;
+        const isPerfect = day.info.total > 0 && day.info.error === 0;
+        // Position: above the cell, clamped to panel
+        const tipLeft = Math.min(Math.max(rect.left - 10, 8), window.innerWidth - 170);
+        const tipTop  = rect.top - 108;
+        return (
+          <div className={styles.heatTooltip} style={{ top: tipTop, left: tipLeft }}>
+            <div className={styles.heatTooltipDate}>{formatShortDate(day.d)}</div>
+            <div className={styles.heatTooltipStat}>
+              {day.info.error} mistake{day.info.error !== 1 ? 's' : ''}
+            </div>
+            <div className={styles.heatTooltipStat}>
+              {day.info.total} run{day.info.total !== 1 ? 's' : ''}
+            </div>
+            {isPerfect && (
+              <div className={styles.heatTooltipPerfect}>Perfect Day! 🌟</div>
+            )}
           </div>
-          <div className={styles.heatTooltipRow}>
-            <span className={styles.heatTooltipDot} style={{ background: '#059669' }} />
-            Success: <b>{tooltip.day.info.success}</b>
-          </div>
-          <div className={styles.heatTooltipRow}>
-            <span className={styles.heatTooltipDot} style={{ background: '#ef4444' }} />
-            Errors: <b>{tooltip.day.info.error}</b>
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
@@ -334,10 +337,10 @@ function DonutChart({ byType, totalErrors }) {
 // ─── 4. Compile Timeline ──────────────────────────────────────────────────────
 function CompileTimeline({ sessions }) {
   const [hov, setHov] = useState(null);
-  const last20 = sessions.slice(-20);
-  const maxMs = Math.max(...last20.map(s => s.timeMs || 100), 100);
+  const last15 = sessions.slice(-15);
+  const maxMs = Math.max(...last15.map(s => s.timeMs || 100), 100);
 
-  if (last20.length === 0) return <div className={styles.emptySmall}>No compile history yet</div>;
+  if (last15.length === 0) return <div className={styles.emptySmall}>No compile history yet</div>;
 
   function barColor(s) {
     if (s.subtype === 'Successful Run') return '#059669';
@@ -349,7 +352,7 @@ function CompileTimeline({ sessions }) {
   return (
     <div className={styles.timelineWrap}>
       <div className={styles.timelineBars}>
-        {last20.map((s, i) => {
+        {last15.map((s, i) => {
           const h = Math.max(8, ((s.timeMs || 100) / maxMs) * 72);
           const color = barColor(s);
           const isHov = hov === i;
@@ -757,15 +760,31 @@ function EmptyState() {
         <polyline points="16,36 28,26 40,18 52,10" stroke="#059669" strokeWidth="2" strokeLinecap="round" fill="none" />
       </svg>
       <p className={styles.emptyTitle}>No analytics yet</p>
-      <p className={styles.emptySub}>Run your first program to start seeing insights, charts, and progress tracking here.</p>
+        <p className={styles.emptySub}>Run your first program to start seeing insights, charts, and progress tracking here.</p>
     </div>
   );
 }
 
-// ─── Section Wrapper ─────────────────────────────────────────────────────────
+// ─── Section Wrapper with scroll-reveal ──────────────────────────
 function Section({ title, children }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.08 }
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <div className={styles.section}>
+    <div
+      ref={ref}
+      className={`${styles.section} ${visible ? styles.sectionVisible : styles.sectionHidden}`}
+    >
       <div className={styles.sectionLabel}>{title}</div>
       {children}
     </div>
@@ -774,7 +793,7 @@ function Section({ title, children }) {
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
 export default function AnalyticsPanel({ onClose }) {
-  const [sessions, setSessions] = useState(() => bugTrackerStore.sessions);
+  const [sessions, setSessions] = useState(() => [...bugTrackerStore.sessions]);
   const [stats, setStats] = useState(() => bugTrackerStore.getStats());
   const [closing, setClosing] = useState(false);
 
@@ -790,6 +809,10 @@ export default function AnalyticsPanel({ onClose }) {
     setClosing(true);
     setTimeout(onClose, 270);
   }, [onClose]);
+
+  const handleClear = useCallback(() => {
+    bugTrackerStore.reset();
+  }, []);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') handleClose(); };
@@ -823,6 +846,16 @@ export default function AnalyticsPanel({ onClose }) {
             Analytics
           </div>
           <div className={styles.headerActions}>
+            {hasData && (
+              <button
+                className={styles.clearBtn}
+                onClick={handleClear}
+                id="analytics-clear-btn"
+                title="Clear all analytics data"
+              >
+                Clear
+              </button>
+            )}
             <button
               className={styles.closeBtn}
               onClick={handleClose}
@@ -856,7 +889,7 @@ export default function AnalyticsPanel({ onClose }) {
               )}
 
               {/* 4 — Compile Timeline */}
-              <Section title="Compile History (Last 20)">
+              <Section title="Compile History (Last 15)">
                 <CompileTimeline sessions={sessions} />
               </Section>
 
