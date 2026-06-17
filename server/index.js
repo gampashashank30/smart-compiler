@@ -62,7 +62,7 @@ const limiter = rateLimit({
 app.use('/api/compile', limiter);
 
 // ── AI proxy endpoint ─────────────────────────────────────────────────────────
-// Calls Groq from the server so the API key stays off the frontend bundle.
+// Calls Z.AI or Groq from the server so the API key stays off the frontend bundle.
 app.post('/api/ai', async (req, res) => {
   const { systemPrompt, userMessage } = req.body ?? {};
   // Accept both names: GROQ_API_KEY (Render) and VITE_GROQ_API_KEY (local dev)
@@ -75,26 +75,36 @@ app.post('/api/ai', async (req, res) => {
     return res.status(400).json({ error: 'systemPrompt and userMessage are required' });
   }
 
+  const isZai = !apiKey.startsWith('gsk_');
+  const apiUrl = isZai ? 'https://api.z.ai/api/paas/v4/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
+  const model = isZai ? 'glm-4.7-Flash' : 'llama-3.3-70b-versatile';
+
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const payload = {
+      model,
+      max_tokens: 4096,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userMessage  },
+      ],
+    };
+
+    if (isZai) {
+      payload.thinking = { type: 'disabled' };
+    }
+
+    const response = await fetch(apiUrl, {
       method:  'POST',
       headers: {
         'Content-Type':  'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model:      'llama-3.3-70b-versatile',
-        max_tokens: 4096,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userMessage  },
-        ],
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
     if (!response.ok) {
-      return res.status(response.status).json({ error: data?.error?.message || 'Groq API error' });
+      return res.status(response.status).json({ error: data?.error?.message || 'AI API error' });
     }
     return res.json({ content: data.choices?.[0]?.message?.content ?? '' });
   } catch (err) {
