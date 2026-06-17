@@ -112,15 +112,35 @@ function trunc(str, len = 85) {
    AGGREGATED ANALYSIS CARD
    Shows all issues in ONE card with 4 sections.
    ══════════════════════════════════════════════════════════════ */
+/* ── Type badge colours ── */
+const TYPE_CONFIG = {
+  logical: { bg: '#fef3c7', color: '#92400e', label: 'Logical' },
+  syntax:  { bg: '#fee2e2', color: '#991b1b', label: 'Syntax'  },
+};
+
+function TypeBadge({ type }) {
+  const cfg = TYPE_CONFIG[type] ?? { bg: '#f3f4f6', color: '#374151', label: type };
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      background: cfg.bg, color: cfg.color,
+      fontSize: '10px', fontWeight: 700,
+      letterSpacing: '0.06em', textTransform: 'uppercase',
+      borderRadius: '5px', padding: '2px 7px',
+      flexShrink: 0,
+    }}>
+      {cfg.label}
+    </span>
+  );
+}
+
 function AggregatedCard({ issues }) {
   // Filter real issues only
   const real = issues.filter(i => i.type !== 'clean');
   if (!real.length) return null;
 
-  const hints       = real.map(i => i.hint).filter(Boolean);
-  const descs       = real.map(i => i.description).filter(Boolean);
-  const lines       = real.filter(i => i.line != null).map(i => i.line);
-  const fixes       = real.filter(i => i.corrected_code_snippet);
+  const hints = real.map(i => i.hint).filter(Boolean);
+  const fixes  = real.filter(i => i.corrected_code_snippet);
 
   return (
     <div className={styles.aggCard}>
@@ -136,9 +156,8 @@ function AggregatedCard({ issues }) {
             {hints.map((h, i) => (
               <NumItem key={i} num={i + 1} text={trunc(h, 90)} />
             ))}
-            {/* If no hints, fall back to short description */}
-            {hints.length === 0 && descs.map((d, i) => (
-              <NumItem key={i} num={i + 1} text={trunc(d, 90)} />
+            {hints.length === 0 && real.map((issue, i) => (
+              <NumItem key={i} num={i + 1} text={trunc(issue.description, 90)} />
             ))}
           </div>
         </div>
@@ -153,13 +172,16 @@ function AggregatedCard({ issues }) {
         sectionClass="sectionWhite"
       >
         <div className={styles.numList}>
-          {descs.map((d, i) => (
-            <NumItem key={i} num={i + 1} text={trunc(d, 100)} />
+          {real.map((issue, i) => (
+            <div key={i} className={styles.numItem}>
+              <span className={styles.numBadge}>{i + 1}</span>
+              <span className={styles.numText}>{issue.description || issue.hint || '—'}</span>
+            </div>
           ))}
         </div>
       </AccordionSection>
 
-      {/* ── Root Cause — shows line numbers ── */}
+      {/* ── Root Cause — shows line + type + description per issue ── */}
       <AccordionSection
         icon={<IconBug />}
         iconBg="#fee2e2"
@@ -167,15 +189,51 @@ function AggregatedCard({ issues }) {
         title="Root Cause"
         sectionClass="sectionRose"
       >
-        {lines.length > 0 ? (
-          <div className={styles.lineList}>
-            {lines.map((ln, i) => (
-              <span key={i} className={styles.linePill}>Line {ln}</span>
-            ))}
-          </div>
-        ) : (
-          <p className={styles.bodyText}>See analysis above.</p>
-        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {real.map((issue, i) => (
+            <div key={i} style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px',
+              background: '#fff',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '10px 12px',
+            }}>
+              {/* Top row: Line pill + type badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {issue.line != null ? (
+                  <span className={styles.linePill}>Line {issue.line}</span>
+                ) : (
+                  <span className={styles.linePill} style={{ background: '#f3f4f6', color: '#6b7280', borderColor: '#e5e7eb' }}>General</span>
+                )}
+                <TypeBadge type={issue.type} />
+              </div>
+              {/* Description */}
+              <p style={{
+                margin: 0,
+                fontSize: '12.5px',
+                color: '#374151',
+                lineHeight: '1.6',
+              }}>
+                {issue.description || issue.hint || '—'}
+              </p>
+              {/* Fix hint if available */}
+              {issue.fix && (
+                <p style={{
+                  margin: '4px 0 0',
+                  fontSize: '12px',
+                  color: '#6b7280',
+                  lineHeight: '1.55',
+                  borderTop: '1px solid #fee2e2',
+                  paddingTop: '6px',
+                }}>
+                  💡 {issue.fix}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
       </AccordionSection>
 
       {/* ── How to Fix ── */}
@@ -189,9 +247,17 @@ function AggregatedCard({ issues }) {
         <div className={styles.fixList}>
           {fixes.map((issue, i) => (
             <div key={i} className={styles.fixItem}>
-              {fixes.length > 1 && (
-                <span className={styles.fixNum}>{i + 1}</span>
-              )}
+              {/* Show line + type label above each snippet */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '2px' }}>
+                {fixes.length > 1 && (
+                  <span className={styles.fixNum}>Fix {i + 1}</span>
+                )}
+                {issue.line != null && (
+                  <span style={{
+                    fontSize: '11px', fontWeight: 600, color: '#6b7280',
+                  }}>— Line {issue.line}</span>
+                )}
+              </div>
               <pre className={styles.fixCode}><code>{issue.corrected_code_snippet}</code></pre>
             </div>
           ))}
