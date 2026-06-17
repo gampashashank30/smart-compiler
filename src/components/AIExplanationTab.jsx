@@ -318,10 +318,11 @@ export default function AIExplanationTab({ code, onApplyFix }) {
     setApplied(false);
     try {
       const issuesSummary = issues
-        .map(i => i.type === 'clean' ? 'No issues.' : `Line ${i.line ?? '?'} (${i.type}): ${i.description}`)
+        .filter(i => i.type !== 'clean')
+        .map(i => `L${i.line ?? '?'} (${i.type}): ${i.description}`)
         .join('\n');
       const raw    = await callClaude(CORRECTION_SYSTEM_PROMPT,
-        `Code:\n\n${code}\n\nIssues:\n${issuesSummary}\n\nGenerate corrected program and 3-5 short learning notes.`);
+        `Code:\n${code}\n\nIssues:\n${issuesSummary}`);
       const parsed = parseJSON(raw);
       const rawCode = parsed.corrected_code ?? '';
       // Some LLMs emit literal \n (two chars) instead of real newlines.
