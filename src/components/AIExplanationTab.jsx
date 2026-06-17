@@ -166,8 +166,8 @@ function AggregatedCard({ issues }) {
       {/* ── Analysis Summary ── */}
       <AccordionSection
         icon={<IconBook />}
-        iconBg="#dbeafe"
-        iconColor="#2563eb"
+        iconBg="linear-gradient(135deg,#d1fae5,#a7f3d0)"
+        iconColor="#059669"
         title="Analysis Summary"
         sectionClass="sectionWhite"
       >
@@ -184,7 +184,7 @@ function AggregatedCard({ issues }) {
       {/* ── Root Cause — shows line + type + description per issue ── */}
       <AccordionSection
         icon={<IconBug />}
-        iconBg="#fee2e2"
+        iconBg="linear-gradient(135deg,#fee2e2,#fecaca)"
         iconColor="#dc2626"
         title="Root Cause"
         sectionClass="sectionRose"
@@ -239,8 +239,8 @@ function AggregatedCard({ issues }) {
       {/* ── How to Fix ── */}
       <AccordionSection
         icon={<IconLightning />}
-        iconBg="#dbeafe"
-        iconColor="#2563eb"
+        iconBg="linear-gradient(135deg,#dbeafe,#bae6fd)"
+        iconColor="#0284c7"
         title="How to Fix"
         sectionClass="sectionSky"
       >
