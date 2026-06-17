@@ -62,55 +62,91 @@ const limiter = rateLimit({
 app.use('/api/compile', limiter);
 
 // ── AI proxy endpoint ─────────────────────────────────────────────────────────
-// Calls Z.AI or Groq from the server so the API key stays off the frontend bundle.
+// Calls Groq (or Z.AI) from the server so the API key stays off the frontend bundle.
+// Supports up to 3 API keys with automatic fallback when one hits a rate limit.
 app.post('/api/ai', async (req, res) => {
   const { systemPrompt, userMessage } = req.body ?? {};
-  // Accept both names: GROQ_API_KEY (Render) and VITE_GROQ_API_KEY (local dev)
-  const apiKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
 
-  if (!apiKey) {
-    return res.status(503).json({ error: 'AI service not configured (missing GROQ_API_KEY)' });
-  }
   if (!systemPrompt || !userMessage) {
     return res.status(400).json({ error: 'systemPrompt and userMessage are required' });
   }
 
-  const isZai = !apiKey.startsWith('gsk_');
-  const apiUrl = isZai ? 'https://api.z.ai/api/paas/v4/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
-  const model = isZai ? 'glm-4.7-Flash' : 'llama-3.3-70b-versatile';
+  // Build the key rotation pool — filter out empty / placeholder values
+  const PLACEHOLDER = 'your_second_api_key_here';
+  const allKeys = [
+    process.env.GROQ_API_KEY   || process.env.VITE_GROQ_API_KEY,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY_3,
+  ].filter((k) => k && k.trim() && !k.startsWith(PLACEHOLDER) && !k.includes('your_'));
 
-  try {
-    const payload = {
-      model,
-      max_tokens: 4096,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user',   content: userMessage  },
-      ],
-    };
-
-    if (isZai) {
-      payload.thinking = { type: 'disabled' };
-    }
-
-    const response = await fetch(apiUrl, {
-      method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      return res.status(response.status).json({ error: data?.error?.message || 'AI API error' });
-    }
-    return res.json({ content: data.choices?.[0]?.message?.content ?? '' });
-  } catch (err) {
-    console.error('[/api/ai] Error:', err);
-    return res.status(500).json({ error: 'Failed to reach AI service' });
+  if (allKeys.length === 0) {
+    return res.status(503).json({ error: 'AI service not configured (no valid GROQ_API_KEY found)' });
   }
+
+  let lastError = null;
+
+  // Try each key in order; move to the next on rate-limit (429) or auth error (401)
+  for (let i = 0; i < allKeys.length; i++) {
+    const apiKey = allKeys[i];
+    const isZai  = !apiKey.startsWith('gsk_');
+    const apiUrl = isZai
+      ? 'https://api.z.ai/api/paas/v4/chat/completions'
+      : 'https://api.groq.com/openai/v1/chat/completions';
+    const model  = isZai ? 'glm-4.7-Flash' : 'llama-3.3-70b-versatile';
+
+    try {
+      const payload = {
+        model,
+        max_tokens: 4096,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userMessage  },
+        ],
+      };
+      if (isZai) payload.thinking = { type: 'disabled' };
+
+      const response = await fetch(apiUrl, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 429 || response.status === 401) {
+        // Rate-limited or bad key — try the next key
+        const reason = response.status === 429 ? 'rate-limited' : 'auth error';
+        console.warn(`[/api/ai] Key #${i + 1} ${reason} — trying next key...`);
+        lastError = data?.error?.message || `Key #${i + 1} ${reason}`;
+        continue; // 👈 move to next key
+      }
+
+      if (!response.ok) {
+        return res.status(response.status).json({ error: data?.error?.message || 'AI API error' });
+      }
+
+      // ✅ Success — return the result (include which key index was used for transparency)
+      if (i > 0) {
+        console.log(`[/api/ai] Succeeded with fallback key #${i + 1}`);
+      }
+      return res.json({ content: data.choices?.[0]?.message?.content ?? '' });
+
+    } catch (err) {
+      console.error(`[/api/ai] Key #${i + 1} threw an error:`, err.message);
+      lastError = err.message;
+      // Network error — also try the next key
+    }
+  }
+
+  // All keys exhausted
+  console.error('[/api/ai] All API keys failed. Last error:', lastError);
+  return res.status(429).json({
+    error: 'All AI API keys are rate-limited or unavailable. Please try again later.',
+    detail: lastError,
+  });
 });
 
 
