@@ -13,16 +13,7 @@ function IconLightbulb() {
     </svg>
   );
 }
-function IconBook() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
-      <path d="M4 4.5A2.5 2.5 0 016.5 2H18a1 1 0 011 1v16a1 1 0 01-1 1H6.5A2.5 2.5 0 014 17.5v-13z"
-        stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-      <path d="M4 17.5A2.5 2.5 0 006.5 20H18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-      <path d="M9 8h6M9 12h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-    </svg>
-  );
-}
+function IconBook() { return null; } // kept for safety, unused
 function IconBug() {
   return (
     <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
@@ -74,8 +65,8 @@ function TypingDots() {
 }
 
 /* ── Collapsible section ── */
-function AccordionSection({ icon, iconBg, iconColor, title, sectionClass, children }) {
-  const [open, setOpen] = useState(true);
+function AccordionSection({ icon, iconBg, iconColor, title, sectionClass, children, defaultOpen = true }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className={`${styles.accordion} ${styles[sectionClass]}`}>
       <button className={styles.accordionHead} onClick={() => setOpen(v => !v)}>
@@ -163,25 +154,7 @@ function AggregatedCard({ issues }) {
         </div>
       </div>
 
-      {/* ── Analysis Summary ── */}
-      <AccordionSection
-        icon={<IconBook />}
-        iconBg="linear-gradient(135deg,#d1fae5,#a7f3d0)"
-        iconColor="#059669"
-        title="Analysis Summary"
-        sectionClass="sectionWhite"
-      >
-        <div className={styles.numList}>
-          {real.map((issue, i) => (
-            <div key={i} className={styles.numItem}>
-              <span className={styles.numBadge}>{i + 1}</span>
-              <span className={styles.numText}>{issue.description || issue.hint || '—'}</span>
-            </div>
-          ))}
-        </div>
-      </AccordionSection>
-
-      {/* ── Root Cause — shows line + type + description per issue ── */}
+      {/* ── Root Cause — compact: line + type + SHORT hint only ── */}
       <AccordionSection
         icon={<IconBug />}
         iconBg="linear-gradient(135deg,#fee2e2,#fecaca)"
@@ -189,48 +162,27 @@ function AggregatedCard({ issues }) {
         title="Root Cause"
         sectionClass="sectionRose"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {real.map((issue, i) => (
             <div key={i} style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '5px',
+              alignItems: 'center',
+              gap: '8px',
               background: '#fff',
               border: '1px solid #fecaca',
               borderRadius: '8px',
-              padding: '10px 12px',
+              padding: '8px 12px',
+              flexWrap: 'wrap',
             }}>
-              {/* Top row: Line pill + type badge */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {issue.line != null ? (
-                  <span className={styles.linePill}>Line {issue.line}</span>
-                ) : (
-                  <span className={styles.linePill} style={{ background: '#f3f4f6', color: '#6b7280', borderColor: '#e5e7eb' }}>General</span>
-                )}
-                <TypeBadge type={issue.type} />
-              </div>
-              {/* Description */}
-              <p style={{
-                margin: 0,
-                fontSize: '12.5px',
-                color: '#374151',
-                lineHeight: '1.6',
-              }}>
-                {issue.description || issue.hint || '—'}
-              </p>
-              {/* Fix hint if available */}
-              {issue.fix && (
-                <p style={{
-                  margin: '4px 0 0',
-                  fontSize: '12px',
-                  color: '#6b7280',
-                  lineHeight: '1.55',
-                  borderTop: '1px solid #fee2e2',
-                  paddingTop: '6px',
-                }}>
-                  💡 {issue.fix}
-                </p>
+              {issue.line != null ? (
+                <span className={styles.linePill}>Line {issue.line}</span>
+              ) : (
+                <span className={styles.linePill} style={{ background: '#f3f4f6', color: '#6b7280', borderColor: '#e5e7eb' }}>General</span>
               )}
+              <TypeBadge type={issue.type} />
+              <span style={{ fontSize: '12.5px', color: '#374151', lineHeight: '1.5', flex: 1, minWidth: '120px' }}>
+                {issue.hint || issue.description || '—'}
+              </span>
             </div>
           ))}
         </div>
@@ -243,19 +195,17 @@ function AggregatedCard({ issues }) {
         iconColor="#0284c7"
         title="How to Fix"
         sectionClass="sectionSky"
+        defaultOpen={false}
       >
         <div className={styles.fixList}>
           {fixes.map((issue, i) => (
             <div key={i} className={styles.fixItem}>
-              {/* Show line + type label above each snippet */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '2px' }}>
                 {fixes.length > 1 && (
                   <span className={styles.fixNum}>Fix {i + 1}</span>
                 )}
                 {issue.line != null && (
-                  <span style={{
-                    fontSize: '11px', fontWeight: 600, color: '#6b7280',
-                  }}>— Line {issue.line}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280' }}>— Line {issue.line}</span>
                 )}
               </div>
               <pre className={styles.fixCode}><code>{issue.corrected_code_snippet}</code></pre>
