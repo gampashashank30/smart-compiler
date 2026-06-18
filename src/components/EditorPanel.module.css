@@ -167,10 +167,7 @@
 
 /* ── + button dropdown menu ──────────────────────────────── */
 .addMenu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 100;
+  z-index: 1000;
   min-width: 180px;
   background: #161b22;
   border: 1px solid #30363d;

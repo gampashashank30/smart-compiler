@@ -100,6 +100,18 @@ export default function EditorPanel({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showAddMenu]);
 
+  // Calculate dropdown position from the + button's bounding rect
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const openAddMenu = useCallback(() => {
+    setShowAddMenu(prev => {
+      if (!prev && addBtnRef.current) {
+        const rect = addBtnRef.current.getBoundingClientRect();
+        setMenuPos({ top: rect.bottom + 6, left: rect.left });
+      }
+      return !prev;
+    });
+  }, []);
+
   // Handle file selection from the hidden <input>
   const handleFileChange = useCallback((e) => {
     const file = e.target.files?.[0];
@@ -459,48 +471,17 @@ export default function EditorPanel({
           })}
 
           {/* Add tab dropdown button */}
-          <div style={{ position: 'relative', alignSelf: 'center', marginLeft: '6px' }}>
+          <div style={{ alignSelf: 'center', marginLeft: '6px' }}>
             <button
               ref={addBtnRef}
               className={styles.tabAdd}
-              onClick={() => setShowAddMenu(prev => !prev)}
+              onClick={openAddMenu}
               title="New tab or upload file"
               tabIndex={-1}
               aria-label="Add new tab or upload file"
             >
               +
             </button>
-
-            {showAddMenu && (
-              <div ref={addMenuRef} className={styles.addMenu}>
-                <button
-                  className={styles.addMenuItem}
-                  onClick={() => {
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path d="M3 17h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-                    <path d="M10 13V3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-                    <path d="M6 7l4-4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Upload File
-                </button>
-                <button
-                  className={styles.addMenuItem}
-                  onClick={() => {
-                    onTabAdd?.();
-                    setShowAddMenu(false);
-                  }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M10 8v4M8 10h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                  New Tab
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Hidden file input for uploads */}
@@ -513,6 +494,43 @@ export default function EditorPanel({
             aria-hidden="true"
           />
         </div>
+
+        {/* Dropdown menu rendered OUTSIDE the tabList to avoid overflow clipping */}
+        {showAddMenu && (
+          <div
+            ref={addMenuRef}
+            className={styles.addMenu}
+            style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
+          >
+            <button
+              className={styles.addMenuItem}
+              onClick={() => {
+                fileInputRef.current?.click();
+                setShowAddMenu(false);
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3 17h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                <path d="M10 13V3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                <path d="M6 7l4-4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Upload File
+            </button>
+            <button
+              className={styles.addMenuItem}
+              onClick={() => {
+                onTabAdd?.();
+                setShowAddMenu(false);
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M10 8v4M8 10h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              New Tab
+            </button>
+          </div>
+        )}
 
         {/* Right badge */}
         <div className={styles.tabRight}>
