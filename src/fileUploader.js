@@ -90,16 +90,16 @@ function extractCodeFromWordText(text) {
     /^\s*using\s+(?!means\b|is\b|refers\b)[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s*;?$/,      // C# using
     /^\s*#!\//,                                            // Shebang
     /^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+(?!means\b|is\b|stands\b|refers\b|speaking\b)[a-zA-Z_]\w*\s*(?:[=;(),]|$)/, // C type declarations
-    /^\s*def\s+\w+\s*\(/,                                  // Python function
+    /^\s*def\s+[a-zA-Z_]\w*\s*\(/,                         // Python function
     /^\s*class\s+[A-Za-z_]\w*\s*(?:[:{]|\bextends\b|\bimplements\b|\(\s*[A-Za-z_]\w*\s*\)\s*:)/, // Python/Java class definition (stricter colon/brace checks)
     /^\s*print\s*\(/,                                      // Python print
     /^\s*printf\s*\(/,                                     // C printf
     /^\s*System\.out\.(print|println|printf)\s*\(/,        // Java print
     /^\s*console\.log\s*\(/,                               // JS console.log
-    /^\s*function\s+\w+\s*\(/,                             // JS/TS function
+    /^\s*function\s+[a-zA-Z_$]\w*\s*\([^)]*\)\s*(?:{)?(?:\s*(?:\/\/|#).*|$)$/, // JS/TS function
     /\binput\s*\(/,                                        // Python input()
     /\bstd::/,                                             // C++ std
-    /^\s*for\s+\w+\s+in\s+/,                               // Python for loop
+    /^\s*for\s+[a-zA-Z_]\w*\s+in\s+.*:\s*(?:\s*#.*|$)$/,   // Python for loop
     /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\s+(?!means\b|is\b|your\b|the\b|a\b)[A-Za-z_*]/i, // SQL
   ];
 
@@ -129,7 +129,112 @@ function extractCodeFromWordText(text) {
     
     // Keywords at the start of the line
     if (/^(def|class|import|from|print|return|if|else|elif|for|while|try|except|finally|with|as|pass|break|continue|void|int|float|double|char|struct|typedef|public|static|package|using|const|let|var|function)\b/.test(trimmed)) {
-      return true;
+      // def (Python function)
+      if (/^\s*def\b/.test(trimmed)) {
+        return /^\s*def\s+[a-zA-Z_]\w*\s*\(/.test(trimmed);
+      }
+      
+      // class (Python/Java/C++)
+      if (/^\s*class\b/.test(trimmed)) {
+        return /^\s*(?:public\s+|private\s+|protected\s+)?class\s+[a-zA-Z_]\w*(?:\s*\(.*\))?\s*(?:[:{;]|\bextends\b|\bimplements\b)(?:\s*(?:\/\/|#).*|$)$/.test(trimmed);
+      }
+      
+      // import (JS/Python/Java)
+      if (/^\s*import\b/.test(trimmed)) {
+        return /^\s*import\s+(?:[\w\s,{}*]+\s+from\s+['"].+['"]|[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*(?:\s+as\s+[a-zA-Z_]\w*)?(?:\s*,\s*[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*(?:\s+as\s+[a-zA-Z_]\w*)?)*\s*;?)$/.test(trimmed);
+      }
+      
+      // from (Python import)
+      if (/^\s*from\b/.test(trimmed)) {
+        return /^\s*from\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s+import\s+[\w\s,{}*()]+$/.test(trimmed);
+      }
+      
+      // package (Java/Go)
+      if (/^\s*package\b/.test(trimmed)) {
+        return /^\s*package\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s*;?$/.test(trimmed);
+      }
+      
+      // using (C#)
+      if (/^\s*using\b/.test(trimmed)) {
+        return /^\s*using\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s*;?$/.test(trimmed);
+      }
+      
+      // const, let, var (JS/TS)
+      if (/^\s*(const|let|var)\b/.test(trimmed)) {
+        return /^\s*(const|let|var)\s+[a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)*\s*(?:=|\s*;?)(?:\s*(?:\/\/|#).*|$)$/.test(trimmed);
+      }
+      
+      // function (JS/TS)
+      if (/^\s*function\b/.test(trimmed)) {
+        return /^\s*function\s+[a-zA-Z_$]\w*\s*\([^)]*\)\s*(?:{)?(?:\s*(?:\/\/|#).*|$)$/.test(trimmed);
+      }
+      
+      // print, printf, println, console.log
+      if (/^\s*(print|printf|println|console\.log|System\.out)\b/.test(trimmed)) {
+        return /^\s*(print|printf|println|console\.log|System\.out\.(print|println|printf))\s*\(/.test(trimmed);
+      }
+      
+      // return
+      if (/^\s*return\b/.test(trimmed)) {
+        return !/^\s*return\s+(?:after|home|tomorrow|to|before|back|from|in|on|at|by|with|means|is|giving|going|here|there)\b/i.test(trimmed);
+      }
+      
+      // if
+      if (/^\s*if\b/.test(trimmed)) {
+        return /^\s*if\s*(?:\(|.*[:{]\s*(?:#|\/\/|$))/.test(trimmed);
+      }
+      
+      // else
+      if (/^\s*else\b/.test(trimmed)) {
+        return /^\s*else(?:\s*if\b|\s*[:{]|\s*(?:#|\/\/)|$)/.test(trimmed);
+      }
+      
+      // elif
+      if (/^\s*elif\b/.test(trimmed)) {
+        return /^\s*elif\s*(?:\(|.*[:{]\s*(?:#|\/\/|$))/.test(trimmed);
+      }
+      
+      // for
+      if (/^\s*for\b/.test(trimmed)) {
+        return /^\s*for\s*(?:\(|.*\bin\b.*[:{])/.test(trimmed);
+      }
+      
+      // while
+      if (/^\s*while\b/.test(trimmed)) {
+        return /^\s*while\s*(?:\(|.*[:{])/.test(trimmed);
+      }
+      
+      // try, finally
+      if (/^\s*(try|finally)\b/.test(trimmed)) {
+        return /^\s*(try|finally)(?:\s*[:{]|\s*(?:#|\/\/)|$)/.test(trimmed);
+      }
+      
+      // except
+      if (/^\s*except\b/.test(trimmed)) {
+        return /^\s*except(?:\s*:|\s+.*:)/.test(trimmed);
+      }
+      
+      // with
+      if (/^\s*with\b/.test(trimmed)) {
+        return /^\s*with\s+.*[({:]/.test(trimmed);
+      }
+      
+      // pass, break, continue
+      if (/^\s*(pass|break|continue)\b/.test(trimmed)) {
+        return /^\s*(pass|break|continue)(?:\s*;|\s*(?:#|\/\/)|$)/.test(trimmed);
+      }
+      
+      // C type declarations
+      if (/^\s*(void|int|float|double|char|struct|typedef|long|short|unsigned|signed|enum)\b/.test(trimmed)) {
+        return /^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+(?!means\b|is\b|stands\b|refers\b|speaking\b|monitors\b)[a-zA-Z_]\w*\s*(?:[=;(),]|$)/.test(trimmed);
+      }
+      
+      // Java public/private/protected/static modifiers
+      if (/^\s*(public|private|protected|static)\b/.test(trimmed)) {
+        return /^\s*(public|private|protected|static)\s+.*[;{=():]\s*(?:\/\/|#|$)/.test(trimmed);
+      }
+
+      return false;
     }
     
     // Assignments (including update assignments like +=, -=, etc.)
