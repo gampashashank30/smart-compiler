@@ -82,6 +82,9 @@ function extractCodeFromWordText(text) {
     /^\s*print\s*\(/,                                      // Python print
     /^\s*console\.log\s*\(/,                               // JS console.log
     /^\s*function\s+\w+/,                                  // JS/TS function
+    /\binput\s*\(/,                                        // Python input()
+    /\bstd::/,                                             // C++ std
+    /^\s*for\s+\w+\s+in\s+/,                               // Python for loop
   ];
 
   let firstMatchIdx = -1;
@@ -96,19 +99,60 @@ function extractCodeFromWordText(text) {
   // If no code marker found, return full text
   if (firstMatchIdx === -1) return text.trim();
 
-  // Walk backwards to include comments, variable assignments, or empty lines
-  // preceding the first matched code pattern, but stop at text headers.
-  let startLine = firstMatchIdx;
+  // Helper to check if a line looks like programming code
   const isCodeLikeLine = (line) => {
     const trimmed = line.trim();
     if (trimmed === '') return true;
-    if (trimmed.startsWith('#') || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.endsWith('*/')) return true;
-    if (/^[a-zA-Z_]\w*\s*=\s*/.test(trimmed)) return true;
-    if (/^(def|class|import|from|print|return|if|else|elif|for|while|try|except|with|as|pass|break|continue)\b/.test(trimmed)) return true;
-    if (trimmed.endsWith(';') || trimmed.endsWith('{') || trimmed.endsWith('}') || trimmed.endsWith(':')) return true;
+    
+    // Comments
+    if (trimmed.startsWith('#') || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.endsWith('*/') || trimmed.startsWith('*')) {
+      return true;
+    }
+    
+    // Keywords at the start of the line
+    if (/^(def|class|import|from|print|return|if|else|elif|for|while|try|except|finally|with|as|pass|break|continue|void|int|float|double|char|struct|typedef|public|static|package|using|const|let|var|function)\b/.test(trimmed)) {
+      return true;
+    }
+    
+    // Assignments (including update assignments like +=, -=, etc.)
+    if (/^[a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)*\s*(?:\+|-|\*|\/|%|&|\||\^|<<|>>|\/\/|\*\*|)?=\s*/.test(trimmed)) {
+      return true;
+    }
+
+    // Common code ending tokens (excluding colon, which has special checks)
+    if (trimmed.endsWith(';') || trimmed.endsWith('{') || trimmed.endsWith('}') || trimmed.endsWith(',') || trimmed.endsWith('(') || trimmed.endsWith('[') || trimmed.endsWith(')') || trimmed.endsWith(']')) {
+      return true;
+    }
+
+    // Special handling for colons to prevent matching text headers like "Objective:"
+    if (trimmed.endsWith(':')) {
+      if (/^(if|else|elif|for|while|def|class|try|except|finally|with|switch|case|default)\b/.test(trimmed)) {
+        return true;
+      }
+      if (/^(public|private|protected)$/.test(trimmed)) {
+        return true;
+      }
+      if (/^[a-zA-Z_]\w*:$/.test(trimmed)) {
+        return true;
+      }
+      return false;
+    }
+    
+    // Function calls
+    if (/^[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s*\(.*\)$/.test(trimmed)) {
+      return true;
+    }
+    
+    // Stream/pointer operations
+    if (/\bcout\s*<<|\bcin\s*>>/.test(trimmed)) {
+      return true;
+    }
+    
     return false;
   };
 
+  // Walk backwards from the first match to include preceding code
+  let startLine = firstMatchIdx;
   for (let i = firstMatchIdx - 1; i >= 0; i--) {
     if (isCodeLikeLine(lines[i])) {
       startLine = i;
@@ -129,11 +173,16 @@ function extractCodeFromWordText(text) {
     /^\s*Sample\s+Run/i,
   ];
 
-  let endLine = lines.length - 1;
-  for (let i = startLine; i < lines.length; i++) {
+  // Walk forward from the first match to find the end of the contiguous code block
+  let endLine = firstMatchIdx;
+  for (let i = firstMatchIdx + 1; i < lines.length; i++) {
     const line = lines[i];
     if (outputStartPatterns.some(pat => pat.test(line))) {
-      endLine = i - 1;
+      break;
+    }
+    if (isCodeLikeLine(line)) {
+      endLine = i;
+    } else {
       break;
     }
   }
