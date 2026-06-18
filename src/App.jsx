@@ -143,6 +143,7 @@ export default function App() {
   // ── Multi-tab state ────────────────────────────────────────────────────────
   const [tabs, setTabs]               = useState([{ id: 1, name: 'main.c', code: STARTER_CODE }]);
   const [activeTabId, setActiveTabId] = useState(1);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Derived: always the active tab's code
   const activeProgramTab = tabs.find(t => t.id === activeTabId) ?? tabs[0];
@@ -215,6 +216,7 @@ export default function App() {
 
   // ── File upload handler ─────────────────────────────────────────────────────
   const handleFileUpload = useCallback(async (file) => {
+    setIsUploading(true);
     try {
       const { content, filename } = await readUploadedFile(file);
       const id = Date.now();
@@ -224,6 +226,8 @@ export default function App() {
       setShowLangPopup(false);
     } catch (err) {
       alert(err.message || 'Failed to read the file.');
+    } finally {
+      setIsUploading(false);
     }
   }, []);
 
@@ -463,6 +467,16 @@ export default function App() {
       {/* AI Tutor Panel — full screen overlay */}
       {aiTutorOpen && (
         <AiTutorPanel onClose={() => setAiTutorOpen(false)} />
+      )}
+
+      {/* OCR/Upload Overlay */}
+      {isUploading && (
+        <div className={styles.uploadOverlay}>
+          <div className={styles.uploadSpinnerContainer}>
+            <div className={styles.uploadSpinner}></div>
+            <div className={styles.uploadText}>Extracting Code with OCR...</div>
+          </div>
+        </div>
       )}
     </div>
   );
