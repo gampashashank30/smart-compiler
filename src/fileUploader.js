@@ -64,7 +64,18 @@ export function getAcceptString() {
  * If no C-style code markers are found, returns the full text as-is.
  */
 function extractCodeFromWordText(text) {
-  const lines = text.split('\n');
+  // Normalize carriage returns, vertical tabs, soft breaks, and non-breaking spaces
+  let normalizedText = text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\u000b/g, '\n')
+    .replace(/\v/g, '\n')
+    .replace(/\u00a0/g, ' '); // Non-breaking space to regular space
+
+  // Remove other hidden unprintable control characters (bell, backspace, null, etc.)
+  normalizedText = normalizedText.replace(/[\u0000-\u0008\u000e-\u001f\u007f-\u009f]/g, '');
+
+  const lines = normalizedText.split('\n');
 
   // ── Find the start of code ─────────────────────────────────────────────
   // Look for common code start markers (C preprocessor directives, or common
@@ -96,8 +107,10 @@ function extractCodeFromWordText(text) {
     }
   }
 
-  // If no code marker found, return full text
-  if (firstMatchIdx === -1) return text.trim();
+  // If no code marker found, throw an error to reject plain text
+  if (firstMatchIdx === -1) {
+    throw new Error('No programming code found in the Word document. Please ensure your document contains code starting with standard markers like #include, def, class, or import.');
+  }
 
   // Helper to check if a line looks like programming code
   const isCodeLikeLine = (line) => {
@@ -210,8 +223,7 @@ function extractCodeFromWordText(text) {
   }
 
   // Extract the code portion
-  const extracted = lines.slice(startLine, endLine + 1).join('\n').trim();
-  return extracted || text.trim();
+  return lines.slice(startLine, endLine + 1).join('\n').trim();
 }
 
 /**
@@ -281,6 +293,17 @@ export async function readUploadedFile(file) {
   if (content.charCodeAt(0) === 0xFEFF) {
     content = content.slice(1);
   }
+
+  // Normalize carriage returns, vertical tabs, soft breaks, and non-breaking spaces for all files
+  content = content
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\u000b/g, '\n')
+    .replace(/\v/g, '\n')
+    .replace(/\u00a0/g, ' '); // Non-breaking space to regular space
+
+  // Remove other hidden unprintable control characters (bell, backspace, null, etc.)
+  content = content.replace(/[\u0000-\u0008\u000e-\u001f\u007f-\u009f]/g, '');
 
   return {
     content: content,
