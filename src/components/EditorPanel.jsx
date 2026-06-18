@@ -1,5 +1,6 @@
 import { useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import { highlightC } from '../highlight.js';
+import { getAcceptString } from '../fileUploader.js';
 import styles from './EditorPanel.module.css';
 
 // ── Smart editor helpers ─────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ export default function EditorPanel({
   onTabAdd,
   onTabClose,
   onTabRename,
+  onFileUpload,
 }) {
   const textareaRef   = useRef(null);
   const preRef        = useRef(null);
@@ -76,6 +78,38 @@ export default function EditorPanel({
   // ── Tab rename state ──────────────────────────────────────────────────
   const [editingTabId, setEditingTabId] = useState(null);
   const [editingName,  setEditingName]  = useState('');
+
+  // ── Add-tab dropdown state ────────────────────────────────────────────
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const addMenuRef   = useRef(null);
+  const addBtnRef    = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showAddMenu) return;
+    const handleClick = (e) => {
+      if (
+        addMenuRef.current && !addMenuRef.current.contains(e.target) &&
+        addBtnRef.current  && !addBtnRef.current.contains(e.target)
+      ) {
+        setShowAddMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showAddMenu]);
+
+  // Handle file selection from the hidden <input>
+  const handleFileChange = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (file && onFileUpload) {
+      onFileUpload(file);
+    }
+    // Reset input so re-uploading the same file works
+    e.target.value = '';
+    setShowAddMenu(false);
+  }, [onFileUpload]);
 
   const startRename = useCallback((id, name, e) => {
     e?.stopPropagation();
@@ -424,16 +458,60 @@ export default function EditorPanel({
             );
           })}
 
-          {/* Add tab button */}
-          <button
-            className={styles.tabAdd}
-            onClick={onTabAdd}
-            title="New program"
-            tabIndex={-1}
-            aria-label="Add new program tab"
-          >
-            +
-          </button>
+          {/* Add tab dropdown button */}
+          <div style={{ position: 'relative', alignSelf: 'center', marginLeft: '6px' }}>
+            <button
+              ref={addBtnRef}
+              className={styles.tabAdd}
+              onClick={() => setShowAddMenu(prev => !prev)}
+              title="New tab or upload file"
+              tabIndex={-1}
+              aria-label="Add new tab or upload file"
+            >
+              +
+            </button>
+
+            {showAddMenu && (
+              <div ref={addMenuRef} className={styles.addMenu}>
+                <button
+                  className={styles.addMenuItem}
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M3 17h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                    <path d="M10 13V3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                    <path d="M6 7l4-4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Upload File
+                </button>
+                <button
+                  className={styles.addMenuItem}
+                  onClick={() => {
+                    onTabAdd?.();
+                    setShowAddMenu(false);
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M10 8v4M8 10h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  New Tab
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Hidden file input for uploads */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={getAcceptString()}
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+            aria-hidden="true"
+          />
         </div>
 
         {/* Right badge */}

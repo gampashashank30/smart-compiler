@@ -13,6 +13,7 @@ import { compilationHistoryStore } from './compilationHistory.js';
 import { STARTER_CODE, LANG_TO_C_PROMPT } from './constants.js';
 import { detectLanguage } from './languageDetector.js';
 import { callClaude, parseJSON } from './api.js';
+import { readUploadedFile } from './fileUploader.js';
 import styles from './App.module.css';
 
 // WebSocket URL — Vite proxies /ws → ws://localhost:3001 in dev
@@ -212,6 +213,20 @@ export default function App() {
     setTabs(prev => prev.map(t => t.id === id ? { ...t, name: name.trim() || t.name } : t));
   }, []);
 
+  // ── File upload handler ─────────────────────────────────────────────────────
+  const handleFileUpload = useCallback(async (file) => {
+    try {
+      const { content, filename } = await readUploadedFile(file);
+      const id = Date.now();
+      setTabs(prev => [...prev, { id, name: filename, code: content }]);
+      setActiveTabId(id);
+      dismissedCodeRef.current = null;
+      setShowLangPopup(false);
+    } catch (err) {
+      alert(err.message || 'Failed to read the file.');
+    }
+  }, []);
+
   // Vertical drag divider
   const onDividerMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -383,6 +398,7 @@ export default function App() {
             onTabAdd={handleTabAdd}
             onTabClose={handleTabClose}
             onTabRename={handleTabRename}
+            onFileUpload={handleFileUpload}
             onRun={handleRun}
             onKill={handleKill}
             onClear={handleClear}
