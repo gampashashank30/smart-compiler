@@ -68,7 +68,7 @@ function extractCodeFromWordText(text) {
 
   // ── Find the start of code ─────────────────────────────────────────────
   // Look for common code start markers (C preprocessor directives, or common
-  // patterns in other languages)
+  // patterns in other languages like Python, JS, Java, etc.)
   const codeStartPatterns = [
     /^\s*#\s*(include|define|pragma|ifndef|ifdef|if\b)/,  // C preprocessor
     /^\s*import\s+/,                                       // Java/Python/JS
@@ -77,39 +77,87 @@ function extractCodeFromWordText(text) {
     /^\s*using\s+/,                                        // C#
     /^\s*#!\//,                                            // Shebang
     /^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+/, // C type declarations
+    /^\s*def\s+\w+\s*\(/,                                  // Python function
+    /^\s*class\s+\w+/,                                     // Python/Java class
+    /^\s*print\s*\(/,                                      // Python print
+    /^\s*console\.log\s*\(/,                               // JS console.log
+    /^\s*function\s+\w+/,                                  // JS/TS function
   ];
 
-  let startLine = -1;
+  let firstMatchIdx = -1;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (codeStartPatterns.some(pat => pat.test(line))) {
-      startLine = i;
+      firstMatchIdx = i;
       break;
     }
   }
 
   // If no code marker found, return full text
-  if (startLine === -1) return text.trim();
+  if (firstMatchIdx === -1) return text.trim();
 
-  // ── Find the end of code ───────────────────────────────────────────────
-  // Look for the last closing brace '}' in the text
-  let endLine = lines.length - 1;
-  for (let i = lines.length - 1; i >= startLine; i--) {
-    if (lines[i].includes('}')) {
-      endLine = i;
+  // Walk backwards to include comments, variable assignments, or empty lines
+  // preceding the first matched code pattern, but stop at text headers.
+  let startLine = firstMatchIdx;
+  const isCodeLikeLine = (line) => {
+    const trimmed = line.trim();
+    if (trimmed === '') return true;
+    if (trimmed.startsWith('#') || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.endsWith('*/')) return true;
+    if (/^[a-zA-Z_]\w*\s*=\s*/.test(trimmed)) return true;
+    if (/^(def|class|import|from|print|return|if|else|elif|for|while|try|except|with|as|pass|break|continue)\b/.test(trimmed)) return true;
+    if (trimmed.endsWith(';') || trimmed.endsWith('{') || trimmed.endsWith('}') || trimmed.endsWith(':')) return true;
+    return false;
+  };
+
+  for (let i = firstMatchIdx - 1; i >= 0; i--) {
+    if (isCodeLikeLine(lines[i])) {
+      startLine = i;
+    } else {
       break;
     }
   }
 
-  // Also handle Python/scripting that don't use braces —
-  // if start was found but no brace, find last non-empty line
-  if (endLine === lines.length - 1) {
-    for (let i = lines.length - 1; i >= startLine; i--) {
+  // ── Find the end of code ───────────────────────────────────────────────
+  // Look for common headers indicating the start of the output/discussion section
+  const outputStartPatterns = [
+    /^\s*Output\s*:/i,
+    /^\s*Expected\s+Output/i,
+    /^\s*Screenshot/i,
+    /^\s*Screen\s*shot/i,
+    /^\s*Result\s*:/i,
+    /^\s*Explanation\s*:/i,
+    /^\s*Sample\s+Run/i,
+  ];
+
+  let endLine = lines.length - 1;
+  for (let i = startLine; i < lines.length; i++) {
+    const line = lines[i];
+    if (outputStartPatterns.some(pat => pat.test(line))) {
+      endLine = i - 1;
+      break;
+    }
+  }
+
+  // Look for the last closing brace '}' within the determined code range
+  let foundBrace = false;
+  for (let i = endLine; i >= startLine; i--) {
+    if (lines[i].includes('}')) {
+      endLine = i;
+      foundBrace = true;
+      break;
+    }
+  }
+
+  // If no brace was found (e.g. Python/scripting), find the last non-empty line
+  if (!foundBrace) {
+    let lastNonEmpty = endLine;
+    for (let i = endLine; i >= startLine; i--) {
       if (lines[i].trim().length > 0) {
-        endLine = i;
+        lastNonEmpty = i;
         break;
       }
     }
+    endLine = lastNonEmpty;
   }
 
   // Extract the code portion
