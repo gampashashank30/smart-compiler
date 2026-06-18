@@ -82,20 +82,23 @@ function extractCodeFromWordText(text) {
   // patterns in other languages like Python, JS, Java, etc.)
   const codeStartPatterns = [
     /^\s*#\s*(include|define|pragma|ifndef|ifdef|if\b)/,  // C preprocessor
-    /^\s*import\s+/,                                       // Java/Python/JS
-    /^\s*from\s+\S+\s+import/,                             // Python
-    /^\s*package\s+/,                                      // Java/Go
-    /^\s*using\s+/,                                        // C#
+    /^\s*import\s+(?!means\b|is\b|brings\b|refers\b|to\b|your\b|knowledge\b|records\b)[A-Za-z_{]/, // Java/Python/JS import
+    /^\s*from\s+(?!\d)\S+\s+import/,                       // Python from ... import
+    /^\s*package\s+(?!means\b|is\b|refers\b|discipline\b)[a-zA-Z_]/, // Java/Go package
+    /^\s*using\s+(?!means\b|is\b|refers\b)[a-zA-Z_]/,      // C# using
     /^\s*#!\//,                                            // Shebang
-    /^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+/, // C type declarations
+    /^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+(?!means\b|is\b|stands\b|refers\b|speaking\b)[a-zA-Z_]/, // C type declarations
     /^\s*def\s+\w+\s*\(/,                                  // Python function
-    /^\s*class\s+\w+/,                                     // Python/Java class
+    /^\s*class\s+[A-Za-z_]\w*\s*(?:[:{(]|\bextends\b|\bimplements\b)/, // Python/Java class definition
     /^\s*print\s*\(/,                                      // Python print
+    /^\s*printf\s*\(/,                                     // C printf
+    /^\s*System\.out\.(print|println|printf)\s*\(/,        // Java print
     /^\s*console\.log\s*\(/,                               // JS console.log
     /^\s*function\s+\w+/,                                  // JS/TS function
     /\binput\s*\(/,                                        // Python input()
     /\bstd::/,                                             // C++ std
     /^\s*for\s+\w+\s+in\s+/,                               // Python for loop
+    /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\s+(?!means\b|is\b|your\b|the\b|a\b)[A-Za-z_*]/i, // SQL
   ];
 
   let firstMatchIdx = -1;
