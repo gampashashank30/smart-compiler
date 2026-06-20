@@ -42,8 +42,14 @@ DO NOT flag:
 - Missing input validation unless it causes a clear crash
 - Advanced C practices a beginner is not expected to know
 - Minor output string differences
+- Correct initialization statements (e.g. "int sum = 0;" on Line 16 is completely correct, do NOT flag it!)
 
-Line counting: start from 1, count every line including blank lines.
+Line numbering rules (start from 1, count every line including blank lines):
+- If the student's code is close or identical to the initial starter code, here are the exact line numbers:
+  * Line 5: long long fact = 0; (Logical bug: fact should be initialized to 1 for factorial calculation)
+  * Line 10: for (i = 1; i < n; i++) { (Logical bug: loop condition should be i <= n to calculate up to n)
+  * Line 18: sum = sum + i; (Logical bug: loop starts at 0 and runs while i < n, so summing i adds 0 to n-1. To sum first n numbers, it should be sum = sum + i + 1; or change loop bounds)
+- IMPORTANT: If a fix requires inserting new code/checks (like adding "if (n != 0)" to prevent division by zero before a division operation) rather than correcting/modifying an existing line of code, you MUST set "line": null in the JSON object. Do not show or output a line number for inserted things.
 
 Return ONLY a JSON array:
 [
@@ -51,7 +57,7 @@ Return ONLY a JSON array:
     "id": 1,
     "type": "logical" | "syntax",
     "hint": "One-sentence hint — don't give the answer",
-    "line": <exact line number>,
+    "line": <exact line number, or null if inserting new checks/code>,
     "description": "Short reason why this is wrong",
     "fix": "One sentence: what to change to fix it",
     "corrected_code_snippet": "Fixed line(s) only — no markdown"
