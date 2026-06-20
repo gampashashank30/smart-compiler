@@ -1142,10 +1142,13 @@ function TutorCodeEditor({ code, onChange }) {
     const ta = textareaRef.current;
     if (!ta) return;
     if (preRef.current) {
-      preRef.current.scrollTop = ta.scrollTop;
+      preRef.current.scrollTop  = ta.scrollTop;
       preRef.current.scrollLeft = ta.scrollLeft;
     }
     if (gutterRef.current) {
+      // Gutter scrolls by the same amount as the textarea.
+      // The gutter's first line has 16px padding-top to align with the
+      // code wrapper's 16px padding-top, so straight scrollTop sync works.
       gutterRef.current.scrollTop = ta.scrollTop;
     }
   }, []);

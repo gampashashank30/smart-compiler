@@ -813,21 +813,34 @@
 .tutorGutter {
   width: 48px;
   flex-shrink: 0;
-  overflow: hidden;
-  padding-top: 16px;
-  padding-bottom: 16px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-top: 0;
+  padding-bottom: 0;
   background: #0d1117;
   border-right: 1px solid #161b22;
   user-select: none;
 }
 
+.tutorGutter::-webkit-scrollbar {
+  display: none;
+}
+
 .tutorLineNum {
-  font-size: 12.5px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
   line-height: 1.6;
   color: #3d444d;
   text-align: right;
   padding-right: 12px;
   white-space: nowrap;
+  /* First line needs to clear the top padding of the code area */
+}
+
+.tutorLineNum:first-child {
+  padding-top: 16px;
 }
 
 .tutorCodeWrapper {
