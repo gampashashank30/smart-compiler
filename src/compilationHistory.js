@@ -18,7 +18,14 @@
  */
 
 const STORAGE_KEY = 'sc_compilation_history';
-const MAX_ENTRIES = 100; // keep last 100 entries
+
+/**
+ * Maximum local entries to keep in localStorage.
+ * When PostgreSQL is integrated, entries beyond this cap will be
+ * stored exclusively in the database — not in localStorage.
+ * Exported so the UI can display the limit.
+ */
+export const MAX_ENTRIES = 50;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

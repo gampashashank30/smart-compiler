@@ -253,13 +253,11 @@ ${codeText}
         <div className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <div className={styles.sidebarTitle}>
-              <span className={styles.sidebarTitleIcon}>🎓</span>
               <span>AI Study Tutor</span>
             </div>
             
             {/* Search */}
             <div className={styles.searchBar}>
-              <span className={styles.searchIcon}>🔍</span>
               <input 
                 type="text" 
                 placeholder="Search concepts..." 
@@ -309,10 +307,8 @@ ${codeText}
                     key={topic.id}
                     className={`${styles.topicCard} ${isActive ? styles.topicCardActive : ''}`}
                     onClick={() => selectTopic(topic.id)}
+                    style={{ borderLeft: `4px solid ${lvlColor}` }}
                   >
-                    <div className={styles.topicIcon} style={{ borderLeft: `4px solid ${lvlColor}` }}>
-                      {topic.icon || '📝'}
-                    </div>
                     <div className={styles.topicMeta}>
                       <div className={styles.topicTitle}>{topic.title}</div>
                       <div className={styles.topicSub}>
@@ -393,12 +389,12 @@ ${codeText}
                 {/* Left Side: Summary & Explanation */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>📖 What is it?</h2>
+                    <h2 className={styles.cardTitle}>What is it?</h2>
                     <p className={styles.whatIsItText}>{currentTopic.concept.whatIsIt}</p>
                   </div>
 
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>⚙️ How it works</h2>
+                    <h2 className={styles.cardTitle}>How it works</h2>
                     <div className={styles.howItWorksList}>
                       {currentTopic.concept.howItWorks.map((step, idx) => (
                         <div key={idx} className={styles.howItWorksItem}>
@@ -413,7 +409,7 @@ ${codeText}
                   </div>
 
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>💡 Real-world Analogy</h2>
+                    <h2 className={styles.cardTitle}>Real-world Analogy</h2>
                     <p className={styles.whatIsItText} style={{ fontStyle: 'italic', color: '#4f46e5' }}>
                       "{currentTopic.concept.realWorldExample}"
                     </p>
@@ -424,13 +420,13 @@ ${codeText}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {/* Visual Diagram */}
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>🖼️ Visual Architecture</h2>
+                    <h2 className={styles.cardTitle}>Visual Architecture</h2>
                     <TutorDiagram type={currentTopic.id} />
                   </div>
 
                   {/* Key Terms Grid */}
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>🔑 Key Vocabulary</h2>
+                    <h2 className={styles.cardTitle}>Key Vocabulary</h2>
                     <div className={styles.keyTermsGrid}>
                       {currentTopic.concept.keyTerms.slice(0, 4).map((term, idx) => (
                         <div key={idx} className={styles.termCard}>
@@ -443,7 +439,7 @@ ${codeText}
 
                   {/* Common Mistakes */}
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>⚠️ Common Pitfalls</h2>
+                    <h2 className={styles.cardTitle}>Common Pitfalls</h2>
                     <div className={styles.mistakesList}>
                       {currentTopic.concept.commonMistakes.map((mistake, idx) => (
                         <div key={idx} className={styles.mistakeItem}>
@@ -456,7 +452,7 @@ ${codeText}
 
                   {/* Complexity Stats */}
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>📊 Computational Cost</h2>
+                    <h2 className={styles.cardTitle}>Computational Cost</h2>
                     <div className={styles.metaGrid}>
                       <div className={styles.metaBox}>
                         <div className={styles.metaLabel}>Time Complexity</div>
@@ -654,7 +650,7 @@ ${codeText}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div className={styles.card} style={{ textAlign: 'center', padding: '36px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
                           <div style={{ fontSize: '48px', animation: 'bounce 1.5s infinite' }}>
-                            {score === total ? '🏆' : (score >= total * 0.6 ? '🌟' : '📚')}
+                            {score === total ? '★' : (score >= total * 0.6 ? '◆' : '○')}
                           </div>
                           
                           <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: 0 }}>
@@ -711,7 +707,7 @@ ${codeText}
                             borderRadius: '9999px',
                             animation: 'pulse 2s infinite ease-in-out'
                           }}>
-                            <span>👇 Scroll down to review detailed questions and explanations</span>
+                            <span>Scroll down to review detailed questions and explanations</span>
                           </div>
 
                           <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '8px' }}>
@@ -824,7 +820,7 @@ ${codeText}
             {step === 3 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', width: '100%', margin: '0 auto' }}>
                 <div className={styles.card}>
-                  <h2 className={styles.cardTitle}>📐 Describe Your Logic</h2>
+                  <h2 className={styles.cardTitle}>Describe Your Logic</h2>
                   <p className={styles.whatIsItText} style={{ marginBottom: '16px' }}>
                     Describe your algorithm, pseudocode, or step-by-step approach to solve the <strong>{currentTopic.title}</strong> challenge. 
                     AI will verify if your logic checks out before you begin coding.
@@ -858,7 +854,7 @@ ${codeText}
                 {logicResult && (
                   <div className={`${styles.validationBox} ${logicResult.correct ? styles.validationSuccess : styles.validationFailure}`}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      {logicResult.correct ? '🎉 Logic Approved!' : '💡 Logic Review Needed'}
+                      {logicResult.correct ? 'Logic Approved!' : 'Logic Review Needed'}
                     </h3>
                     <p style={{ fontSize: '13.5px', lineHeight: '1.5' }}>{logicResult.feedback}</p>
                     
@@ -944,7 +940,7 @@ ${codeText}
                 </div>
 
                 <div className={styles.card}>
-                  <h2 className={styles.cardTitle}>💻 Implement in C</h2>
+                  <h2 className={styles.cardTitle}>Implement in C</h2>
                   <p className={styles.whatIsItText} style={{ marginBottom: '16px' }}>
                     Now, write the C code to implement the logic for <strong>{currentTopic.title}</strong>. 
                     You can run the code against mock inputs, and submit it for AI verification when complete.
@@ -982,7 +978,7 @@ ${codeText}
                 {codeResult && (
                   <div className={`${styles.validationBox} ${codeResult.correct ? styles.validationSuccess : styles.validationFailure}`}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      {codeResult.correct ? '🎉 Code Verified!' : '💡 Verification Feedback'}
+                      {codeResult.correct ? 'Code Verified!' : 'Verification Feedback'}
                     </h3>
                     <p style={{ fontSize: '13.5px', lineHeight: '1.5' }}>{codeResult.feedback}</p>
 
@@ -1023,7 +1019,7 @@ ${codeText}
                               }, 500);
                             }}
                           >
-                            💡 Generate Full Solution
+                            Generate Full Solution
                           </button>
                         ) : null}
                       </div>
@@ -1034,7 +1030,7 @@ ${codeText}
                 {/* Reference Solution display card */}
                 {showSolution && !isGeneratingSolution && (
                   <div className={styles.card} style={{ border: '1.5px solid #cbd5e1', background: '#f8fafc' }}>
-                    <h3 className={styles.cardTitle} style={{ color: '#1e293b' }}>🔑 Reference Solution</h3>
+                    <h3 className={styles.cardTitle} style={{ color: '#1e293b' }}>Reference Solution</h3>
                     <p className={styles.whatIsItText} style={{ fontSize: '13px', color: '#475569', marginBottom: '12px' }}>
                       Here is the correct solution for <strong>{currentTopic.title}</strong>. You can review the structure and comments below.
                     </p>
@@ -1102,7 +1098,7 @@ ${codeText}
           {showCompletionModal && (
             <div className={styles.completionOverlay}>
               <div className={styles.completionCard}>
-                <div className={styles.completionEmoji}>🏆</div>
+                <div className={styles.completionEmoji}>★</div>
                 <h2 className={styles.completionTitle}>Concept Mastered!</h2>
                 <p className={styles.completionDesc}>
                   Incredible job! You have fully completed the <strong>{currentTopic.title}</strong> module. 

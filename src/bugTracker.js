@@ -175,6 +175,14 @@ export const TIPS = {
 // ─── Storage adapters (swap these for Supabase later) ───────────────────────
 const STORAGE_KEY = 'sc_bug_tracker_v1';
 
+/**
+ * Maximum events kept locally in sessionStorage.
+ * When PostgreSQL is integrated, events beyond this cap will be
+ * stored exclusively in the database — not in sessionStorage.
+ * Exported so the Analytics panel can display the limit.
+ */
+export const MAX_SESSIONS = 50;
+
 function _hydrate() {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -214,7 +222,9 @@ export const bugTrackerStore = {
       lineHint:  event.lineHint ?? null,
       stderr:    event.stderr   ?? '',
     };
-    this.sessions = [...this.sessions, entry];
+    // Keep only the most-recent MAX_SESSIONS entries.
+    // Older entries will move to the PostgreSQL database once integrated.
+    this.sessions = [...this.sessions, entry].slice(-MAX_SESSIONS);
     _persist(this.sessions);
     this._notify();
   },

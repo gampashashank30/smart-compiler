@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { bugTrackerStore, ERROR_TYPES, TIPS } from '../bugTracker.js';
+import { bugTrackerStore, ERROR_TYPES, TIPS, MAX_SESSIONS } from '../bugTracker.js';
 import styles from './BugTrackerPanel.module.css';
 
 // ─── Donut chart (pure SVG, no libs) ─────────────────────────────────────────
@@ -392,6 +392,22 @@ export default function BugTrackerPanel({ onClose }) {
             Bug Tracker
           </div>
           <div className={styles.headerActions}>
+            {hasData && (
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  color: totalRuns >= MAX_SESSIONS ? '#f59e0b' : '#94a3b8',
+                  fontVariantNumeric: 'tabular-nums',
+                  marginRight: 4,
+                }}
+                title={totalRuns >= MAX_SESSIONS
+                  ? 'Local event limit reached — older events will be archived to PostgreSQL once the database is integrated'
+                  : `Tracking last ${MAX_SESSIONS} events locally`
+                }
+              >
+                {totalRuns >= MAX_SESSIONS ? '⚠ ' : ''}{totalRuns} / {MAX_SESSIONS}
+              </span>
+            )}
             <button className={styles.resetBtn} onClick={handleReset} id="bug-tracker-reset">
               Reset Analytics
             </button>

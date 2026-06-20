@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { compilationHistoryStore } from '../compilationHistory.js';
+import { compilationHistoryStore, MAX_ENTRIES } from '../compilationHistory.js';
 import styles from './CompilationHistoryPanel.module.css';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -387,8 +387,8 @@ function KebabMenu({ entryId, code, onDelete, onMaximize }) {
   useEffect(() => {
     if (!open) return;
     const h = () => setOpen(false);
-    window.addEventListener('click', h, { capture: true });
-    return () => window.removeEventListener('click', h, { capture: true });
+    window.addEventListener('click', h);
+    return () => window.removeEventListener('click', h);
   }, [open]);
 
   return (
@@ -407,6 +407,14 @@ function KebabMenu({ entryId, code, onDelete, onMaximize }) {
       </button>
       {open && (
         <div className={styles.menuDropdown} onClick={e => e.stopPropagation()}>
+          <button className={styles.menuItem} onClick={() => { onMaximize(); setOpen(false); }}>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M1.5 8.5v5a1 1 0 001 1h5M14.5 7.5v-5a1 1 0 00-1-1h-5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 6l4.5-4.5M14 5V1h-4M6 10l-4.5 4.5M2 11v4h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            View Details
+          </button>
+          <div className={styles.menuDivider} />
           <button className={styles.menuItem} onClick={handleCopy}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <rect x="5" y="5" width="9" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
@@ -455,6 +463,19 @@ function HistoryCard({ entry, onLoadInEditor, onDelete }) {
               </svg>
               {formatDate(entry.timestamp)}
             </span>
+
+            {/* Expand details button */}
+            <button
+              className={styles.expandBtn}
+              onClick={() => setMaximized(true)}
+              title="Expand Details"
+              aria-label="Expand Details"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M1.5 8.5v5a1 1 0 001 1h5M14.5 7.5v-5a1 1 0 00-1-1h-5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M10 6l4.5-4.5M14 5V1h-4M6 10l-4.5 4.5M2 11v4h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
 
             {/* Kebab */}
             <KebabMenu
@@ -739,14 +760,22 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
 
         {/* ── Footer ─────────────────────────────────────── */}
         {entries.length > 0 && (
-          <div className={styles.panelFooter}>
+        <div className={styles.panelFooter}>
             <span className={styles.footerDot} style={{ background: '#10b981' }} />
             <span className={styles.footerText}>{successCount} passed</span>
             <span className={styles.footerSep}>·</span>
             <span className={styles.footerDot} style={{ background: '#ef4444' }} />
             <span className={styles.footerText}>{errorCount} failed</span>
             <span className={styles.footerSep}>·</span>
-            <span className={styles.footerText}>{entries.length} total</span>
+            <span className={styles.footerText}>{entries.length} / {MAX_ENTRIES} stored</span>
+            {entries.length >= MAX_ENTRIES && (
+              <>
+                <span className={styles.footerSep}>·</span>
+                <span className={styles.footerText} title="Older runs will be archived to PostgreSQL once the database is integrated" style={{ color: '#f59e0b', fontSize: '0.7rem' }}>
+                  ⚠ Limit reached — older runs go to DB
+                </span>
+              </>
+            )}
           </div>
         )}
       </aside>

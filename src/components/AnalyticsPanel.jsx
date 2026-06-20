@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { bugTrackerStore, ERROR_TYPES, TIPS } from '../bugTracker.js';
+import { bugTrackerStore, ERROR_TYPES, TIPS, MAX_SESSIONS } from '../bugTracker.js';
 import styles from './AnalyticsPanel.module.css';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -853,14 +853,30 @@ export default function AnalyticsPanel({ onClose }) {
           </div>
           <div className={styles.headerActions}>
             {stats.totalRuns > 0 && (
-              <button
-                className={styles.clearBtn}
-                onClick={() => { bugTrackerStore.reset(); }}
-                id="analytics-clear-btn"
-                title="Clear all analytics data"
-              >
-                Clear Data
-              </button>
+              <>
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    color: sessions.length >= MAX_SESSIONS ? '#f59e0b' : '#94a3b8',
+                    fontVariantNumeric: 'tabular-nums',
+                    marginRight: 4,
+                  }}
+                  title={sessions.length >= MAX_SESSIONS
+                    ? 'Local limit reached — older events will be archived to PostgreSQL once the database is integrated'
+                    : `Tracking last ${MAX_SESSIONS} events locally`
+                  }
+                >
+                  {sessions.length >= MAX_SESSIONS ? '⚠ ' : ''}{sessions.length} / {MAX_SESSIONS}
+                </span>
+                <button
+                  className={styles.clearBtn}
+                  onClick={() => { bugTrackerStore.reset(); }}
+                  id="analytics-clear-btn"
+                  title="Clear all analytics data"
+                >
+                  Clear Data
+                </button>
+              </>
             )}
             <button
               className={styles.closeBtn}
