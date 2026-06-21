@@ -25,6 +25,9 @@
 .popup {
   pointer-events: all;
   width: 360px;
+  max-height: calc(100vh - 96px); /* stay within viewport */
+  display: flex;
+  flex-direction: column;
   background: #ffffff;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
@@ -66,6 +69,7 @@
   justify-content: space-between;
   padding: 14px 18px 10px;
   border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
 }
 
 .headerLeft {
@@ -128,6 +132,24 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;           /* scroll when content overflows */
+  min-height: 0;              /* allow flex shrink */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.body::-webkit-scrollbar {
+  width: 5px;
+}
+.body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* ─── Language hero row ─────────────────────────────────────── */
@@ -477,6 +499,7 @@
   padding: 14px 18px 18px;
   background: #f8fafc;
   border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;             /* never collapse action buttons */
 }
 
 .wrongBtn {

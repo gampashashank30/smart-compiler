@@ -309,6 +309,7 @@ ${codeText}
                     onClick={() => selectTopic(topic.id)}
                     style={{ borderLeft: `4px solid ${lvlColor}` }}
                   >
+                    {topic.icon && <span className={styles.topicIcon}>{topic.icon}</span>}
                     <div className={styles.topicMeta}>
                       <div className={styles.topicTitle}>{topic.title}</div>
                       <div className={styles.topicSub}>
@@ -340,7 +341,10 @@ ${codeText}
               >
                 Level {currentTopic.levelNum} • {currentTopic.category}
               </span>
-              <h1 className={styles.headerTitle}>{currentTopic.title}</h1>
+              <h1 className={styles.headerTitle}>
+                {currentTopic.icon && <span className={styles.headerIcon}>{currentTopic.icon}</span>}
+                {currentTopic.title}
+              </h1>
             </div>
             <button className={styles.closeButton} onClick={onClose}>✕</button>
           </div>

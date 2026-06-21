@@ -244,6 +244,14 @@
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.03em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerIcon {
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
 .closeButton {
