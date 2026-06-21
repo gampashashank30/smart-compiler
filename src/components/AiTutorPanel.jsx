@@ -44,6 +44,7 @@ export default function AiTutorPanel({ onClose }) {
   const [codeResult, setCodeResult] = useState(null); // { correct, feedback, issues }
   const [showSolution, setShowSolution] = useState(false);
   const [isGeneratingSolution, setIsGeneratingSolution] = useState(false);
+  const [langWarning, setLangWarning] = useState(null); // non-null = detected language string
 
   // Completed Topics (tracked in memory since no localStorage requirement)
   const [completedTopics, setCompletedTopics] = useState(new Set());
@@ -164,8 +165,33 @@ ${logicText}
     }
   };
 
+  // ── C-language detector ──────────────────────────────────────────
+  // Returns the detected language name if clearly non-C, otherwise null.
+  const detectNonC = (code) => {
+    const stripped = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''); // remove comments
+    const lines = stripped.split('\n').map(l => l.trim()).filter(Boolean);
+    // Python
+    if (/^def \w+\s*\(/.test(stripped) || /^import \w/.test(stripped) || /^from \w+ import/.test(stripped) ||
+        /^elif /.test(stripped) || /\bprint\s*\(/.test(stripped) && !/printf/.test(stripped)) return 'Python';
+    // JavaScript / TypeScript
+    if (/\bconsole\.log\s*\(/.test(stripped) || /^(const|let|var) \w+ =/.test(stripped) ||
+        /=>/.test(stripped) || /\bfetch\s*\(/.test(stripped)) return 'JavaScript';
+    // Java
+    if (/\bpublic\s+class\s+\w+/.test(stripped) || /System\.out\.print/.test(stripped) ||
+        /\bpublic\s+static\s+void\s+main/.test(stripped)) return 'Java';
+    // Python (extra)
+    if (/^for \w+ in /.test(stripped) || lines.some(l => l.endsWith(':') && !l.includes('//') && !l.includes(';'))) return 'Python';
+    return null;
+  };
+
   // Step 4 Run Code call
   const handleRunCode = async () => {
+    const detected = detectNonC(codeText);
+    if (detected) {
+      setLangWarning(detected);
+      return;
+    }
+    setLangWarning(null);
     setIsRunningCode(true);
     setTerminalOutput('Compiling and executing code...');
 
@@ -189,6 +215,12 @@ ${logicText}
 
   // Step 4 Code validation call
   const handleVerifyCode = async () => {
+    const detected = detectNonC(codeText);
+    if (detected) {
+      setLangWarning(detected);
+      return;
+    }
+    setLangWarning(null);
     setIsValidatingCode(true);
     setCodeResult(null);
 
@@ -443,7 +475,7 @@ ${codeText}
 
                   {/* Common Mistakes */}
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>Common Pitfalls</h2>
+                    <h2 className={styles.cardTitle}>Common Mistakes</h2>
                     <div className={styles.mistakesList}>
                       {currentTopic.concept.commonMistakes.map((mistake, idx) => (
                         <div key={idx} className={styles.mistakeItem}>
@@ -456,7 +488,7 @@ ${codeText}
 
                   {/* Complexity Stats */}
                   <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>Computational Cost</h2>
+                    <h2 className={styles.cardTitle}>Complexities</h2>
                     <div className={styles.metaGrid}>
                       <div className={styles.metaBox}>
                         <div className={styles.metaLabel}>Time Complexity</div>
@@ -904,25 +936,63 @@ ${codeText}
             {/* STEP 4: CODE SOLUTION */}
             {step === 4 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* Mock Terminal output */}
-                <div className={styles.terminalCard}>
-                  <div className={styles.terminalHeader}>
-                    <span className={styles.terminalDot} style={{ backgroundColor: '#ef4444' }} />
-                    <span className={styles.terminalDot} style={{ backgroundColor: '#f59e0b' }} />
-                    <span className={styles.terminalDot} style={{ backgroundColor: '#10b981' }} />
-                    <span style={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'JetBrains Mono', marginLeft: '8px' }}>Terminal Output</span>
-                  </div>
-                  <div className={styles.terminalOutput}>
-                    {terminalOutput || 'SmartCompiler Terminal v1.0.0\nPress "Run Code" to compile and execute your program.'}
-                  </div>
-                  {/* Integrated Stdin row directly below terminal output */}
+                <div className={styles.card}>
+                  <h2 className={styles.cardTitle}>Implement in C</h2>
+                  <p className={styles.whatIsItText} style={{ marginBottom: '16px' }}>
+                    Write your C solution for <strong>{currentTopic.title}</strong>.
+                    Run it against inputs, then verify with AI. Need help? Use <strong>Give Full Solution</strong> below.
+                  </p>
+
+                  <TutorCodeEditor
+                    code={codeText}
+                    onChange={(v) => { setCodeText(v); setLangWarning(null); }}
+                  />
+
+                  {/* Language warning banner */}
+                  {langWarning && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      background: '#fff7ed',
+                      border: '1.5px solid #fb923c',
+                      borderLeft: '4px solid #ea580c',
+                      borderRadius: '10px',
+                      padding: '14px 16px',
+                      marginTop: '12px',
+                      animation: 'slideInUp 250ms ease'
+                    }}>
+                      <span style={{ fontSize: '20px', lineHeight: 1 }}>⚠️</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: '13.5px', color: '#9a3412', marginBottom: '4px' }}>
+                          {langWarning} code detected — please write C only!
+                        </div>
+                        <div style={{ fontSize: '12.5px', color: '#c2410c', lineHeight: 1.45 }}>
+                          This is a C programming course. Your editor must contain valid C code (using <code style={{ fontFamily: 'JetBrains Mono, monospace', background: '#fed7aa', padding: '1px 4px', borderRadius: '4px' }}>#include</code>, <code style={{ fontFamily: 'JetBrains Mono, monospace', background: '#fed7aa', padding: '1px 4px', borderRadius: '4px' }}>int main()</code>, etc.).
+                          Please rewrite your solution in C before running or verifying.
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setLangWarning(null)}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: '#9a3412', fontSize: '16px', lineHeight: 1, padding: '0 2px',
+                          flexShrink: 0
+                        }}
+                        title="Dismiss warning"
+                      >✕</button>
+                    </div>
+                  )}
+
+                  {/* Stdin row */}
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     background: '#090d16',
-                    borderTop: '1px solid #1e293b',
+                    borderRadius: '8px',
                     padding: '10px 16px',
-                    gap: '8px'
+                    gap: '8px',
+                    marginTop: '12px'
                   }}>
                     <span style={{ color: '#6366f1', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 'bold' }}>stdin &gt;</span>
                     <input
@@ -941,26 +1011,14 @@ ${codeText}
                       onChange={e => setStdinText(e.target.value)}
                     />
                   </div>
-                </div>
 
-                <div className={styles.card}>
-                  <h2 className={styles.cardTitle}>Implement in C</h2>
-                  <p className={styles.whatIsItText} style={{ marginBottom: '16px' }}>
-                    Now, write the C code to implement the logic for <strong>{currentTopic.title}</strong>. 
-                    You can run the code against mock inputs, and submit it for AI verification when complete.
-                  </p>
-
-                  <TutorCodeEditor
-                    code={codeText}
-                    onChange={setCodeText}
-                  />
-
+                  {/* Primary action row */}
                   <div className={styles.actionRow}>
                     <button
                       className={`${styles.secondaryButton} ${isRunningCode ? styles.buttonDisabled : ''}`}
                       onClick={handleRunCode}
                     >
-                      {isRunningCode ? 'Running...' : 'Run Code'}
+                      {isRunningCode ? 'Running...' : '▶ Run Code'}
                     </button>
                     <button
                       className={`${styles.primaryButton} ${isValidatingCode ? styles.buttonDisabled : ''}`}
@@ -976,7 +1034,60 @@ ${codeText}
                       )}
                     </button>
                   </div>
+
+                  {/* Give Full Solution row */}
+                  <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                    {isGeneratingSolution ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6366f1' }}>
+                        <div className={styles.loadingSpinner} style={{ borderTopColor: '#6366f1', width: '14px', height: '14px', borderWidth: '2px' }} />
+                        Loading solution...
+                      </div>
+                    ) : !showSolution ? (
+                      <button
+                        className={styles.secondaryButton}
+                        style={{
+                          border: '1.5px dashed #6366f1',
+                          color: '#4f46e5',
+                          background: '#f5f3ff',
+                          fontSize: '13px',
+                          padding: '9px 18px'
+                        }}
+                        onClick={() => {
+                          setIsGeneratingSolution(true);
+                          setTimeout(() => {
+                            setIsGeneratingSolution(false);
+                            setShowSolution(true);
+                          }, 600);
+                        }}
+                      >
+                        💡 Give Full Solution
+                      </button>
+                    ) : (
+                      <button
+                        className={styles.secondaryButton}
+                        style={{ fontSize: '13px', padding: '9px 18px' }}
+                        onClick={() => setShowSolution(false)}
+                      >
+                        Hide Solution
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Terminal output — shown after Run Code or when there is output */}
+                {terminalOutput && (
+                  <div className={styles.terminalCard}>
+                    <div className={styles.terminalHeader}>
+                      <span className={styles.terminalDot} style={{ backgroundColor: '#ef4444' }} />
+                      <span className={styles.terminalDot} style={{ backgroundColor: '#f59e0b' }} />
+                      <span className={styles.terminalDot} style={{ backgroundColor: '#10b981' }} />
+                      <span style={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'JetBrains Mono', marginLeft: '8px' }}>Terminal Output</span>
+                    </div>
+                    <div className={styles.terminalOutput}>
+                      {terminalOutput}
+                    </div>
+                  </div>
+                )}
 
                 {/* AI verification response */}
                 {codeResult && (
@@ -999,33 +1110,10 @@ ${codeText}
                       </div>
                     )}
 
-                    {/* Generate Full Solution section (shown when solution is incorrect) */}
+                    {/* Tip: full solution button is above the editor */}
                     {!codeResult.correct && (
-                      <div style={{ marginTop: '16px' }}>
-                        {isGeneratingSolution ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#991b1b', fontSize: '13.5px' }}>
-                            <div className={styles.loadingSpinner} style={{ borderTopColor: '#ef4444' }} />
-                            <span>Generating reference solution...</span>
-                          </div>
-                        ) : !showSolution ? (
-                          <button
-                            className={styles.secondaryButton}
-                            style={{
-                              border: '1.5px dashed #ef4444',
-                              color: '#b91c1c',
-                              background: '#fff5f5'
-                            }}
-                            onClick={() => {
-                              setIsGeneratingSolution(true);
-                              setTimeout(() => {
-                                setIsGeneratingSolution(false);
-                                setShowSolution(true);
-                              }, 500);
-                            }}
-                          >
-                            Generate Full Solution
-                          </button>
-                        ) : null}
+                      <div style={{ marginTop: '12px', fontSize: '12.5px', color: '#9a3412', background: 'rgba(239,68,68,0.05)', border: '1px dashed #ef4444', borderRadius: '6px', padding: '10px 12px' }}>
+                        <strong>Tip:</strong> Use the <strong>💡 Give Full Solution</strong> button above the editor to reveal the reference answer.
                       </div>
                     )}
                   </div>
