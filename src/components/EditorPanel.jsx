@@ -542,11 +542,13 @@ export default function EditorPanel({
       {/* ── Editor body ──────────────────────────────────────────────────── */}
       <div className={styles.editorBody}>
 
-        {/* Line numbers gutter */}
+        {/* Line numbers gutter — rendered as a single text block to match
+             the textarea's continuous text rendering and prevent sub-pixel
+             rounding drift that occurs with individual div elements */}
         <div className={styles.gutter} ref={gutterRef} aria-hidden="true">
-          {Array.from({ length: lineCount }, (_, idx) => (
-            <div key={idx} className={styles.lineNum}>{idx + 1}</div>
-          ))}
+          <pre className={styles.lineNumbers}>
+            {Array.from({ length: lineCount }, (_, idx) => idx + 1).join('\n')}
+          </pre>
         </div>
 
         {/* Code overlay: pre (highlight layer) + textarea (input layer) */}

@@ -284,14 +284,21 @@
   user-select: none;
 }
 
-.lineNum {
-  font-size: 13px;
+/* Single pre element for line numbers — MUST mirror .highlight/.textarea
+   font properties exactly so both text blocks share identical per-line
+   pixel heights and scroll in perfect sync. */
+.lineNumbers {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+  font-size: 13.5px;
   line-height: 1.65;
+  white-space: pre;
   color: #3d444d;
   text-align: right;
   padding-right: 14px;
-  white-space: nowrap;
-  transition: color 0.12s;
 }
 
 /* ─── Code wrapper (overlay container) ───────────────────── */
