@@ -59,6 +59,23 @@
   */
   gap: 14px;
   flex-shrink: 0;
+  /* Link reset — brand is now an <a> tag */
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  transition: background 0.15s ease;
+}
+
+.brand:hover {
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.brand:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 3px;
 }
 
 /* Logo box: just hosts the SVG, adds the glow shadow */

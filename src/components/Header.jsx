@@ -17,8 +17,8 @@ export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, o
   return (
     <header className={styles.header}>
 
-      {/* ── LEFT: Logo icon + wordmark ───────────────────────── */}
-      <div className={styles.brand}>
+      {/* ── LEFT: Logo icon + wordmark → links back to landing page ─── */}
+      <a href="/" className={styles.brand} aria-label="SmartCompiler home — return to landing page">
 
         {/* 
           Logo mark: 40×40 rounded square with green→teal gradient.
@@ -74,7 +74,7 @@ export default function Header({ onBugTrackerToggle, bugTrackerErrorCount = 0, o
             Write &nbsp;·&nbsp; Analyze &nbsp;·&nbsp; Learn
           </p>
         </div>
-      </div>
+      </a>
 
       {/* ── RIGHT: AI Tutor + Analytics + History + Bug Tracker buttons ──── */}
       <div className={styles.rightSection}>

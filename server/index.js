@@ -205,7 +205,13 @@ app.post('/api/compile', async (req, res) => {
 const distDir = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(distDir)) {
   app.use(express.static(distDir));
-  // SPA fallback — any non-API route serves index.html
+
+  // Clean /app route serves the React editor
+  app.get('/app', (req, res) => {
+    res.sendFile(path.join(distDir, 'app.html'));
+  });
+
+  // Root and any other non-API route serves the landing page
   app.get('*', (req, res) => {
     res.sendFile(path.join(distDir, 'index.html'));
   });

@@ -1,18 +1,4751 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SmartCompiler — AI-Powered C Learning Environment</title>
-    <meta name="description" content="A beginner-friendly C programming environment with AI-powered code analysis, hints, and learning notes. Learn C by fixing real mistakes." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartCompiler — The AI C Compiler That Catches the Bugs GCC Can't</title>
+  <meta name="description"
+    content="SmartCompiler is a browser-based AI C programming environment for students. It catches logical bugs GCC misses, explains errors in plain English, and guides you from Hello World to Linked Lists — zero installation required." />
+  <meta property="og:title" content="SmartCompiler — Write · Analyze · Learn" />
+  <meta property="og:description"
+    content="The AI-powered C compiler that catches logical bugs, not just syntax errors. Built for CS students learning C as their first language." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#10b981" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* ── Reset ─────────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* ── Tokens ─────────────────────────────────────────────── */
+    :root {
+      --brand-green: #10b981;
+      --brand-sky: #0ea5e9;
+      --brand-teal: #06b6d4;
+      --brand-emerald: #059669;
+      --ai-indigo: #6366f1;
+      --ai-violet: #8b5cf6;
+
+      --text-primary: #1e293b;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --text-faint: #94a3b8;
+
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --surface-3: #f8f8f5;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+
+      --editor-bg: #0d1117;
+      --editor-panel: #161b22;
+      --editor-border: #21262d;
+      --editor-text: #c9d1d9;
+
+      --syn-keyword: #d2a8ff;
+      --syn-function: #ffa657;
+      --syn-string: #7ee787;
+      --syn-number: #ff7b72;
+      --syn-comment: #444c56;
+      --syn-operator: #79c0ff;
+
+      --r-sm: 7px;
+      --r-md: 11px;
+      --r-lg: 14px;
+      --r-xl: 20px;
+      --r-pill: 9999px;
+
+      --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+
+      --shadow-brand: 0 4px 16px rgba(16, 185, 129, 0.20);
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+      --shadow-lift: 0 8px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--surface);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* ── Utilities ─────────────────────────────────────────── */
+    .mono {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    .grad-text {
+      background: linear-gradient(90deg, var(--brand-green), var(--brand-sky));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .ai-grad-text {
+      background: linear-gradient(90deg, var(--ai-indigo), var(--ai-violet));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Scroll reveal (GSAP will drive these states) ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ── Scroll Progress Bar ───────────────────────────────── */
+    #scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--brand-green), var(--brand-sky));
+      width: 0%;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    /* ── Hero Particles Canvas ─────────────────────────────── */
+    #hero-particles {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       NAV
+    ══════════════════════════════════════════════════════════ */
+    #nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    }
+
+    #nav.scrolled {
+      border-bottom-color: var(--border);
+      box-shadow: 0 1px 0 var(--border), 0 4px 20px rgba(16, 185, 129, 0.06);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .nav-logo-box {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 10px rgba(16, 185, 129, 0.35));
+      transition: filter 0.2s ease, transform 0.2s var(--ease-spring);
+    }
+
+    .nav-logo-box:hover {
+      filter: drop-shadow(0 4px 16px rgba(14, 165, 233, 0.45));
+      transform: translateY(-1px);
+    }
+
+    .nav-wordmark {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .nav-name {
+      display: flex;
+      align-items: baseline;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .nav-smart {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #1e293b;
+    }
+
+    .nav-compiler {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #059669;
+    }
+
+    .nav-tagline {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 6px 13px;
+      border-radius: var(--r-sm);
+      transition: background 0.15s ease, color 0.15s ease;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-links a:hover {
+      background: #f0fdf4;
+      color: var(--brand-emerald);
+    }
+
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 22px;
+      border-radius: var(--r-pill);
+      background: linear-gradient(90deg, var(--brand-green), var(--brand-sky));
+      color: #fff;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease-spring);
+      box-shadow: 0 2px 12px rgba(16, 185, 129, 0.30);
+    }
+
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.40);
+    }
+
+    @media (max-width: 768px) {
+      #nav {
+        padding: 0 20px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .nav-tagline {
+        display: none;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       HERO
+    ══════════════════════════════════════════════════════════ */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 40px 80px;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle grid background */
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border-light) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-light) 1px, transparent 1px);
+      background-size: 64px 64px;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Cursor-following radial glow */
+    #hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, -120px), rgba(16, 185, 129, 0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      max-width: 960px;
+      width: 100%;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: var(--r-pill);
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+    }
+
+    .hero-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--brand-green);
+      animation: pulse-dot 2.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+      }
+
+      60% {
+        box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    .hero-headline {
+      font-size: clamp(2.6rem, 5.5vw, 4rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.08;
+      text-align: center;
+      color: var(--text-primary);
+      max-width: 820px;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      font-weight: 400;
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 1.65;
+      max-width: 600px;
+      letter-spacing: -0.01em;
+    }
+
+    .hero-ctas {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .hero-ctas .btn-primary,
+    .hero-ctas .btn-secondary {
+      /* initial state managed by GSAP – will-change for perf */
+      will-change: opacity, transform;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 14px 28px;
+      border-radius: var(--r-pill);
+      background: linear-gradient(90deg, var(--brand-green) 0%, var(--brand-sky) 100%);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease-spring);
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(16, 185, 129, 0.45);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 13px 24px;
+      border-radius: var(--r-pill);
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease-spring), border-color 0.15s, color 0.15s;
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-card);
+      border-color: #a7f3d0;
+      color: var(--brand-emerald);
+    }
+
+    /* ── Hero visual: animated editor + AI panel ── */
+    .hero-visual {
+      width: 100%;
+      max-width: 900px;
+      margin-top: 20px;
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      border: 1px solid var(--editor-border);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.10);
+      background: var(--editor-bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Window chrome */
+    .editor-chrome {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--editor-panel);
+      border-bottom: 1px solid var(--editor-border);
+      flex-shrink: 0;
+    }
+
+    .chrome-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .chrome-dot.red {
+      background: #ff5f57;
+    }
+
+    .chrome-dot.yellow {
+      background: #ffbd2e;
+    }
+
+    .chrome-dot.green {
+      background: #28c840;
+    }
+
+    .chrome-tab {
+      margin-left: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 6px 6px 0 0;
+      background: var(--editor-bg);
+      border: 1px solid var(--editor-border);
+      border-bottom: none;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--editor-text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .chrome-tab-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--brand-green);
+    }
+
+    /* Editor body: split code | AI panel */
+    .editor-body {
+      display: flex;
+      flex: 1;
+      min-height: 340px;
+    }
+
+    /* Code area */
+    .code-area {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .line-gutter {
+      padding: 16px 0;
+      min-width: 42px;
+      background: var(--editor-panel);
+      border-right: 1px solid var(--editor-border);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0;
+    }
+
+    .line-gutter span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #484f58;
+      padding: 0 10px;
+      line-height: 1.75;
+      display: block;
+      height: 21px;
+      user-select: none;
+    }
+
+    .code-content {
+      flex: 1;
+      padding: 16px 20px;
+      overflow: auto;
+    }
+
+    .code-content pre {
+      margin: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.75;
+      color: var(--editor-text);
+      white-space: pre;
+    }
+
+    /* Syntax colours */
+    .kw {
+      color: var(--syn-keyword);
+    }
+
+    .fn {
+      color: var(--syn-function);
+    }
+
+    .str {
+      color: var(--syn-string);
+    }
+
+    .num {
+      color: var(--syn-number);
+    }
+
+    .cm {
+      color: var(--syn-comment);
+      font-style: italic;
+    }
+
+    .op {
+      color: var(--syn-operator);
+    }
+
+    .lit {
+      color: var(--editor-text);
+    }
+
+    /* Typing cursor */
+    .cursor-blink {
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      background: var(--brand-green);
+      margin-left: 1px;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    /* AI Analysis panel (right side) */
+    .ai-panel {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-left: 1px solid var(--editor-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateX(100%);
+      transition: transform 0.55s var(--ease-spring);
+    }
+
+    .ai-panel.visible {
+      transform: translateX(0);
+    }
+
+    .ai-panel-header {
+      padding: 12px 14px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .ai-panel-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--brand-green), var(--brand-sky));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .ai-panel-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .ai-panel-sub {
+      font-size: 10.5px;
+      color: var(--text-faint);
+    }
+
+    .ai-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ai-banner {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border: 1px solid #fde68a;
+      border-radius: var(--r-md);
+      padding: 10px 12px;
+    }
+
+    .ai-banner-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #92400e;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .ai-banner-text {
+      font-size: 11.5px;
+      color: #78350f;
+      line-height: 1.55;
+    }
+
+    .ai-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      overflow: hidden;
+    }
+
+    .ai-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-light);
+      background: var(--surface-2);
+    }
+
+    .ai-card-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .ai-card-icon.red {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .ai-card-icon.blue {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .ai-card-icon.green {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .ai-card-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .ai-card-body {
+      padding: 10px 12px;
+    }
+
+    .line-pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #dc2626;
+      background: #fef2f2;
+      border: 1.5px solid #fecaca;
+      border-radius: var(--r-sm);
+      padding: 2px 8px;
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-left: 5px;
+    }
+
+    .type-badge.logical {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .ai-card-desc {
+      font-size: 11px;
+      color: #374151;
+      line-height: 1.55;
+      margin-top: 4px;
+    }
+
+    .fix-code-mini {
+      background: var(--editor-bg);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--editor-text);
+      white-space: pre;
+      border: 1px solid var(--editor-border);
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .apply-btn-mini {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: calc(100% - 0px);
+      margin: 10px 12px 12px;
+      padding: 8px;
+      border-radius: 7px;
+      background: linear-gradient(90deg, var(--brand-emerald), var(--brand-green));
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+
+    .apply-btn-mini:hover {
+      opacity: 0.9;
+    }
+
+    @media (max-width: 768px) {
+      .hero-visual {
+        border-radius: 12px;
+      }
+
+      .ai-panel {
+        display: none;
+      }
+
+      #hero {
+        padding: 90px 20px 60px;
+      }
+    }
+
+    /* ── Product Flow Section ────────────────────────────────── */
+    #product-flow {
+      padding: 100px 40px;
+      background: var(--surface);
+      position: relative;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: 1.12fr 1fr;
+      gap: 56px;
+      align-items: start;
+    }
+
+    .flow-visual-container {
+      position: sticky;
+      top: 100px;
+      height: 420px;
+      background: var(--editor-bg);
+      border-radius: var(--r-xl);
+      border: 1px solid var(--editor-border);
+      box-shadow: var(--shadow-lift);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .flow-visual-body {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .flow-state {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px) scale(0.98);
+      transition: opacity 0.45s ease, transform 0.45s var(--ease-spring);
+    }
+
+    .flow-state.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+
+    .flow-steps-wrapper {
+      position: relative;
+      padding-left: 32px;
+    }
+
+    .flow-step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+      margin-bottom: 36px;
+    }
+
+    .flow-step-card:last-child {
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 900px) {
+      .flow-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .flow-visual-container {
+        position: relative;
+        top: auto;
+        height: 380px;
+        margin-bottom: 20px;
+      }
+
+      #product-flow {
+        padding: 70px 20px;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       PROBLEM SECTION
+    ══════════════════════════════════════════════════════════ */
+    #problem {
+      padding: 100px 40px;
+      background: var(--surface-3);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #problem::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse at bottom right, rgba(14, 165, 233, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--brand-emerald);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--brand-green), var(--brand-sky));
+      border-radius: 2px;
+    }
+
+    .section-headline {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      color: var(--text-primary);
+      margin-bottom: 18px;
+    }
+
+    .section-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 560px;
+      letter-spacing: -0.01em;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .problem-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #problem {
+        padding: 70px 20px;
+      }
+    }
+
+    .pain-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 24px 24px 24px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease-spring);
+    }
+
+    .pain-card:hover {
+      box-shadow: var(--shadow-lift);
+    }
+
+    .pain-icon {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      border-radius: var(--r-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pain-icon.red {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .pain-icon.amber {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+    }
+
+    .pain-icon.slate {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    .pain-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 5px;
+    }
+
+    .pain-body {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* GCC vs SmartCompiler comparison */
+    .compare-section {
+      margin-top: 80px;
+    }
+
+    .compare-tabs {
+      display: flex;
+      gap: 0;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 4px;
+      width: fit-content;
+      margin-bottom: 24px;
+    }
+
+    .compare-tab {
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .compare-tab.active {
+      background: var(--surface);
+      color: var(--text-primary);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .compare-tab.active.smart {
+      color: var(--brand-emerald);
+    }
+
+    .compare-panels {
+      position: relative;
+    }
+
+    .compare-panel {
+      display: none;
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      border: 1px solid var(--editor-border);
+      box-shadow: var(--shadow-card);
+      opacity: 0;
+      transform: scale(0.99);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .compare-panel.active {
+      display: block;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .compare-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--editor-border);
+      font-size: 11.5px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .compare-bar.gcc {
+      background: #1c1c1c;
+      color: #888;
+    }
+
+    .compare-bar.smart {
+      background: var(--editor-panel);
+      color: var(--editor-text);
+    }
+
+    .compare-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .compare-bar.gcc .compare-dot {
+      background: #ef4444;
+    }
+
+    .compare-bar.smart .compare-dot {
+      background: var(--brand-green);
+    }
+
+    .compare-body {
+      background: var(--editor-bg);
+      padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.75;
+      min-height: 160px;
+    }
+
+    .compare-body.gcc-output {
+      color: #ef4444;
+    }
+
+    .compare-body.smart-output {
+      color: var(--editor-text);
+    }
+
+    .smart-line {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: flex-start;
+    }
+
+    .smart-tag {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .smart-tag.logic {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .smart-tag.fix {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .smart-tag.tip {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .smart-text {
+      color: #c9d1d9;
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       HOW IT WORKS
+    ══════════════════════════════════════════════════════════ */
+    #how-it-works {
+      padding: 100px 40px;
+      background: var(--surface);
+    }
+
+    #how-it-works .section-header {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+
+    #how-it-works .section-sub {
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      left: 27px;
+      top: 28px;
+      bottom: 28px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--brand-green), var(--brand-sky), var(--brand-teal));
+      border-radius: 2px;
+    }
+
+    .pipeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-light);
+      position: relative;
+    }
+
+    .pipeline-step:last-child {
+      border-bottom: none;
+    }
+
+    .pipeline-num {
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      position: relative;
+      z-index: 1;
+      transition: border-color 0.3s, color 0.3s, background 0.3s;
+    }
+
+    .pipeline-step.active .pipeline-num {
+      background: linear-gradient(135deg, var(--brand-green), var(--brand-sky));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: var(--shadow-brand);
+    }
+
+    .pipeline-content {
+      flex: 1;
+      padding-top: 10px;
+    }
+
+    .pipeline-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 5px;
+      letter-spacing: -0.02em;
+    }
+
+    .pipeline-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    .pipeline-visual {
+      position: sticky;
+      top: 100px;
+      background: var(--editor-bg);
+      border-radius: var(--r-xl);
+      border: 1px solid var(--editor-border);
+      padding: 24px;
+      box-shadow: var(--shadow-lift);
+    }
+
+    @media (max-width: 900px) {
+      .pipeline-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pipeline-visual {
+        position: relative;
+        top: auto;
+        margin-top: 32px;
+      }
+
+      #how-it-works {
+        padding: 70px 20px;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       FEATURES
+    ══════════════════════════════════════════════════════════ */
+    #features {
+      background: var(--surface-3);
+      border-top: 1px solid var(--border);
+    }
+
+    .feature-section {
+      padding: 100px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .feature-section:last-child {
+      border-bottom: none;
+    }
+
+    .feature-section.dark {
+      background: var(--editor-bg);
+      border-color: var(--editor-border);
+    }
+
+    .feature-grid {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 72px;
+      align-items: center;
+    }
+
+    .feature-grid.flip {
+      direction: rtl;
+    }
+
+    .feature-grid.flip>* {
+      direction: ltr;
+    }
+
+    .feature-text .section-label {
+      margin-top: 0;
+    }
+
+    .feature-text .section-headline {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      margin-bottom: 14px;
+    }
+
+    .feature-points {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feature-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .feature-point-dot {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand-green), var(--brand-sky));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .feature-point-dot svg {
+      width: 10px;
+      height: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .feature-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .feature-grid.flip {
+        direction: ltr;
+      }
+
+      .feature-section {
+        padding: 70px 20px;
+      }
+    }
+
+    /* ── Feature: Editor mini-UI ── */
+    .editor-mini {
+      background: var(--editor-bg);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--editor-border);
+      overflow: hidden;
+      box-shadow: var(--shadow-lift);
+    }
+
+    .editor-mini-chrome {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      background: var(--editor-panel);
+      border-bottom: 1px solid var(--editor-border);
+    }
+
+    .editor-mini-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+      padding: 3px 12px;
+      background: var(--editor-bg);
+      border: 1px solid var(--editor-border);
+      border-radius: 5px 5px 0 0;
+      border-bottom: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--editor-text);
+    }
+
+    .tab-modified {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #f59e0b;
+    }
+
+    .editor-mini-code {
+      padding: 16px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.75;
+      color: var(--editor-text);
+      overflow: hidden;
+      max-height: 300px;
+    }
+
+    /* ── Feature: Language Detector mini-UI ── */
+    .lang-detector-ui {
+      background: var(--surface);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-lift);
+    }
+
+    .lang-detector-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .lang-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand-green), var(--brand-sky));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .lang-detect-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .lang-detect-conf {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .lang-confidence-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .lang-confidence-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--brand-green), var(--brand-sky));
+      width: 0%;
+      /* driven by GSAP trigger */
+    }
+
+    .lang-signals {
+      padding: 14px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .signal-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-pill);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .signal-pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--brand-green);
+    }
+
+    .lang-convert-btn {
+      margin: 0 18px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      border-radius: var(--r-md);
+      background: linear-gradient(90deg, var(--brand-green), var(--brand-sky));
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      width: calc(100% - 36px);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .lang-convert-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+
+    /* ── Terminal mini-UI ── */
+    .terminal-mini {
+      background: var(--editor-bg);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--editor-border);
+      overflow: hidden;
+      box-shadow: var(--shadow-lift);
+    }
+
+    .terminal-chrome {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--editor-panel);
+      border-bottom: 1px solid var(--editor-border);
+    }
+
+    .terminal-title {
+      margin-left: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #6e7681;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .terminal-body {
+      padding: 16px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      color: var(--editor-text);
+    }
+
+    .term-prompt {
+      color: var(--brand-green);
+    }
+
+    .term-cmd {
+      color: var(--editor-text);
+    }
+
+    .term-ok {
+      color: var(--syn-string);
+    }
+
+    .term-err {
+      color: var(--syn-number);
+    }
+
+    .term-muted {
+      color: #6e7681;
+    }
+
+    .term-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 10px;
+      padding: 3px 10px;
+      border-radius: var(--r-pill);
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .term-badge.exit-ok {
+      background: rgba(126, 231, 135, 0.15);
+      color: var(--syn-string);
+      border: 1px solid rgba(126, 231, 135, 0.3);
+    }
+
+    .term-badge.exit-err {
+      background: rgba(255, 123, 114, 0.15);
+      color: var(--syn-number);
+      border: 1px solid rgba(255, 123, 114, 0.3);
+    }
+
+    .term-badge.time {
+      background: rgba(121, 192, 255, 0.12);
+      color: var(--syn-operator);
+      border: 1px solid rgba(121, 192, 255, 0.25);
+    }
+
+    /* ── AI Analysis full UI ── */
+    .ai-analysis-ui {
+      background: var(--surface);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-lift);
+    }
+
+    .ai-analysis-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border-bottom: 1px solid #fde68a;
+    }
+
+    .ai-analysis-icon {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+    }
+
+    .ai-analysis-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .ai-analysis-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #92400e;
+    }
+
+    .ai-analysis-issues {
+      font-size: 11px;
+      color: #b45309;
+    }
+
+    .ai-analysis-body {
+      padding: 0;
+    }
+
+    .ai-accordion {
+      border-bottom: 1px solid var(--border-light);
+      padding: 12px 16px;
+    }
+
+    .ai-accordion:last-child {
+      border-bottom: none;
+    }
+
+    .ai-accordion-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ai-accordion-icon {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .ai-accordion-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .ai-num-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .ai-num-badge {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #f3f4f6;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .ai-num-text {
+      font-size: 12px;
+      color: #374151;
+      line-height: 1.55;
+    }
+
+    /* ── Bug Tracker UI ── */
+    .bug-tracker-ui {
+      background: var(--surface);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-lift);
+    }
+
+    .bug-tracker-header {
+      padding: 14px 18px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bug-tracker-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .bug-tracker-body {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Donut chart (CSS-drawn but GSAP updated) */
+    .donut-wrap {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .donut {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(#ef4444 0% 0%,
+          #f59e0b 0% 0%,
+          #10b981 0% 0%,
+          #0ea5e9 0% 0%);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .donut::after {
+      content: '';
+      position: absolute;
+      inset: 14px;
+      border-radius: 50%;
+      background: var(--surface);
+    }
+
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .donut-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    .donut-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .mistake-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mistake-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .mistake-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .mistake-rank {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      min-width: 20px;
+    }
+
+    .mistake-info {
+      flex: 1;
+    }
+
+    .mistake-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .mistake-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .mistake-count {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--r-pill);
+    }
+
+    .mistake-count.high {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .mistake-count.medium {
+      background: #fffbeb;
+      color: #d97706;
+    }
+
+    .mistake-count.low {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    /* ── Analytics UI ── */
+    .analytics-ui {
+      background: var(--surface);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-lift);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      padding: 16px 18px;
+    }
+
+    .kpi-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-faint);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .kpi-value span {
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 3px;
+    }
+
+    .kpi-value.green {
+      color: var(--brand-emerald);
+    }
+
+    .kpi-value.sky {
+      color: var(--brand-sky);
+    }
+
+    .kpi-value.violet {
+      color: var(--ai-indigo);
+    }
+
+    .kpi-change {
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .kpi-change.up {
+      color: var(--brand-emerald);
+    }
+
+    .kpi-change.down {
+      color: #ef4444;
+    }
+
+    /* Heatmap */
+    .heatmap-section {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .heatmap-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 3px;
+    }
+
+    .hmap-cell {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 3px;
+    }
+
+    .hmap-cell.l0 {
+      background: var(--border-light);
+    }
+
+    .hmap-cell.l1 {
+      background: rgba(16, 185, 129, 0.2);
+    }
+
+    .hmap-cell.l2 {
+      background: rgba(16, 185, 129, 0.45);
+    }
+
+    .hmap-cell.l3 {
+      background: rgba(16, 185, 129, 0.7);
+    }
+
+    .hmap-cell.l4 {
+      background: rgba(16, 185, 129, 0.95);
+    }
+
+    .streak-section {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .streak-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border: 1.5px solid #fde68a;
+      border-radius: var(--r-md);
+    }
+
+    .streak-fire {
+      font-size: 18px;
+    }
+
+    .streak-num {
+      font-size: 20px;
+      font-weight: 900;
+      color: #d97706;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .streak-days {
+      font-size: 11px;
+      font-weight: 600;
+      color: #92400e;
+    }
+
+    /* ── AI Tutor UI ── */
+    .ai-tutor-ui {
+      background: var(--surface);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-lift);
+    }
+
+    .tutor-header {
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+      border-bottom: 1px solid #ddd6fe;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tutor-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--ai-indigo), var(--ai-violet));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    .tutor-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #4338ca;
+    }
+
+    .tutor-sub {
+      font-size: 11px;
+      color: #6d28d9;
+    }
+
+    .tutor-steps {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+      overflow-x: auto;
+    }
+
+    .tutor-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .tutor-step.active {
+      color: var(--ai-indigo);
+      background: var(--surface);
+    }
+
+    .tutor-step.done {
+      color: var(--brand-emerald);
+    }
+
+    .tutor-step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      background: var(--border-light);
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .tutor-step.active .tutor-step-num {
+      background: var(--ai-indigo);
+      color: #fff;
+    }
+
+    .tutor-step.done .tutor-step-num {
+      background: var(--brand-green);
+      color: #fff;
+    }
+
+    .tutor-body {
+      padding: 18px;
+    }
+
+    .tutor-concept {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .tutor-concept-badge {
+      padding: 3px 10px;
+      border-radius: var(--r-pill);
+      background: #ede9fe;
+      border: 1.5px solid #ddd6fe;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ai-indigo);
+    }
+
+    .tutor-level {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .tutor-question {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+
+    .tutor-quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .tutor-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .tutor-option:hover:not(.selected) {
+      border-color: var(--ai-indigo);
+      background: #faf5ff;
+      color: var(--ai-indigo);
+    }
+
+    .tutor-option.selected {
+      border-color: var(--brand-green);
+      background: #f0fdf4;
+      color: var(--brand-emerald);
+    }
+
+    .tutor-option.wrong {
+      border-color: #ef4444;
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .option-radio {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid var(--border);
+    }
+
+    .tutor-option.selected .option-radio {
+      background: var(--brand-green);
+      border-color: var(--brand-green);
+    }
+
+    .tutor-option.wrong .option-radio {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       STATS STRIP
+    ══════════════════════════════════════════════════════════ */
+    #stats {
+      padding: 72px 40px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stats-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+      line-height: 1.45;
+    }
+
+    .stat-value .stat-plus {
+      color: var(--brand-green);
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+      }
+
+      #stats {
+        padding: 60px 20px;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       MISSION / AUDIENCE
+    ══════════════════════════════════════════════════════════ */
+    #mission {
+      padding: 100px 40px;
+      background: var(--surface-3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mission-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .mission-text .section-headline {
+      margin-bottom: 18px;
+    }
+
+    .audience-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .audience-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-card);
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
+    }
+
+    .audience-card:hover {
+      box-shadow: var(--shadow-lift);
+    }
+
+    .audience-icon {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+      border-radius: var(--r-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .audience-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .audience-desc {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    @media (max-width: 768px) {
+      .mission-inner {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      #mission {
+        padding: 70px 20px;
+      }
+    }
+
+    /* ── Final CTA ── */
+    #final-cta {
+      padding: 120px 40px;
+      background: var(--editor-bg);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    #final-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .cta-headline {
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      color: var(--editor-text);
+    }
+
+    .cta-sub {
+      font-size: 1rem;
+      color: #6e7681;
+      line-height: 1.65;
+      max-width: 500px;
+    }
+
+    .cta-mark {
+      position: absolute;
+      opacity: 0.05;
+      bottom: 20px;
+      right: 40px;
+      font-size: 160px;
+      font-weight: 900;
+      color: var(--brand-green);
+      pointer-events: none;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+    }
+
+    @media (max-width: 480px) {
+      #final-cta {
+        padding: 80px 20px;
+      }
+
+      .cta-mark {
+        display: none;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════════════════════ */
+    footer {
+      background: var(--editor-panel);
+      border-top: 1px solid var(--editor-border);
+      padding: 48px 40px 32px;
+    }
+
+    .footer-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .footer-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .footer-brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .footer-name {
+      font-size: 17px;
+      font-weight: 900;
+      color: #e6edf3;
+      letter-spacing: -0.03em;
+    }
+
+    .footer-name span {
+      color: var(--brand-green);
+    }
+
+    .footer-tagline {
+      font-size: 9.5px;
+      color: #484f58;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .footer-desc {
+      font-size: 13px;
+      color: #6e7681;
+      line-height: 1.65;
+      max-width: 340px;
+      margin-top: 10px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-links-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .footer-links a {
+      font-size: 13px;
+      color: #8b949e;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover {
+      color: var(--brand-green);
+    }
+
+    .footer-bottom {
+      padding-top: 24px;
+      border-top: 1px solid var(--editor-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-copy {
+      font-size: 12px;
+      color: #484f58;
+    }
+
+    .footer-built {
+      font-size: 11.5px;
+      color: #484f58;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-built span {
+      color: var(--brand-green);
+      font-weight: 700;
+    }
+
+    @media (max-width: 600px) {
+      footer {
+        padding: 40px 20px 24px;
+      }
+
+      .footer-top {
+        flex-direction: column;
+      }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #d4d0c8;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #b8b4ac;
+    }
+
+    /* ── Selection ── */
+    ::selection {
+      background: rgba(16, 185, 129, 0.15);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Scroll Progress Bar -->
+  <div id="scroll-progress"></div>
+
+  <!-- ════════════════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════════════════ -->
+  <nav id="nav" role="navigation" aria-label="Main navigation">
+    <a href="#" class="nav-brand" aria-label="SmartCompiler home">
+      <!-- Logo mark -->
+      <svg class="nav-logo-box" width="40" height="40" viewBox="0 0 40 40" fill="none"
+        xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+        <rect width="40" height="40" rx="11" fill="url(#lp-grad)" />
+        <polygon points="24,8 13,23 20,23 16,33 27,18 20,18" fill="white" fill-rule="evenodd" />
+        <defs>
+          <linearGradient id="lp-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#10b981" />
+            <stop offset="100%" stop-color="#0ea5e9" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="nav-wordmark">
+        <div class="nav-name">
+          <span class="nav-smart">Smart</span><span class="nav-compiler">Compiler</span>
+        </div>
+        <p class="nav-tagline">Write &nbsp;·&nbsp; Analyze &nbsp;·&nbsp; Learn</p>
+      </div>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="#problem">The Problem</a></li>
+      <li><a href="#product-flow">Visual Flow</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#mission">For Students</a></li>
+    </ul>
+
+    <a href="/app.html" class="nav-cta" aria-label="Launch SmartCompiler app">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <polygon points="24,8 13,23 20,23 16,33 27,18 20,18" fill="white" fill-rule="evenodd"
+          transform="scale(0.7) translate(2,2)" />
+        <path d="M12 2L5 12h7l-1 9 8-11h-6.5L12 2z" stroke="white" stroke-width="1.5" stroke-linejoin="round"
+          stroke-linecap="round" fill="none" />
+      </svg>
+      Launch App
+    </a>
+  </nav>
+
+  <!-- ════════════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════════════ -->
+  <section id="hero" aria-label="Hero section">
+    <!-- Interactive canvas particles backdrop -->
+    <canvas id="hero-particles"></canvas>
+
+    <div class="hero-inner">
+      <div class="hero-badge">
+        <span class="hero-badge-dot" aria-hidden="true"></span>
+        Zero installation &nbsp;·&nbsp; Browser-based &nbsp;·&nbsp; Free for students
+      </div>
+
+      <h1 class="hero-headline">
+        The compiler that catches<br />
+        <span class="grad-text">the bugs GCC can't.</span>
+      </h1>
+
+      <p class="hero-sub">
+        SmartCompiler is a browser-based C programming environment that finds logical bugs —
+        uninitialized variables, off-by-one loops, wrong comparisons — then explains
+        the root cause in plain English and shows you exactly how to fix it.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="/app.html" class="btn-primary" id="hero-cta-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2L5 12h7l-1 9 8-11h-6.5L12 2z" stroke="white" stroke-width="2" stroke-linejoin="round"
+              fill="none" />
+          </svg>
+          Start Coding Free
+        </a>
+        <a href="#how-it-works" class="btn-secondary" id="hero-cta-secondary">
+          See how it works
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M5 10h10M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </a>
+      </div>
+
+      <!-- ── Animated editor visual ── -->
+      <div class="hero-visual" role="img" aria-label="SmartCompiler editor showing AI bug analysis">
+        <div class="editor-chrome" aria-hidden="true">
+          <span class="chrome-dot red"></span>
+          <span class="chrome-dot yellow"></span>
+          <span class="chrome-dot green"></span>
+          <div class="chrome-tab">
+            <span class="chrome-tab-dot"></span>
+            factorial.c
+          </div>
+        </div>
+        <div class="editor-body">
+          <!-- Code panel -->
+          <div class="code-area" aria-hidden="true">
+            <div class="line-gutter" id="hero-gutter"></div>
+            <div class="code-content">
+              <pre id="hero-code"></pre>
+            </div>
+          </div>
+
+          <!-- AI Analysis panel (slides in after typing) -->
+          <div class="ai-panel" id="hero-ai-panel" aria-hidden="true">
+            <div class="ai-panel-header">
+              <div class="ai-panel-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" stroke="white"
+                    stroke-width="1.5" stroke-linejoin="round" fill="none" />
+                </svg>
+              </div>
+              <div>
+                <div class="ai-panel-title">AI Analysis</div>
+                <div class="ai-panel-sub">3 issues found</div>
+              </div>
+            </div>
+            <div class="ai-panel-body">
+              <div class="ai-banner">
+                <div class="ai-banner-label">AI Analysis</div>
+                <div class="ai-banner-text">
+                  Found 3 logical bugs. The factorial initialises to 0 (should be 1), loop bound excludes n, and integer
+                  division truncates the average.
+                </div>
+              </div>
+
+              <div class="ai-card">
+                <div class="ai-card-head">
+                  <div class="ai-card-icon red">⚠</div>
+                  <div class="ai-card-title">Root Cause</div>
+                </div>
+                <div class="ai-card-body">
+                  <div>
+                    <span class="line-pill">Line 7</span>
+                    <span class="type-badge logical">Logical</span>
+                  </div>
+                  <div class="ai-card-desc">
+                    <code class="mono" style="color:#d2a8ff">fact = 0</code> — multiplying by 0 always gives 0.
+                    Factorial must start at 1.
+                  </div>
+                  <div>
+                    <span class="line-pill" style="margin-top:8px;display:inline-flex">Line 12</span>
+                    <span class="type-badge logical">Logical</span>
+                  </div>
+                  <div class="ai-card-desc">
+                    <code class="mono" style="color:#d2a8ff">i &lt; n</code> skips the last iteration. Use <code
+                      class="mono" style="color:#7ee787">i &lt;= n</code>.
+                  </div>
+                </div>
+              </div>
+
+              <div class="ai-card">
+                <div class="ai-card-head">
+                  <div class="ai-card-icon blue">⚡</div>
+                  <div class="ai-card-title">How to Fix</div>
+                </div>
+                <div class="ai-card-body">
+                  <div class="fix-code-mini"><span class="kw">long long</span> fact = <span class="num">1</span>; <span
+                      class="cm">// was 0</span>
+                    <span class="kw">for</span> (i = <span class="num">1</span>; i &lt;= n; i++) <span class="cm">// was
+                      i&lt;n</span>
+                  </div>
+                </div>
+                <button class="apply-btn-mini" id="hero-apply-btn">
+                  <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
+                    <path d="M4 10l5 5 7-7" stroke="white" stroke-width="2.2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                  Apply Fix to Editor
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════
+     PRODUCT FLOW SECTION (GSAP driven sticky demo)
+════════════════════════════════════════════════════════════ -->
+  <section id="product-flow" aria-labelledby="flow-heading">
+    <div class="container">
+      <div class="section-label" style="justify-content:center">Visual Flow</div>
+      <h2 class="section-headline" id="flow-heading" style="text-align:center;">
+        How SmartCompiler works<br />
+        <span class="grad-text">in real-time.</span>
+      </h2>
+
+      <div class="flow-grid">
+        <!-- Left: Sticky visual preview -->
+        <div class="flow-visual-container" aria-hidden="true">
+          <!-- Window chrome -->
+          <div class="editor-chrome">
+            <span class="chrome-dot red"></span>
+            <span class="chrome-dot yellow"></span>
+            <span class="chrome-dot green"></span>
+            <div class="chrome-tab"><span class="chrome-tab-dot"></span>flow_demo.c</div>
+          </div>
+          <!-- Visual states -->
+          <div class="flow-visual-body">
+
+            <!-- State 1: Write Code -->
+            <div class="flow-state state-write active"
+              style="padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--editor-text); display: flex; flex-direction: column;">
+              <div style="color: var(--syn-comment); margin-bottom: 12px; font-style: italic;">// 1. Write your C
+                program</div>
+              <div><span class="kw">#include</span> <span class="str">&lt;stdio.h&gt;</span></div>
+              <br>
+              <div><span class="kw">int</span> <span class="fn">main</span>() {</div>
+              <div> <span class="kw">int</span> count = <span class="num">5</span>;</div>
+              <div> <span class="kw">int</span> total; <span class="cm">// Uninitialized local variable</span></div>
+              <div> <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt;
+                count; i++) {</div>
+              <div style="background: rgba(239, 68, 68, 0.1); border-left: 2px solid #ef4444; padding-left: 6px;"> total
+                += i; <span class="cm">// ⚠ logical bug</span></div>
+              <div> }</div>
+              <div> <span class="fn">printf</span>(<span class="str">"Total: %d\\n"</span>, total);</div>
+              <div> <span class="kw">return</span> <span class="num">0</span>;</div>
+              <div>}</div>
+            </div>
+
+            <!-- State 2: Compile -->
+            <div class="flow-state state-compile"
+              style="padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--editor-text); background: #0b0e14; display: flex; flex-direction: column;">
+              <div style="color: var(--brand-sky); margin-bottom: 12px;">$ gcc main.c -Wall &amp;&amp; ./a.out</div>
+              <div style="color: #6e7681;">Compilation successful. (0.08s)</div>
+              <div style="color: #f59e0b; margin-top: 6px;">warning: 'total' is used uninitialized [-Wuninitialized]
+              </div>
+              <br>
+              <div style="color: #e6edf3;">[Running program...]</div>
+              <div style="color: #ef4444; font-weight: 700; margin-top: 6px;">Output: Total: 32767</div>
+              <div style="color: #8b949e; font-size: 11.5px; margin-top: 8px;">(Logical bug: Output is random garbage
+                memory value)</div>
+            </div>
+
+            <!-- State 3: AI Detect -->
+            <div class="flow-state state-ai-detect" style="display: flex; height: 100%;">
+              <div
+                style="flex: 1.2; padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--editor-text); border-right: 1px solid var(--editor-border); overflow-y: auto;">
+                <div><span class="kw">int</span> total;</div>
+                <div
+                  style="background: rgba(239, 68, 68, 0.15); border-left: 3px solid #ef4444; padding: 4px 6px; margin: 6px 0;">
+                  total += i;
+                </div>
+              </div>
+              <div
+                style="flex: 1; background: var(--surface); color: var(--text-primary); padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;">
+                <div
+                  style="font-weight: 800; font-size: 11px; color: #dc2626; text-transform: uppercase; letter-spacing: 0.05em;">
+                  AI Root Cause</div>
+                <div style="font-size: 12px; font-weight: 700; line-height: 1.3;">Uninitialized stack variable used in
+                  accumulation.</div>
+                <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+                  In C, stack variables are not initialized to 0. They hold whatever residual garbage values were stored
+                  at that memory slot previously.
+                </div>
+              </div>
+            </div>
+
+            <!-- State 4: Shows Fix -->
+            <div class="flow-state state-shows-fix"
+              style="padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--editor-text); display: flex; flex-direction: column;">
+              <div style="color: var(--brand-teal); margin-bottom: 12px; font-weight: 700;">AI Fix Suggestion</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="border: 1px solid var(--editor-border); border-radius: 6px; overflow: hidden;">
+                  <div
+                    style="background: rgba(239, 68, 68, 0.15); padding: 8px 12px; text-decoration: line-through; border-bottom: 1px solid var(--editor-border);">
+                    - <span class="kw">int</span> total;
+                  </div>
+                  <div style="background: rgba(16, 185, 129, 0.15); padding: 8px 12px; color: #a7f3d0;">
+                    + <span class="kw">int</span> total = <span class="num">0</span>;
+                  </div>
+                </div>
+                <div
+                  style="font-size: 11.5px; color: #8b949e; line-height: 1.5; font-family: sans-serif; margin-top: 6px;">
+                  Setting <code class="mono" style="color:#7ee787">total = 0</code> ensures you start accumulating from
+                  a clean, known value.
+                </div>
+              </div>
+            </div>
+
+            <!-- State 5: Applied -->
+            <div class="flow-state state-applied"
+              style="padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--editor-text); display: flex; flex-direction: column;">
+              <div
+                style="color: var(--brand-emerald); font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                <span
+                  style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: #dcfce7; color: #15803d; font-size: 12px;">✓</span>
+                Fix Applied!
+              </div>
+              <div><span class="kw">#include</span> <span class="str">&lt;stdio.h&gt;</span></div>
+              <br>
+              <div><span class="kw">int</span> <span class="fn">main</span>() {</div>
+              <div> <span class="kw">int</span> count = <span class="num">5</span>;</div>
+              <div
+                style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--brand-green); padding-left: 6px; font-weight: 600; color: #7ee787;">
+                <span class="kw">int</span> total = <span class="num">0</span>; <span class="cm">// ✓
+                  Auto-patched</span></div>
+              <div> <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt;
+                count; i++) {</div>
+              <div> total += i;</div>
+              <div> }</div>
+              <div> <span class="fn">printf</span>(<span class="str">"Total: %d\\n"</span>, total);</div>
+              <div> <span class="kw">return</span> <span class="num">0</span>;</div>
+              <div>}</div>
+            </div>
+
+            <!-- State 6: Learn -->
+            <div class="flow-state state-learn"
+              style="background: var(--surface); color: var(--text-primary); padding: 24px; display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="tutor-concept-badge"
+                  style="background:#ede9fe; color:var(--ai-indigo); border:1px solid #ddd6fe; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">Variables
+                  &amp; memory</span>
+                <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">AI Tutor Mastery</span>
+              </div>
+              <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Quiz: What happens to
+                uninitialized stack memory?</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div
+                  style="border: 1.5px solid var(--brand-green); background: #f0fdf4; border-radius: 8px; padding: 10px; font-size: 12px; display: flex; align-items: center; gap: 8px;">
+                  <span style="color:var(--brand-emerald); font-weight:700;">✓</span>
+                  It contains arbitrary values ("garbage data").
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+                  Since stack memory is recycled for efficiency, declared local variables hold whatever data was
+                  previously stored at that address.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Scrolling Steps -->
+        <div class="flow-steps-wrapper">
+          <!-- Progress connection line -->
+          <div style="position: absolute; left: 12px; top: 12px; bottom: 12px; width: 2px; background: var(--border);">
+          </div>
+          <div id="flow-progress-line"
+            style="position: absolute; left: 12px; top: 12px; height: 0%; width: 2px; background: linear-gradient(to bottom, var(--brand-green), var(--brand-sky), var(--brand-teal)); transition: height 0.2s ease;">
+          </div>
+
+          <div class="flow-steps">
+            <div class="flow-step-card" data-step="write">
+              <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--brand-green); margin-bottom: 8px; text-transform: uppercase;">
+                01 / Write Code</div>
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary);">Type C Code
+                Freely</h3>
+              <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">Students write code in our
+                browser-based editor. The syntax highlighter automatically tags identifiers, variables, structures, and
+                comments.</p>
+            </div>
+
+            <div class="flow-step-card" data-step="compile" style="opacity: 0.4;">
+              <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--brand-sky); margin-bottom: 8px; text-transform: uppercase;">
+                02 / Compile</div>
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary);">Build &amp;
+                Execution</h3>
+              <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">Our sandboxed GCC
+                environment builds your program instantly, displaying warnings or errors in the built-in terminal
+                console.</p>
+            </div>
+
+            <div class="flow-step-card" data-step="ai-detect" style="opacity: 0.4;">
+              <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--brand-teal); margin-bottom: 8px; text-transform: uppercase;">
+                03 / AI Analysis</div>
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary);">Deep
+                Logical Diagnostic</h3>
+              <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">If there's a runtime error
+                or wrong outputs, our AI scanner inspects the AST, flagging logical bugs that standard compilers let
+                through.</p>
+            </div>
+
+            <div class="flow-step-card" data-step="shows-fix" style="opacity: 0.4;">
+              <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--ai-indigo); margin-bottom: 8px; text-transform: uppercase;">
+                04 / Shows Fix</div>
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary);">Clear
+                Explanations &amp; Diff</h3>
+              <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">See exactly what went wrong
+                in plain English. The interface provides a highlighted diff comparison showing you how to fix it.</p>
+            </div>
+
+            <div class="flow-step-card" data-step="applied" style="opacity: 0.4;">
+              <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--brand-emerald); margin-bottom: 8px; text-transform: uppercase;">
+                05 / Applied</div>
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary);">One-Click
+                Quick Patch</h3>
+              <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">Click "Apply Fix" to merge
+                the corrected lines directly into your active code tab automatically, without tedious rewriting.</p>
+            </div>
+
+            <div class="flow-step-card" data-step="learn" style="opacity: 0.4;">
+              <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--ai-violet); margin-bottom: 8px; text-transform: uppercase;">
+                06 / Learn</div>
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary);">Structured
+                Mastery Loop</h3>
+              <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">Our interactive tutor
+                reinforces what you've learned. Answer quiz questions and complete custom challenges to unlock badges
+                and build a coding streak.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════
+     THE PROBLEM
+════════════════════════════════════════════════════════════ -->
+  <section id="problem" aria-labelledby="problem-heading">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label">The Problem</div>
+        <h2 class="section-headline" id="problem-heading">
+          GCC tells you <em>what</em> broke.<br />
+          SmartCompiler tells you <em>why</em>.
+        </h2>
+        <p class="section-sub">
+          Standard compilers catch syntax errors — missing semicolons, wrong types.
+          They say nothing about logic errors that compile fine but produce completely wrong output.
+          That's where most beginners lose hours.
+        </p>
+      </div>
+
+      <div class="problem-grid">
+        <div class="pain-card reveal">
+          <div class="pain-icon red" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#dc2626" stroke-width="1.8" />
+              <path d="M12 8v5M12 16v.5" stroke="#dc2626" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="pain-title">Cryptic error messages</div>
+            <div class="pain-body">
+              <code class="mono" style="font-size:11.5px;color:#ef4444">error: expected ';' before '}'</code>
+              — which file? Which function? Beginners have no context to locate it.
+            </div>
+          </div>
+        </div>
+
+        <div class="pain-card reveal">
+          <div class="pain-icon red" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-5-5z" stroke="#dc2626" stroke-width="1.8"
+                stroke-linejoin="round" />
+              <path d="M9 3v5h10M12 11v6M9 14h6" stroke="#dc2626" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="pain-title">Logic bugs compile silently</div>
+            <div class="pain-body">
+              GCC compiles <code class="mono" style="font-size:11.5px">long long fact = 0</code> without complaint.
+              At runtime: factorial always outputs 0. No warning.
+            </div>
+          </div>
+        </div>
+
+        <div class="pain-card reveal">
+          <div class="pain-icon amber" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2a7 7 0 015.3 11.6C16.6 14.7 16 15.9 16 17v1a2 2 0 01-2 2h-4a2 2 0 01-2-2v-1c0-1.1-.6-2.3-1.3-3.4A7 7 0 0112 2z"
+                stroke="#d97706" stroke-width="1.8" stroke-linejoin="round" />
+              <path d="M9 21h6" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="pain-title">Zero learning guidance</div>
+            <div class="pain-body">
+              An error code tells you nothing. SmartCompiler explains the root cause,
+              why it matters, and gives you the corrected code with a learning takeaway.
+            </div>
+          </div>
+        </div>
+
+        <div class="pain-card reveal">
+          <div class="pain-icon amber" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="#d97706" stroke-width="1.8" />
+              <path d="M12 7v5.5l3.5 2" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="pain-title">Hours lost to line-by-line debugging</div>
+            <div class="pain-body">
+              Manual debugging without AI means reading every line, re-running, guessing.
+              SmartCompiler pinpoints the exact line and bug type in seconds.
+            </div>
+          </div>
+        </div>
+
+        <div class="pain-card reveal" style="grid-column: 1/-1">
+          <div class="pain-icon slate" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M8 3l-5 5 5 5M16 21l5-5-5-5M14 3l-4 18" stroke="#64748b" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="pain-title">Python/Java programmers struggle to write C</div>
+            <div class="pain-body">
+              Students arriving from Python or Java bring different mental models.
+              SmartCompiler's Auto Converter instantly translates your existing code to valid C
+              so you can see the syntactic differences side-by-side.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GCC vs SmartCompiler comparison -->
+      <div class="compare-section reveal">
+        <h3
+          style="font-size:1.3rem;font-weight:800;letter-spacing:-0.03em;color:var(--text-primary);margin-bottom:20px;">
+          Same code. Very different feedback.
+        </h3>
+        <div class="compare-tabs" role="tablist" aria-label="Compiler comparison">
+          <button class="compare-tab active" id="tab-gcc" role="tab" aria-selected="true" aria-controls="panel-gcc"
+            onclick="switchTab('gcc')">GCC output</button>
+          <button class="compare-tab smart" id="tab-smart" role="tab" aria-selected="false" aria-controls="panel-smart"
+            onclick="switchTab('smart')">SmartCompiler</button>
+        </div>
+        <div class="compare-panels">
+          <div class="compare-panel active" id="panel-gcc" role="tabpanel">
+            <div class="compare-bar gcc">
+              <span class="compare-dot"></span> gcc factorial.c &amp;&amp; ./a.out
+            </div>
+            <div class="compare-body gcc-output">
+              Enter a number: 5<br />
+              Factorial of 5 is <strong>0</strong><br />
+              Sum of first 5 numbers: 10<br />
+              Average: 2<br />
+              <br />
+              <span style="color:#6e7281;font-size:11px">Process exited with code 0. No errors reported.</span>
+            </div>
+          </div>
+          <div class="compare-panel" id="panel-smart" role="tabpanel">
+            <div class="compare-bar smart">
+              <span class="compare-dot"></span> SmartCompiler — AI Analysis
+            </div>
+            <div class="compare-body smart-output">
+              <div class="smart-line">
+                <span class="smart-tag logic">LOGIC</span>
+                <span class="smart-text">
+                  <strong>Line 7:</strong> <code class="mono" style="color:#d2a8ff">long long fact = 0</code>
+                  — initialising to 0 means every multiplication step produces 0.
+                  Factorial must start at 1 (the multiplicative identity).
+                </span>
+              </div>
+              <div class="smart-line">
+                <span class="smart-tag logic">LOGIC</span>
+                <span class="smart-text">
+                  <strong>Line 12:</strong> <code class="mono" style="color:#d2a8ff">for (i = 1; i &lt; n; i++)</code>
+                  — the &lt; bound stops before reaching n, so factorial(5) computes 1×2×3×4 = 24, not 120.
+                  Change to <code class="mono" style="color:#7ee787">i &lt;= n</code>.
+                </span>
+              </div>
+              <div class="smart-line">
+                <span class="smart-tag fix">FIX</span>
+                <span class="smart-text">
+                  Corrected code ready — click "Apply Fix" to patch both lines in the editor automatically.
+                </span>
+              </div>
+              <div class="smart-line">
+                <span class="smart-tag tip">TIP</span>
+                <span class="smart-text">
+                  Integer division: <code class="mono" style="color:#ffa657">int avg = sum / n</code> truncates.
+                  Cast to <code class="mono" style="color:#7ee787">float</code> if you need a decimal average.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════════════════════════════ -->
+  <section id="how-it-works" aria-labelledby="hiw-heading">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label" style="justify-content:center">Pipeline</div>
+        <h2 class="section-headline" id="hiw-heading">
+          From raw code to understood fix<br />
+          <span class="grad-text">in eight steps.</span>
+        </h2>
+        <p class="section-sub">
+          Every run passes through SmartCompiler's full pipeline —
+          execution, AI analysis, and structured learning feedback, all in under a second.
+        </p>
+      </div>
+
+      <div class="pipeline-grid">
+        <div class="pipeline" id="pipeline-list" aria-label="SmartCompiler pipeline steps">
+          <div class="pipeline-step active reveal">
+            <div class="pipeline-num" aria-hidden="true">01</div>
+            <div class="pipeline-content">
+              <div class="pipeline-title">Code Input</div>
+              <div class="pipeline-desc">
+                Write directly in the multi-tab editor, drag-and-drop a file,
+                or upload a photo of handwritten code — OCR converts it automatically.
+              </div>
+            </div>
+          </div>
+          <div class="pipeline-step reveal">
+            <div class="pipeline-num" aria-hidden="true">02</div>
+            <div class="pipeline-content">
+              <div class="pipeline-title">Language Detection</div>
+              <div class="pipeline-desc">
+                Heuristic engine identifies 20+ languages with confidence scoring
+                and matched signal pills — then offers one-click conversion to C.
+              </div>
+            </div>
+          </div>
+          <div class="pipeline-step reveal">
+            <div class="pipeline-num" aria-hidden="true">03</div>
+            <div class="pipeline-content">
+              <div class="pipeline-title">Code Analysis</div>
+              <div class="pipeline-desc">
+                AI reads your code with line-number prefixes so it can pinpoint
+                the exact location of every issue — not a line-range guess.
+              </div>
+            </div>
+          </div>
+          <div class="pipeline-step reveal">
+            <div class="pipeline-num" aria-hidden="true">04</div>
+            <div class="pipeline-content">
+              <div class="pipeline-title">Smart Diagnostics</div>
+              <div class="pipeline-desc">
+                100+ error patterns detected: off-by-one loops, uninitialized
+                variables, wrong comparison operators, integer overflow, null dereference.
+              </div>
+            </div>
+          </div>
+          <div class="pipeline-step reveal">
+            <div class="pipeline-num" aria-hidden="true">05</div>
+            <div class="pipeline-content">
+              <div class="pipeline-title">Plain-English Explanations</div>
+              <div class="pipeline-desc">
+                No jargon. Each bug gets a one-sentence hint, a root-cause description,
+                and a fix — written for someone seeing C for the first time.
+              </div>
+            </div>
+          </div>
+          <div class="pipeline-step reveal">
+            <div class="pipeline-num" aria-hidden="true">06</div>
+            <div class="pipeline-content">
+              <div class="pipeline-title">One-Click Fixes</div>
+              <div class="pipeline-desc">
+                "Apply Fix" patches the editor with corrected code — no copy-pasting,
+                no losing your place, no accidentally breaking unrelated lines.
+              </div>
+            </div>
+          </div>
+          <div class="pipeline-step reveal">
+            <div class="pipeline-num" aria-hidden="true">07</div>
+            <div class="pipeline-content">
+              <div class="pipeline-title">Learn &amp; Improve</div>
+              <div class="pipeline-desc">
+                The AI Tutor's 4-step mastery loop (Learn → Quiz → Verify Logic → Code)
+                covers 40+ C topics from Hello World through trees and hash tables.
+              </div>
+            </div>
+          </div>
+          <div class="pipeline-step reveal">
+            <div class="pipeline-num" aria-hidden="true">08</div>
+            <div class="pipeline-content">
+              <div class="pipeline-title">Track Progress</div>
+              <div class="pipeline-desc">
+                KPI cards, activity heatmap, error-profile radar chart, streak badges,
+                and compilation history — all in one analytics dashboard.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pipeline visual — terminal replay -->
+        <div class="pipeline-visual reveal" aria-hidden="true">
+          <div
+            style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#6e7681;margin-bottom:14px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">
+            Live execution log
+          </div>
+          <div
+            style="display:flex;flex-direction:column;gap:4px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8">
+            <div><span style="color:#10b981">$</span> <span style="color:#c9d1d9">gcc factorial.c -o program</span>
+            </div>
+            <div style="color:#7ee787">✓ Compiled successfully (0.12s)</div>
+            <div style="margin-top:6px"><span style="color:#10b981">$</span> <span
+                style="color:#c9d1d9">./program</span></div>
+            <div style="color:#c9d1d9">Enter a number: 5</div>
+            <div style="color:#c9d1d9">Factorial of 5 is 0</div>
+            <div style="margin-top:10px;padding:10px;background:#161b22;border:1px solid #21262d;border-radius:8px">
+              <div
+                style="color:#6e7681;font-size:10.5px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">
+                AI ANALYSIS</div>
+              <div style="color:#ffa657;font-size:11.5px;margin-bottom:4px">⚠ 3 logical issues detected</div>
+              <div style="color:#8b949e;font-size:11px;line-height:1.6">
+                — L7: fact initialised to 0 (multiplicative absorber)<br />
+                — L12: loop bound &lt; n skips last iteration<br />
+                — L23: integer division truncates average
+              </div>
+            </div>
+            <div style="margin-top:8px">
+              <span
+                style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:6px;background:rgba(16,185,129,0.15);color:#7ee787;font-size:11px;border:1px solid rgba(126,231,135,0.25)">
+                ✓ Fix applied to editor
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════
+     FEATURES
+════════════════════════════════════════════════════════════ -->
+  <div id="features">
+
+    <!-- ── Feature 1: Smart Editor ── -->
+    <section class="feature-section" aria-labelledby="feat-editor-heading">
+      <div class="feature-grid container">
+        <div class="feature-text reveal">
+          <div class="section-label">Editor</div>
+          <h2 class="section-headline" id="feat-editor-heading">
+            A code editor built<br />for learning C.
+          </h2>
+          <p class="section-sub">
+            Multi-tab editing, live syntax highlighting, smart bracket auto-close,
+            drag-and-drop file upload, and OCR image-to-code — all without installing anything.
+          </p>
+          <div class="feature-points">
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Syntax highlighting using the exact token palette from the editor
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Drag-and-drop or paste image → OCR extracts your handwritten C code
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Download as <code class="mono" style="font-size:12px">.c</code> file, undo/redo history, multiple open
+              tabs
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="editor-mini" role="img" aria-label="Code editor with syntax highlighting">
+            <div class="editor-mini-chrome" aria-hidden="true">
+              <span class="chrome-dot red"></span>
+              <span class="chrome-dot yellow"></span>
+              <span class="chrome-dot green"></span>
+              <div class="editor-mini-tab">
+                <span class="tab-modified"></span> main.c
+              </div>
+              <div class="editor-mini-tab" style="opacity:0.5;background:transparent;border-color:transparent">
+                utils.c
+              </div>
+            </div>
+            <div class="editor-mini-code" aria-label="C code with syntax highlighting">
+              <pre><span class="cm">/* Linked list — Level 5 topic */</span>
+<span class="kw">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="kw">#include</span> <span class="str">&lt;stdlib.h&gt;</span>
+
+<span class="kw">struct</span> <span class="fn">Node</span> {
+    <span class="kw">int</span> data<span class="op">;</span>
+    <span class="kw">struct</span> Node <span class="op">*</span>next<span class="op">;</span>
+}<span class="op">;</span>
+
+<span class="kw">struct</span> Node<span class="op">*</span> <span class="fn">createNode</span>(<span class="kw">int</span> val) {
+    <span class="kw">struct</span> Node<span class="op">*</span> n <span class="op">=</span>
+        <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> Node))<span class="op">;</span>
+    n<span class="op">-&gt;</span>data <span class="op">=</span> val<span class="op">;</span>
+    n<span class="op">-&gt;</span>next <span class="op">=</span> <span class="num">NULL</span><span class="op">;</span>
+    <span class="kw">return</span> n<span class="op">;</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Feature 2: Language Detector ── -->
+    <section class="feature-section" style="background:var(--surface)" aria-labelledby="feat-detect-heading">
+      <div class="feature-grid flip container">
+        <div class="feature-text reveal">
+          <div class="section-label">Language Detection</div>
+          <h2 class="section-headline" id="feat-detect-heading">
+            Paste any code.<br />Convert to C instantly.
+          </h2>
+          <p class="section-sub">
+            Supports 20+ languages — Python, Java, Go, Rust, Swift, Kotlin, and more.
+            The heuristic engine shows confidence scores and matched signal tokens,
+            then converts to compileable C in one click.
+          </p>
+          <div class="feature-points">
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Confidence bar + matched signal pills (e.g. <code class="mono" style="font-size:11px">def</code>, <code
+                class="mono" style="font-size:11px">print()</code>, <code class="mono"
+                style="font-size:11px">f-string</code>)
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              OOP → procedural C with structs — faithfully translated, not approximated
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Conversion notes explain every language-specific difference
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="lang-detector-ui" role="img"
+            aria-label="Language detector showing Python detected at 94% confidence">
+            <div class="lang-detector-head" aria-hidden="true">
+              <div class="lang-icon">Py</div>
+              <div>
+                <div class="lang-detect-title">Python detected</div>
+                <div class="lang-detect-conf">94% confidence</div>
+              </div>
+            </div>
+            <div style="padding:14px 18px 0" aria-hidden="true">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:11px;font-weight:600;color:var(--text-muted)">Confidence</span>
+                <span
+                  style="font-size:11px;font-weight:700;color:var(--brand-emerald);font-family:'JetBrains Mono',monospace">94%</span>
+              </div>
+              <div class="lang-confidence-bar">
+                <div class="lang-confidence-fill"></div>
+              </div>
+            </div>
+            <div class="lang-signals" aria-hidden="true">
+              <div class="signal-pill"><span class="signal-pill-dot"></span>def keyword</div>
+              <div class="signal-pill"><span class="signal-pill-dot"></span>print() call</div>
+              <div class="signal-pill"><span class="signal-pill-dot"></span>f-string</div>
+              <div class="signal-pill"><span class="signal-pill-dot"></span>: block syntax</div>
+              <div class="signal-pill"><span class="signal-pill-dot"></span>list comprehension</div>
+              <div class="signal-pill"><span class="signal-pill-dot"></span>range()</div>
+            </div>
+            <button class="lang-convert-btn" aria-label="Convert Python code to C">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M8 3l-5 5 5 5M16 21l5-5-5-5M14 3l-4 18" stroke="white" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+              Convert to C
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Feature 3: Terminal ── -->
+    <section class="feature-section dark" aria-labelledby="feat-terminal-heading">
+      <div class="feature-grid container">
+        <div class="feature-text reveal">
+          <div class="section-label" style="color:#10b981">Execution</div>
+          <h2 class="section-headline" style="color:#e6edf3" id="feat-terminal-heading">
+            Compile. Run. Protect.<br />
+            <span class="grad-text">All in the browser.</span>
+          </h2>
+          <p class="section-sub" style="color:#8b949e">
+            A live terminal shows the full compile → execute → output flow with exit codes
+            and timing. Infinite loops are auto-killed — no frozen tab, no lost work.
+          </p>
+          <div class="feature-points">
+            <div class="feature-point" style="color:#8b949e">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Real GCC compilation with exit-code and timing badges
+            </div>
+            <div class="feature-point" style="color:#8b949e">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Automatic TLE protection — long-running programs auto-killed
+            </div>
+            <div class="feature-point" style="color:#8b949e">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Provide stdin input before running — supports all interactive C programs
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="terminal-mini" role="img" aria-label="Terminal showing compilation and execution">
+            <div class="terminal-chrome" aria-hidden="true">
+              <span class="chrome-dot red"></span>
+              <span class="chrome-dot yellow"></span>
+              <span class="chrome-dot green"></span>
+              <div class="terminal-title">Terminal — SmartCompiler</div>
+            </div>
+            <div class="terminal-body" aria-label="Terminal output">
+              <div><span class="term-muted">Compiling...</span></div>
+              <div><span class="term-prompt">$</span> <span class="term-cmd">gcc main.c -o program -Wall</span></div>
+              <div><span class="term-ok">✓ Compiled in 0.14s — no warnings</span></div>
+              <br />
+              <div><span class="term-prompt">$</span> <span class="term-cmd">./program</span></div>
+              <div>Enter a number: 5</div>
+              <div>Factorial of 5 is <span class="term-ok">120</span></div>
+              <div>Sum of first 5 numbers: 15</div>
+              <div>Average: 3</div>
+              <br />
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="term-badge exit-ok">exit 0</span>
+                <span class="term-badge time">⏱ 0.003s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Feature 4: AI Bug Analysis ── -->
+    <section class="feature-section" aria-labelledby="feat-ai-heading">
+      <div class="feature-grid flip container">
+        <div class="feature-text reveal">
+          <div class="section-label">AI Analysis</div>
+          <h2 class="section-headline" id="feat-ai-heading">
+            Root cause.<br />
+            <span class="ai-grad-text">Explained in plain English.</span>
+          </h2>
+          <p class="section-sub">
+            The AI Analysis panel finds logical bugs — not just syntax — and structures
+            its response as a Root Cause card, a How-to-Fix card with corrected code,
+            and key takeaways. One click applies the fix directly to your editor.
+          </p>
+          <div class="feature-points">
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              100+ error patterns: off-by-one, uninitialized variables, wrong operators
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Pinpoints the exact line number — not a file-level guess
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              "Apply Fix" patches the editor — no manual copy-paste required
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="ai-analysis-ui" role="img" aria-label="AI Analysis panel showing bug root cause and fix">
+            <div class="ai-analysis-header" aria-hidden="true">
+              <div class="ai-analysis-icon">💡</div>
+              <div class="ai-analysis-title-wrap">
+                <div class="ai-analysis-title">AI Analysis</div>
+                <div class="ai-analysis-issues">3 logical issues found</div>
+              </div>
+            </div>
+            <div class="ai-analysis-body">
+              <div class="ai-accordion" style="background:linear-gradient(135deg,#fffbeb,#fef9f0)">
+                <div class="ai-accordion-head">
+                  <div class="ai-accordion-icon" style="background:#fef3c7;color:#d97706">💡</div>
+                  <div class="ai-accordion-title">Summary</div>
+                </div>
+                <div>
+                  <div class="ai-num-item">
+                    <div class="ai-num-badge"
+                      style="background:rgba(146,64,14,0.1);color:#92400e;border-color:rgba(146,64,14,0.2)">1</div>
+                    <div class="ai-num-text">factorial initialised to 0 — always produces 0</div>
+                  </div>
+                  <div class="ai-num-item">
+                    <div class="ai-num-badge"
+                      style="background:rgba(146,64,14,0.1);color:#92400e;border-color:rgba(146,64,14,0.2)">2</div>
+                    <div class="ai-num-text">loop bound i &lt; n skips the n-th iteration</div>
+                  </div>
+                  <div class="ai-num-item">
+                    <div class="ai-num-badge"
+                      style="background:rgba(146,64,14,0.1);color:#92400e;border-color:rgba(146,64,14,0.2)">3</div>
+                    <div class="ai-num-text">integer division truncates average silently</div>
+                  </div>
+                </div>
+              </div>
+              <div class="ai-accordion" style="background:linear-gradient(160deg,#fff5f5,#fef2f2)">
+                <div class="ai-accordion-head">
+                  <div class="ai-accordion-icon" style="background:#fee2e2;color:#dc2626">🐛</div>
+                  <div class="ai-accordion-title">Root Cause</div>
+                </div>
+                <div>
+                  <span class="line-pill">Line 7</span>
+                  <span class="type-badge logical">Logical</span>
+                  <div class="ai-num-text" style="margin-top:6px">
+                    <code class="mono" style="color:#d2a8ff;font-size:11.5px">long long fact = 0</code>
+                    — 0 is the multiplicative absorber. Any number multiplied by 0 is 0.
+                    The factorial identity is 1, not 0.
+                  </div>
+                </div>
+              </div>
+              <div class="ai-accordion">
+                <div class="ai-accordion-head">
+                  <div class="ai-accordion-icon" style="background:#dbeafe;color:#2563eb">⚡</div>
+                  <div class="ai-accordion-title">How to Fix</div>
+                </div>
+                <div class="fix-code-mini"><span class="kw">long long</span> fact = <span class="num">1</span>;
+                  <span class="kw">for</span> (i = <span class="num">1</span>; i &lt;= n; i++)
+                </div>
+                <div style="margin:8px 0 4px;display:flex;justify-content:center">
+                  <button
+                    style="display:flex;align-items:center;gap:6px;padding:8px 20px;border-radius:8px;background:linear-gradient(90deg,var(--brand-emerald),var(--brand-green));color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:'Inter',sans-serif"
+                    aria-label="Apply fix to editor">
+                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path d="M4 10l5 5 7-7" stroke="white" stroke-width="2.2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    </svg>
+                    Apply Fix
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Feature 5: Bug Tracker ── -->
+    <section class="feature-section" style="background:var(--surface-3)" aria-labelledby="feat-tracker-heading">
+      <div class="feature-grid container">
+        <div class="feature-text reveal">
+          <div class="section-label">Bug Tracker</div>
+          <h2 class="section-headline" id="feat-tracker-heading">
+            See every mistake.<br />Stop repeating them.
+          </h2>
+          <p class="section-sub">
+            A donut chart breaks error types by frequency.
+            The "Common Mistakes" card grid ranks your most repeated bugs
+            with contextual tips so you don't make the same mistake twice.
+          </p>
+          <div class="feature-points">
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Error breakdown: logical, syntax, runtime — visualised by frequency
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Ranked "Common Mistakes to Avoid" with per-error learning tips
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Persists across sessions — your bug history is always available
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="bug-tracker-ui" role="img" aria-label="Bug tracker showing error frequency breakdown">
+            <div class="bug-tracker-header" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <ellipse cx="10" cy="11.5" rx="5" ry="6" fill="none" stroke="#1e293b" stroke-width="1.5" />
+                <ellipse cx="10" cy="7.2" rx="3" ry="2.5" fill="none" stroke="#1e293b" stroke-width="1.3" />
+                <line x1="10" y1="7.5" x2="10" y2="17.5" stroke="#1e293b" stroke-width="1.2" stroke-linecap="round" />
+              </svg>
+              <div class="bug-tracker-title">Bug Tracker</div>
+            </div>
+            <div class="bug-tracker-body">
+              <div class="donut-wrap" aria-hidden="true">
+                <div class="donut" role="img" aria-label="Donut chart showing error type distribution"></div>
+                <div class="donut-legend">
+                  <div class="donut-item"><span class="donut-dot" style="background:#ef4444"></span>Logical (38%)</div>
+                  <div class="donut-item"><span class="donut-dot" style="background:#f59e0b"></span>Syntax (27%)</div>
+                  <div class="donut-item"><span class="donut-dot" style="background:#10b981"></span>Runtime (15%)</div>
+                  <div class="donut-item"><span class="donut-dot" style="background:#0ea5e9"></span>Other (20%)</div>
+                </div>
+              </div>
+              <div
+                style="font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;margin-bottom:8px">
+                Top mistakes this week</div>
+              <div class="mistake-cards">
+                <div class="mistake-card">
+                  <div class="mistake-rank">#1</div>
+                  <div class="mistake-info">
+                    <div class="mistake-title">Off-by-one loop bounds</div>
+                    <div class="mistake-sub">Using &lt; instead of &lt;=</div>
+                  </div>
+                  <span class="mistake-count high">12×</span>
+                </div>
+                <div class="mistake-card">
+                  <div class="mistake-rank">#2</div>
+                  <div class="mistake-info">
+                    <div class="mistake-title">Uninitialized variable</div>
+                    <div class="mistake-sub">fact = 0 instead of 1</div>
+                  </div>
+                  <span class="mistake-count medium">7×</span>
+                </div>
+                <div class="mistake-card">
+                  <div class="mistake-rank">#3</div>
+                  <div class="mistake-info">
+                    <div class="mistake-title">Integer division truncation</div>
+                    <div class="mistake-sub">avg = sum/n loses precision</div>
+                  </div>
+                  <span class="mistake-count low">4×</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Feature 6: Analytics ── -->
+    <section class="feature-section" style="background:var(--surface)" aria-labelledby="feat-analytics-heading">
+      <div class="feature-grid flip container">
+        <div class="feature-text reveal">
+          <div class="section-label">Analytics</div>
+          <h2 class="section-headline" id="feat-analytics-heading">
+            Measure how fast<br />you're actually learning.
+          </h2>
+          <p class="section-sub">
+            KPI cards track total runs, success rate, average fix time, and daily streak.
+            A 14-day activity heatmap shows when you're most productive.
+            Streak badges reward consistency.
+          </p>
+          <div class="feature-points">
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              14-day activity heatmap + error-profile radar chart
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Streak + milestone badges — daily practice rewarded
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Learning-velocity trend — see your improvement over time
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="analytics-ui" role="img" aria-label="Analytics dashboard with KPI cards and activity heatmap">
+            <div class="kpi-grid" aria-hidden="true">
+              <div class="kpi-card">
+                <div class="kpi-label">Total Runs</div>
+                <div class="kpi-value mono">147</div>
+                <div class="kpi-change up">↑ 23 this week</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Success Rate</div>
+                <div class="kpi-value green mono">78<span>%</span></div>
+                <div class="kpi-change up">↑ 12% from last week</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Avg Fix Time</div>
+                <div class="kpi-value sky mono">1.8<span>min</span></div>
+                <div class="kpi-change up">↓ improving</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Day Streak</div>
+                <div class="kpi-value violet mono">🔥 7</div>
+                <div class="kpi-change up">Personal best!</div>
+              </div>
+            </div>
+            <div class="heatmap-section" aria-hidden="true">
+              <div class="heatmap-label">14-day activity</div>
+              <div class="heatmap" role="img" aria-label="14-day activity heatmap">
+                <div class="hmap-cell l1"></div>
+                <div class="hmap-cell l0"></div>
+                <div class="hmap-cell l2"></div>
+                <div class="hmap-cell l3"></div>
+                <div class="hmap-cell l1"></div>
+                <div class="hmap-cell l4"></div>
+                <div class="hmap-cell l2"></div>
+                <div class="hmap-cell l0"></div>
+                <div class="hmap-cell l3"></div>
+                <div class="hmap-cell l4"></div>
+                <div class="hmap-cell l2"></div>
+                <div class="hmap-cell l4"></div>
+                <div class="hmap-cell l3"></div>
+                <div class="hmap-cell l4"></div>
+              </div>
+            </div>
+            <div class="streak-section" aria-hidden="true">
+              <div class="streak-badge">
+                <span class="streak-fire" aria-hidden="true">🔥</span>
+                <span class="streak-num">7</span>
+                <span class="streak-days">day streak</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5">
+                You've coded every day this week.<br />
+                <span style="font-weight:600;color:var(--brand-emerald)">Keep it going!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Feature 7: AI Tutor ── -->
+    <section class="feature-section" style="background:var(--surface-3)" aria-labelledby="feat-tutor-heading">
+      <div class="feature-grid container">
+        <div class="feature-text reveal">
+          <div class="section-label" style="color:var(--ai-indigo)">AI Tutor</div>
+          <h2 class="section-headline" id="feat-tutor-heading">
+            Learn C from<br />
+            <span class="ai-grad-text">Hello World to Trees.</span>
+          </h2>
+          <p class="section-sub">
+            A structured 4-step mastery loop — Learn Concept, Test Knowledge,
+            Verify Logic, Write Code — across 5 levels and 40+ C topics.
+            The AI validates your pseudocode approach before you write a single line.
+          </p>
+          <div class="feature-points">
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              5 levels, 40+ topics: from variables through linked lists and hash tables
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              AI validates your pseudocode logic before you write the actual C
+            </div>
+            <div class="feature-point">
+              <div class="feature-point-dot"
+                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </div>
+              Custom visual diagram + quiz for every concept
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="ai-tutor-ui" role="img" aria-label="AI Tutor interface showing 4-step mastery loop">
+            <div class="tutor-header" aria-hidden="true">
+              <div class="tutor-icon">🎓</div>
+              <div>
+                <div class="tutor-title">AI Tutor</div>
+                <div class="tutor-sub">Level 2 · Loops & Arrays · Topic 2 of 8</div>
+              </div>
+            </div>
+            <div class="tutor-steps" role="list" aria-label="Learning steps" aria-hidden="true">
+              <div class="tutor-step done" role="listitem">
+                <div class="tutor-step-num">✓</div> Learn
+              </div>
+              <div class="tutor-step active" role="listitem">
+                <div class="tutor-step-num">2</div> Quiz
+              </div>
+              <div class="tutor-step" role="listitem">
+                <div class="tutor-step-num">3</div> Logic
+              </div>
+              <div class="tutor-step" role="listitem">
+                <div class="tutor-step-num">4</div> Code
+              </div>
+            </div>
+            <div class="tutor-body">
+              <div class="tutor-concept" aria-hidden="true">
+                <span class="tutor-concept-badge">For Loops</span>
+                <span class="tutor-level">Level 2 — Iteration</span>
+              </div>
+              <div class="tutor-question">
+                Which loop condition correctly iterates from 1 to n inclusive?
+              </div>
+              <div class="tutor-quiz-options" role="radiogroup" aria-label="Quiz options">
+                <label class="tutor-option">
+                  <div class="option-radio" aria-hidden="true"></div>
+                  <code class="mono" style="font-size:12px">for (i = 0; i &lt; n; i++)</code>
+                </label>
+                <label class="tutor-option selected" aria-checked="true">
+                  <div class="option-radio" aria-hidden="true"></div>
+                  <code class="mono" style="font-size:12px">for (i = 1; i &lt;= n; i++)</code>
+                </label>
+                <label class="tutor-option">
+                  <div class="option-radio" aria-hidden="true"></div>
+                  <code class="mono" style="font-size:12px">for (i = 1; i &lt; n; i++)</code>
+                </label>
+              </div>
+              <div
+                style="margin-top:12px;padding:10px 12px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:8px;font-size:12px;color:#166534;line-height:1.55">
+                ✓ Correct! Starting at 1 and using &lt;= n ensures all n values are processed.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+     STATS STRIP
+════════════════════════════════════════════════════════════ -->
+  <section id="stats" aria-labelledby="stats-heading">
+    <div class="container">
+      <h2 id="stats-heading" class="sr-only">SmartCompiler statistics</h2>
+      <div class="stats-grid">
+        <div class="reveal" style="display:flex;flex-direction:column;align-items:center">
+          <div class="stat-value mono"><span class="stat-plus" aria-hidden="true">100</span><span
+              style="color:var(--brand-green)">+</span></div>
+          <div class="stat-label">error patterns<br />detected by AI</div>
+        </div>
+        <div class="reveal" style="display:flex;flex-direction:column;align-items:center">
+          <div class="stat-value mono"><span class="stat-plus">20</span><span style="color:var(--brand-green)">+</span>
+          </div>
+          <div class="stat-label">programming<br />concepts explained</div>
+        </div>
+        <div class="reveal" style="display:flex;flex-direction:column;align-items:center">
+          <div class="stat-value mono"><span class="stat-plus">20</span><span style="color:var(--brand-green)">+</span>
+          </div>
+          <div class="stat-label">languages<br />auto-detected</div>
+        </div>
+        <div class="reveal" style="display:flex;flex-direction:column;align-items:center">
+          <div class="stat-value mono" style="color:var(--brand-sky)">Real<span style="font-size:1.2rem">-time</span>
+          </div>
+          <div class="stat-label">AI guidance<br />while you code</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════
+     MISSION / BUILT FOR STUDENTS
+════════════════════════════════════════════════════════════ -->
+  <section id="mission" aria-labelledby="mission-heading">
+    <div class="mission-inner">
+      <div class="mission-text reveal">
+        <div class="section-label">For Students</div>
+        <h2 class="section-headline" id="mission-heading">
+          Built for CS students<br />learning C first.
+        </h2>
+        <p class="section-sub" style="max-width:100%">
+          C remains the standard first-year language in computer science programmes
+          worldwide — particularly across India, where millions of engineering students
+          encounter pointers, memory management, and manual type handling before
+          they've written a single object or closure.
+        </p>
+        <p class="section-sub" style="max-width:100%;margin-top:14px">
+          SmartCompiler exists because the tools available to these students were
+          built for professionals, not beginners. A professional compiler is not a teacher.
+          We built one that is.
+        </p>
+      </div>
+      <div class="audience-cards reveal">
+        <div class="audience-card">
+          <div class="audience-icon" style="background:#f0fdf4;border:1px solid #a7f3d0" aria-hidden="true">📚</div>
+          <div>
+            <div class="audience-title">First-year CS students</div>
+            <div class="audience-desc">Learning C as your first language — pointers, structs, and memory management
+              explained step by step.</div>
+          </div>
+        </div>
+        <div class="audience-card">
+          <div class="audience-icon" style="background:#eff6ff;border:1px solid #bae6fd" aria-hidden="true">🔄</div>
+          <div>
+            <div class="audience-title">Python &amp; Java developers</div>
+            <div class="audience-desc">Transitioning from a garbage-collected language — the auto-converter shows you
+              the C equivalent of your existing code.</div>
+          </div>
+        </div>
+        <div class="audience-card">
+          <div class="audience-icon" style="background:#faf5ff;border:1px solid #ddd6fe" aria-hidden="true">🏆</div>
+          <div>
+            <div class="audience-title">Competitive programmers</div>
+            <div class="audience-desc">Preparing for exams and coding competitions that require C proficiency — practice
+              with real AI feedback.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════
+     FINAL CTA
+════════════════════════════════════════════════════════════ -->
+  <section id="final-cta" aria-labelledby="cta-heading">
+    <div class="cta-inner">
+      <div class="reveal">
+        <div class="section-label" style="color:var(--brand-green);justify-content:center">Zero installation</div>
+      </div>
+      <h2 class="cta-headline reveal" id="cta-heading">
+        Write your first C program.<br />
+        <span class="grad-text">Understand every line of it.</span>
+      </h2>
+      <p class="cta-sub reveal">
+        SmartCompiler runs entirely in the browser. No compiler to install,
+        no IDE to configure, no Stack Overflow rabbit holes. Just code, feedback, and learning.
+      </p>
+      <div class="hero-ctas reveal">
+        <a href="/app.html" class="btn-primary" id="final-cta-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2L5 12h7l-1 9 8-11h-6.5L12 2z" stroke="white" stroke-width="2" stroke-linejoin="round"
+              fill="none" />
+          </svg>
+          Open SmartCompiler
+        </a>
+        <a href="#how-it-works" class="btn-secondary" style="color:#6e7681;border-color:#21262d" id="final-learn-more">
+          Learn how it works
+        </a>
+      </div>
+    </div>
+    <div class="cta-mark" aria-hidden="true">⚡</div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════════ -->
+  <footer role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+          <a href="/" class="footer-brand" aria-label="SmartCompiler home">
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true">
+              <rect width="40" height="40" rx="11" fill="url(#foot-grad)" />
+              <polygon points="24,8 13,23 20,23 16,33 27,18 20,18" fill="white" fill-rule="evenodd" />
+              <defs>
+                <linearGradient id="foot-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#10b981" />
+                  <stop offset="100%" stop-color="#0ea5e9" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="footer-brand-text">
+              <div class="footer-name">Smart<span>Compiler</span></div>
+              <div class="footer-tagline">Write · Analyze · Learn</div>
+            </div>
+          </a>
+          <p class="footer-desc">
+            A browser-based AI C programming environment built for students learning C as their first language. Zero
+            installation required.
+          </p>
+        </div>
+
+        <div class="footer-links" aria-label="Product links">
+          <div class="footer-links-title">Product</div>
+          <a href="/app.html">Editor</a>
+          <a href="/#ai-analysis">AI Analysis</a>
+          <a href="/#tutor">AI Tutor</a>
+          <a href="/#analytics">Analytics</a>
+          <a href="/#bug-tracker">Bug Tracker</a>
+        </div>
+
+        <div class="footer-links" aria-label="Learn links">
+          <div class="footer-links-title">Learn</div>
+          <a href="/#tutor">C Basics</a>
+          <a href="/#tutor">Pointers</a>
+          <a href="/#tutor">Linked Lists</a>
+          <a href="/#tutor">Trees &amp; Graphs</a>
+          <a href="/#tutor">Hash Tables</a>
+        </div>
+
+        <div class="footer-links" aria-label="More links">
+          <div class="footer-links-title">More</div>
+          <a href="#problem">The Problem</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#mission">For Students</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-copy">© 2025 SmartCompiler. Built for students.</div>
+        <div class="footer-built">
+          Made with purpose —
+          <span>Write · Analyze · Learn</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Screen reader only utility -->
+  <style>
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0
+    }
+  </style>
+
+  <!-- Load GSAP and ScrollTrigger CDN libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <script>
+    // Register ScrollTrigger plugin
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* ── Nav scroll state ── */
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 20);
+    }, { passive: true });
+
+    /* ── Scroll Progress Bar ── */
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      const progressEl = document.getElementById('scroll-progress');
+      if (progressEl) progressEl.style.width = scrollPercent + '%';
+    }, { passive: true });
+
+    /* ── GSAP Slide Down Nav on Load ── */
+    gsap.from('#nav', {
+      y: -70,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power3.out'
+    });
+
+    /* ── Interactive Particle System in Hero ── */
+    function initHeroParticles() {
+      const canvas = document.getElementById('hero-particles');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const hero = canvas.closest('#hero') || canvas.parentElement;
+
+      function resize() {
+        w = canvas.width = hero.offsetWidth || window.innerWidth;
+        h = canvas.height = hero.offsetHeight || window.innerHeight;
+      }
+
+      let w, h;
+      resize();
+      window.addEventListener('resize', resize, { passive: true });
+
+
+      const particles = [];
+      const particleCount = 40;
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 4 + 2,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          alpha: Math.random() * 0.5 + 0.1
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+
+        // Draw connections
+        for (let i = 0; i < particleCount; i++) {
+          for (let j = i + 1; j < particleCount; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 100) {
+              ctx.strokeStyle = `rgba(16, 185, 129, ${0.1 * (1 - dist / 100)})`;
+              ctx.lineWidth = 0.5;
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Draw particles
+        particles.forEach(p => {
+          ctx.fillStyle = `rgba(16, 185, 129, ${p.alpha})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0 || p.x > w) p.vx *= -1;
+          if (p.y < 0 || p.y > h) p.vy *= -1;
+        });
+
+        requestAnimationFrame(draw);
+      }
+
+      draw();
+    }
+    initHeroParticles();
+
+    /* ── Mouse Glow Handler on Hero ── */
+    const heroSection = document.getElementById('hero');
+    if (heroSection) {
+      heroSection.addEventListener('mousemove', e => {
+        const rect = heroSection.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        heroSection.style.setProperty('--mouse-x', `${x}px`);
+        heroSection.style.setProperty('--mouse-y', `${y}px`);
+      });
+    }
+
+    /* ── Hero staggered reveal — badge → headline → sub → CTAs ── */
+    const headlineEl = document.querySelector('.hero-headline');
+    if (headlineEl) {
+      // Split headline into words for stagger bounce
+      headlineEl.innerHTML = `
+    <span class="hero-word">The</span>
+    <span class="hero-word">compiler</span>
+    <span class="hero-word">that</span>
+    <span class="hero-word">catches</span><br/>
+    <span class="hero-word grad-text">the</span>
+    <span class="hero-word grad-text">bugs</span>
+    <span class="hero-word grad-text">GCC</span>
+    <span class="hero-word grad-text">can't.</span>
+  `;
+      // Badge fades in first
+      gsap.fromTo('.hero-badge',
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }
+      );
+      // Headline words bounce in
+      gsap.fromTo('.hero-word',
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.8, stagger: 0.07, delay: 0.2, ease: 'back.out(1.7)' }
+      );
+      // Sub-headline slides in
+      gsap.fromTo('.hero-sub',
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.8, delay: 0.55, ease: 'power2.out' }
+      );
+      // CTA buttons pop in
+      gsap.fromTo('.hero-ctas .btn-primary, .hero-ctas .btn-secondary',
+        { opacity: 0, y: 12, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, stagger: 0.15, delay: 0.8, ease: 'back.out(1.8)' }
+      );
+      // Hero visual slides up
+      gsap.fromTo('.hero-visual',
+        { opacity: 0, y: 32 },
+        { opacity: 1, y: 0, duration: 1.0, delay: 0.6, ease: 'power3.out' }
+      );
+    }
+
+    /* ── Staggered Scroll Reveal via GSAP ScrollTrigger ── */
+    document.querySelectorAll('.reveal').forEach(el => {
+      gsap.fromTo(el,
+        { opacity: 0, y: 28 },
+        {
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 88%',
+            toggleActions: 'play none none none'
+          },
+          opacity: 1,
+          y: 0,
+          duration: 0.85,
+          ease: 'power2.out'
+        }
+      );
+    });
+
+    /* ── Staggered reveal for grid elements specifically ── */
+    document.querySelectorAll('.problem-grid, .audience-cards').forEach(grid => {
+      const cards = grid.children;
+      gsap.from(cards, {
+        scrollTrigger: {
+          trigger: grid,
+          start: 'top 85%',
+        },
+        opacity: 0,
+        y: 24,
+        stagger: 0.12,
+        duration: 0.7,
+        ease: 'power2.out'
+      });
+    });
+
+    /* ── Horizontal Feature sections sliding in ── */
+    document.querySelectorAll('.feature-grid').forEach(grid => {
+      const isFlipped = grid.classList.contains('flip');
+      const text = grid.querySelector('.feature-text');
+      const visual = grid.querySelector('.feature-text + div');
+      if (text && visual) {
+        gsap.from(text, {
+          scrollTrigger: {
+            trigger: grid,
+            start: 'top 85%',
+          },
+          opacity: 0,
+          x: isFlipped ? 40 : -40,
+          duration: 0.8,
+          ease: 'power2.out'
+        });
+        gsap.from(visual, {
+          scrollTrigger: {
+            trigger: grid,
+            start: 'top 85%',
+          },
+          opacity: 0,
+          x: isFlipped ? -40 : 40,
+          duration: 0.8,
+          ease: 'power2.out'
+        });
+      }
+    });
+
+    /* ── Product Flow Step-by-Step Scroll Trigger ── */
+    const progressMap = {
+      'write': '10%',
+      'compile': '30%',
+      'ai-detect': '50%',
+      'shows-fix': '70%',
+      'applied': '90%',
+      'learn': '100%'
+    };
+
+    document.querySelectorAll('.flow-step-card').forEach((card) => {
+      const step = card.getAttribute('data-step');
+      ScrollTrigger.create({
+        trigger: card,
+        start: 'top 60%',
+        end: 'bottom 40%',
+        onEnter: () => activateStep(step, card),
+        onEnterBack: () => activateStep(step, card)
+      });
+    });
+
+    function activateStep(step, activeCard) {
+      // Dim all step cards
+      document.querySelectorAll('.flow-step-card').forEach(c => {
+        gsap.to(c, { opacity: 0.4, borderColor: 'var(--border)', boxShadow: 'none', duration: 0.3 });
+      });
+      // Highlight active card
+      gsap.to(activeCard, {
+        opacity: 1,
+        borderColor: 'var(--brand-green)',
+        boxShadow: 'var(--shadow-lift)',
+        duration: 0.3
+      });
+
+      // Fade out all visual states
+      document.querySelectorAll('.flow-state').forEach(state => {
+        state.classList.remove('active');
+      });
+      // Fade in active visual state
+      const activeState = document.querySelector('.flow-state.state-' + step);
+      if (activeState) {
+        activeState.classList.add('active');
+      }
+
+      // Update progress line height
+      const progressLine = document.getElementById('flow-progress-line');
+      if (progressLine && progressMap[step]) {
+        progressLine.style.height = progressMap[step];
+      }
+    }
+
+    /* ── Donut chart animation on scroll ── */
+    const donutData = { logical: 0, syntax: 0, runtime: 0, other: 0 };
+    ScrollTrigger.create({
+      trigger: '.bug-tracker-ui',
+      start: 'top 85%',
+      onEnter: () => {
+        gsap.to(donutData, {
+          logical: 38,
+          syntax: 27,
+          runtime: 15,
+          other: 20,
+          duration: 1.6,
+          ease: 'power2.out',
+          onUpdate: () => {
+            const donut = document.querySelector('.donut');
+            if (donut) {
+              const l = donutData.logical;
+              const s = l + donutData.syntax;
+              const r = s + donutData.runtime;
+              donut.style.background = `conic-gradient(
+            #ef4444 0% ${l}%,
+            #f59e0b ${l}% ${s}%,
+            #10b981 ${s}% ${r}%,
+            #0ea5e9 ${r}% 100%
+          )`;
+            }
+          }
+        });
+      }
+    });
+
+    /* ── Language detector confidence fill on scroll ── */
+    ScrollTrigger.create({
+      trigger: '.lang-detector-ui',
+      start: 'top 85%',
+      onEnter: () => {
+        gsap.to('.lang-confidence-fill', {
+          width: '94%',
+          duration: 1.4,
+          ease: 'power2.out'
+        });
+      }
+    });
+
+    /* ── 3D Perspective Card Tilt on Mousemove ── */
+    function init3DTilt() {
+      document.querySelectorAll('.pain-card, .audience-card, .flow-step-card, .kpi-card, .mistake-card').forEach(card => {
+        card.style.transformStyle = 'preserve-3d';
+        card.style.perspective = '1000px';
+
+        card.addEventListener('mousemove', e => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+
+          const rotateX = ((y - centerY) / centerY) * -5; // subtle tilt (max 5 deg)
+          const rotateY = ((x - centerX) / centerX) * 5;
+
+          gsap.to(card, {
+            rotateX: rotateX,
+            rotateY: rotateY,
+            transformPerspective: 1000,
+            ease: 'power1.out',
+            duration: 0.3
+          });
+        });
+
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, {
+            rotateX: 0,
+            rotateY: 0,
+            ease: 'power2.out',
+            duration: 0.5
+          });
+        });
+      });
+    }
+    init3DTilt();
+
+    /* ── Compare tabs ── */
+    function switchTab(tab) {
+      document.querySelectorAll('.compare-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('.compare-panel').forEach(p => p.classList.remove('active'));
+      const activeTab = document.getElementById('tab-' + tab);
+      const activePanel = document.getElementById('panel-' + tab);
+      if (activeTab && activePanel) {
+        activeTab.classList.add('active');
+        activeTab.setAttribute('aria-selected', 'true');
+        activePanel.classList.add('active');
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       HERO TYPING ANIMATION
+       Shows buggy C code being typed, then AI panel slides in
+       Controlled and animated via GSAP timelines
+    ══════════════════════════════════════════════════════════════ */
+    const codeLines = [
+      { raw: '#include <stdio.h>', html: '<span class="kw">#include</span> <span class="str">&lt;stdio.h&gt;</span>' },
+      { raw: '', html: '' },
+      { raw: 'int main() {', html: '<span class="kw">int</span> <span class="fn">main</span>() {' },
+      { raw: '    int n, i;', html: '    <span class="kw">int</span> n, i<span class="op">;</span>' },
+      { raw: '    long long fact = 0;', html: '    <span class="kw">long long</span> fact <span class="op">=</span> <span class="num">0</span><span class="op">;</span> <span class="cm">// ← bug</span>' },
+      { raw: '', html: '' },
+      { raw: '    printf("Enter a number: ");', html: '    <span class="fn">printf</span>(<span class="str">"Enter a number: "</span>)<span class="op">;</span>' },
+      { raw: '    scanf("%d", &n);', html: '    <span class="fn">scanf</span>(<span class="str">"%d"</span>, <span class="op">&amp;</span>n)<span class="op">;</span>' },
+      { raw: '', html: '' },
+      { raw: '    for (i = 1; i < n; i++) {', html: '    <span class="kw">for</span> (i <span class="op">=</span> <span class="num">1</span>; i <span class="op">&lt;</span> n; i++) {  <span class="cm">// ← bug</span>' },
+      { raw: '        fact = fact * i;', html: '        fact <span class="op">=</span> fact <span class="op">*</span> i<span class="op">;</span>' },
+      { raw: '    }', html: '    }' },
+      { raw: '', html: '' },
+      { raw: '    printf("Factorial: %lld\\n", fact);', html: '    <span class="fn">printf</span>(<span class="str">"Factorial: %lld\\n"</span>, fact)<span class="op">;</span>' },
+      { raw: '    return 0;', html: '    <span class="kw">return</span> <span class="num">0</span><span class="op">;</span>' },
+      { raw: '}', html: '}' },
+    ];
+
+    const heroCode = document.getElementById('hero-code');
+    const heroGutter = document.getElementById('hero-gutter');
+    const heroPanel = document.getElementById('hero-ai-panel');
+
+    let displayedLines = [];
+    let currentLine = 0;
+
+    function buildGutter() {
+      heroGutter.innerHTML = '';
+      const totalLines = Math.max(displayedLines.length, 1);
+      for (let i = 1; i <= totalLines; i++) {
+        const s = document.createElement('span');
+        s.textContent = i;
+        heroGutter.appendChild(s);
+      }
+    }
+
+    function typeNextLine() {
+      if (currentLine >= codeLines.length) {
+        // All lines typed — slide in AI panel with GSAP
+        setTimeout(() => {
+          gsap.to('#hero-ai-panel', {
+            x: 0,
+            duration: 0.75,
+            ease: 'power3.out',
+            onStart: () => {
+              heroPanel.classList.add('visible');
+            }
+          });
+        }, 600);
+        return;
+      }
+
+      const line = codeLines[currentLine];
+      displayedLines.push(line.html);
+      heroCode.innerHTML = displayedLines.join('\n') + '<span class="cursor-blink"></span>';
+      buildGutter();
+      currentLine++;
+
+      const delay = line.raw === '' ? 60 : 80 + Math.random() * 60;
+      setTimeout(typeNextLine, delay);
+    }
+
+    // Start typing after initial page load delay
+    setTimeout(typeNextLine, 1200);
+
+    /* ── Apply fix button (hero) ── */
+    const applyBtn = document.getElementById('hero-apply-btn');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        applyBtn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
+        <path d="M4 10l5 5 7-7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Fix Applied ✓`;
+
+        gsap.to(applyBtn, {
+          backgroundImage: 'linear-gradient(90deg, #047857, #059669)',
+          scale: 1.05,
+          duration: 0.25,
+          yoyo: true,
+          repeat: 1
+        });
+
+        const fixedLines = [
+          '<span class="kw">#include</span> <span class="str">&lt;stdio.h&gt;</span>',
+          '',
+          '<span class="kw">int</span> <span class="fn">main</span>() {',
+          '    <span class="kw">int</span> n, i<span class="op">;</span>',
+          '    <span class="kw">long long</span> fact <span class="op">=</span> <span class="num">1</span><span class="op">;</span> <span class="cm">// ✓ fixed</span>',
+          '',
+          '    <span class="fn">printf</span>(<span class="str">"Enter a number: "</span>)<span class="op">;</span>',
+          '    <span class="fn">scanf</span>(<span class="str">"%d"</span>, <span class="op">&amp;</span>n)<span class="op">;</span>',
+          '',
+          '    <span class="kw">for</span> (i <span class="op">=</span> <span class="num">1</span>; i <span class="op">&lt;=</span> n; i++) {  <span class="cm">// ✓ fixed</span>',
+          '        fact <span class="op">=</span> fact <span class="op">*</span> i<span class="op">;</span>',
+          '    }',
+          '',
+          '    <span class="fn">printf</span>(<span class="str">"Factorial: %lld\\n"</span>, fact)<span class="op">;</span>',
+          '    <span class="kw">return</span> <span class="num">0</span><span class="op">;</span>',
+          '}',
+        ];
+
+        // Fade code block and update with green flash
+        gsap.to('#hero-code', {
+          opacity: 0,
+          duration: 0.15,
+          onComplete: () => {
+            heroCode.innerHTML = fixedLines.join('\n');
+            buildGutter();
+            gsap.to('#hero-code', { opacity: 1, duration: 0.3 });
+            gsap.fromTo('#hero-code',
+              { backgroundColor: 'rgba(16, 185, 129, 0.15)' },
+              { backgroundColor: 'transparent', duration: 1.2 }
+            );
+          }
+        });
+      });
+    }
+
+    /* ── Stats Counter GSAP Interpolation ── */
+    document.querySelectorAll('.stat-plus').forEach(el => {
+      const targetVal = parseInt(el.textContent);
+      if (!isNaN(targetVal)) {
+        el.textContent = '0';
+
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 90%',
+          onEnter: () => {
+            gsap.to(el, {
+              innerText: targetVal,
+              duration: 2.0,
+              snap: { innerText: 1 },
+              ease: 'power2.out'
+            });
+          }
+        });
+      }
+    });
+
+    /* ── Keyboard nav for comparison tabs ── */
+    document.querySelectorAll('.compare-tab').forEach(tab => {
+      tab.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const tabId = tab.id.replace('tab-', '');
+          switchTab(tabId);
+        }
+      });
+    });
+  </script>
+</body>
+
 </html>

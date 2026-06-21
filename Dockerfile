@@ -17,7 +17,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy all frontend source files and build the React app
-COPY index.html vite.config.js eslint.config.js ./
+COPY index.html app.html vite.config.js eslint.config.js ./
 COPY public/ ./public/
 COPY src/ ./src/
 RUN npm run build
