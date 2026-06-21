@@ -3,7 +3,7 @@ import styles from './AiTutorPanel.module.css';
 import { TUTOR_CURRICULUM, TUTOR_LEVELS } from '../tutorData';
 import { TutorDiagram } from './TutorDiagrams';
 import { callClaude, parseJSON, compileC } from '../api';
-import { TUTOR_LOGIC_SYSTEM_PROMPT, TUTOR_CODE_SYSTEM_PROMPT } from '../constants';
+import { TUTOR_LOGIC_SYSTEM_PROMPT, TUTOR_CODE_SYSTEM_PROMPT, TUTOR_AI_SOLUTION_PROMPT } from '../constants';
 import { highlightC } from '../highlight';
 
 
@@ -45,6 +45,8 @@ export default function AiTutorPanel({ onClose }) {
   const [showSolution, setShowSolution] = useState(false);
   const [isGeneratingSolution, setIsGeneratingSolution] = useState(false);
   const [langWarning, setLangWarning] = useState(null); // non-null = detected language string
+  const [aiSolution, setAiSolution] = useState(null);  // { c_code, explanation, steps }
+  const [isGeneratingAiSolution, setIsGeneratingAiSolution] = useState(false);
 
   // Completed Topics (tracked in memory since no localStorage requirement)
   const [completedTopics, setCompletedTopics] = useState(new Set());
@@ -81,6 +83,8 @@ export default function AiTutorPanel({ onClose }) {
     setStdinText('');
     setShowSolution(false);
     setIsGeneratingSolution(false);
+    setAiSolution(null);
+    setIsGeneratingAiSolution(false);
 
     const topic = TUTOR_CURRICULUM[topicId] || TUTOR_CURRICULUM['hello-world'];
     if (topic.referenceSolution) {
@@ -182,6 +186,41 @@ ${logicText}
     // Python (extra)
     if (/^for \w+ in /.test(stripped) || lines.some(l => l.endsWith(':') && !l.includes('//') && !l.includes(';'))) return 'Python';
     return null;
+  };
+
+  // ── AI-personalized solution based on student's current code ──────
+  const handleGenerateAiSolution = async () => {
+    setIsGeneratingAiSolution(true);
+    setAiSolution(null);
+    try {
+      const userPrompt = `
+Concept: ${currentTopic.title}
+Category: ${currentTopic.category}
+Level: ${currentTopic.levelNum}
+
+Student's current code attempt:
+"""
+${codeText}
+"""
+
+Reference solution (do NOT reveal directly, but use it to understand the correct approach):
+"""
+${currentTopic.referenceSolution}
+"""
+`;
+      const responseString = await callClaude(TUTOR_AI_SOLUTION_PROMPT, userPrompt);
+      const parsed = parseJSON(responseString);
+      setAiSolution(parsed);
+    } catch (err) {
+      console.error(err);
+      setAiSolution({
+        c_code: currentTopic.referenceSolution || '',
+        explanation: `Could not generate personalized solution: ${err.message}. Showing reference solution instead.`,
+        steps: ['Check your network connection and try again.']
+      });
+    } finally {
+      setIsGeneratingAiSolution(false);
+    }
   };
 
   // Step 4 Run Code call
@@ -1035,8 +1074,32 @@ ${codeText}
                     </button>
                   </div>
 
-                  {/* Give Full Solution row */}
-                  <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                  {/* Helper buttons row: AI Solution + Give Full Solution */}
+                  <div style={{ marginTop: '8px', display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    {/* AI Solution Based on My Logic */}
+                    {isGeneratingAiSolution ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#7c3aed' }}>
+                        <div className={styles.loadingSpinner} style={{ borderTopColor: '#7c3aed', width: '14px', height: '14px', borderWidth: '2px' }} />
+                        AI is analyzing your code...
+                      </div>
+                    ) : (
+                      <button
+                        className={styles.secondaryButton}
+                        style={{
+                          border: '1.5px solid #7c3aed',
+                          color: '#6d28d9',
+                          background: '#faf5ff',
+                          fontSize: '13px',
+                          padding: '9px 18px'
+                        }}
+                        onClick={handleGenerateAiSolution}
+                        title="AI will analyze your code and generate a personalized solution"
+                      >
+                        🤖 AI Solution Based on My Logic
+                      </button>
+                    )}
+
+                    {/* Give Full Solution (prebuilt) */}
                     {isGeneratingSolution ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6366f1' }}>
                         <div className={styles.loadingSpinner} style={{ borderTopColor: '#6366f1', width: '14px', height: '14px', borderWidth: '2px' }} />
@@ -1116,6 +1179,73 @@ ${codeText}
                         <strong>Tip:</strong> Use the <strong>💡 Give Full Solution</strong> button above the editor to reveal the reference answer.
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* AI-generated personalized solution card */}
+                {aiSolution && (
+                  <div className={styles.card} style={{ border: '1.5px solid #a78bfa', background: 'linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '22px' }}>🤖</span>
+                      <div>
+                        <h3 className={styles.cardTitle} style={{ color: '#5b21b6', margin: 0 }}>AI-Personalized Solution</h3>
+                        <p style={{ fontSize: '12px', color: '#7c3aed', margin: 0 }}>Generated based on your code approach</p>
+                      </div>
+                      <button
+                        onClick={() => setAiSolution(null)}
+                        style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#7c3aed', fontSize: '16px' }}
+                        title="Dismiss"
+                      >✕</button>
+                    </div>
+
+                    {/* AI explanation */}
+                    <p style={{ fontSize: '13.5px', color: '#4c1d95', lineHeight: 1.55, marginBottom: '14px', padding: '10px 14px', background: '#ede9fe', borderRadius: '8px', border: '1px solid #c4b5fd' }}>
+                      {aiSolution.explanation}
+                    </p>
+
+                    {/* Step-by-step breakdown */}
+                    {aiSolution.steps && aiSolution.steps.length > 0 && (
+                      <div style={{ marginBottom: '14px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 800, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>How it works</div>
+                        {aiSolution.steps.map((step, i) => (
+                          <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '6px' }}>
+                            <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#7c3aed', color: '#fff', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+                            <span style={{ fontSize: '13px', color: '#3b0764', lineHeight: 1.45 }}>{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Generated C code */}
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Generated C Code</div>
+                    <pre style={{
+                      background: '#0d1117',
+                      color: '#c9d1d9',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: '12.5px',
+                      overflowX: 'auto',
+                      whiteSpace: 'pre',
+                      border: '1px solid #30363d',
+                      marginBottom: '14px'
+                    }}>{aiSolution.c_code}</pre>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        className={styles.primaryButton}
+                        style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}
+                        onClick={() => { setCodeText(aiSolution.c_code); setAiSolution(null); }}
+                      >
+                        Apply to Editor
+                      </button>
+                      <button
+                        className={styles.secondaryButton}
+                        onClick={() => setAiSolution(null)}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
                   </div>
                 )}
 
