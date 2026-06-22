@@ -1023,42 +1023,8 @@ ${codeText}
                     </div>
                   )}
 
-                  {/* Stdin row */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: '#090d16',
-                    borderRadius: '8px',
-                    padding: '10px 16px',
-                    gap: '8px',
-                    marginTop: '12px'
-                  }}>
-                    <span style={{ color: '#6366f1', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 'bold' }}>stdin &gt;</span>
-                    <input
-                      type="text"
-                      style={{
-                        flex: 1,
-                        background: 'transparent',
-                        border: 'none',
-                        outline: 'none',
-                        color: '#f8fafc',
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontSize: '12.5px'
-                      }}
-                      placeholder="Type optional program input here..."
-                      value={stdinText}
-                      onChange={e => setStdinText(e.target.value)}
-                    />
-                  </div>
-
                   {/* Primary action row */}
                   <div className={styles.actionRow}>
-                    <button
-                      className={`${styles.secondaryButton} ${isRunningCode ? styles.buttonDisabled : ''}`}
-                      onClick={handleRunCode}
-                    >
-                      {isRunningCode ? 'Running...' : '▶ Run Code'}
-                    </button>
                     <button
                       className={`${styles.primaryButton} ${isValidatingCode ? styles.buttonDisabled : ''}`}
                       onClick={handleVerifyCode}
