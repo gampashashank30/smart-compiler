@@ -1,5 +1,5 @@
 /* ============================================================
-   EditorPanel — dark navy theme (Monaco Editor variant)
+   EditorPanel — dark navy theme, syntax-highlighted overlay
    ============================================================ */
 
 /* ─── Font stack (JetBrains Mono preferred) ──────────────── */
@@ -263,39 +263,106 @@
 }
 
 
-/* ─── Monaco Editor container ────────────────────────────── */
-/* Monaco fills this div entirely; it manages its own layout. */
+/* ─── Editor body (gutter + code) ───────────────────────── */
 .editorBody {
+  display: flex;
   flex: 1;
-  min-height: 0;          /* critical: allow flex shrink */
+  min-height: 0;          /* critical: lets editor body shrink */
   overflow: hidden;
   background: #0d1117;
 }
 
-/* ── Loading placeholder shown while Monaco JS chunks load ── */
-.editorLoading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  height: 100%;
+/* ─── Line-number gutter ─────────────────────────────────── */
+.gutter {
+  width: 52px;
+  flex-shrink: 0;
+  overflow: hidden;            /* vertically synced via JS */
+  padding-top: 16px;
+  padding-bottom: 16px;
   background: #0d1117;
-  color: #484f58;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
+  border-right: 1px solid #161b22;
+  user-select: none;
 }
 
-.editorLoadingDot {
+/* Single pre element for line numbers — MUST mirror .highlight/.textarea
+   font properties exactly so both text blocks share identical per-line
+   pixel heights and scroll in perfect sync. */
+.lineNumbers {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.65;
+  white-space: pre;
+  color: #3d444d;
+  text-align: right;
+  padding-right: 14px;
+}
+
+/* ─── Code wrapper (overlay container) ───────────────────── */
+.codeWrapper {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Shared font properties for BOTH layers ─────────────── */
+.highlight,
+.textarea {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 16px 20px;
+
+  /* MUST be identical on both */
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.65;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* ─── Highlight layer (pre) ─────────────────────────────── */
+.highlight {
+  color: #adbac7;           /* default token colour */
+  background: transparent;
+  border: none;
+  overflow: hidden;         /* scroll is driven by textarea via JS */
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Textarea (input layer) ─────────────────────────────── */
+.textarea {
+  background: transparent;
+  color: transparent;       /* hide raw text — only the pre shows */
+  caret-color: #c9d1d9;    /* visible cursor */
+  border: none;
+  outline: none;
+  resize: none;
+  overflow: auto;           /* textarea drives scrolling */
+  z-index: 1;
+}
+
+/* Thin scrollbar styled to match the theme */
+.textarea::-webkit-scrollbar {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background: #3d444d;
-  animation: loadPulse 1.2s ease-in-out infinite;
 }
-
-@keyframes loadPulse {
-  0%, 100% { opacity: 0.3; transform: scale(1);    }
-  50%       { opacity: 1;   transform: scale(1.3);  }
+.textarea::-webkit-scrollbar-track {
+  background: #0d1117;
+}
+.textarea::-webkit-scrollbar-thumb {
+  background: #2d333b;
+  border-radius: 4px;
+}
+.textarea::-webkit-scrollbar-thumb:hover {
+  background: #444c56;
 }
 
 
@@ -455,3 +522,36 @@
   font-size: 11px;
   line-height: 1;
 }
+
+
+/* ================================================================
+   SYNTAX HIGHLIGHT TOKEN COLOURS  (global because they live in
+   dangerouslySetInnerHTML — CSS Modules can't scope them)
+   ================================================================ */
+
+/* Keywords: int, return, for, while, if, void … */
+:global(.hl-keyword)    { color: #d2a8ff; }   /* soft purple       */
+
+/* Built-in functions: printf, scanf, main … */
+:global(.hl-function)   { color: #ffa657; }   /* warm gold/amber   */
+
+/* String & char literals */
+:global(.hl-string)     { color: #7ee787; }   /* bright green      */
+
+/* Numeric literals */
+:global(.hl-number)     { color: #ff7b72; }   /* coral/red-orange  */
+
+/* Comments */
+:global(.hl-comment)    { color: #444c56; font-style: italic; }
+
+/* #include, #define … directive word */
+:global(.hl-preproc)    { color: #d2a8ff; }   /* same as keywords  */
+
+/* The value part of a preprocessor line (<stdio.h>, etc.) */
+:global(.hl-preproc-val){ color: #7ee787; }   /* green like strings */
+
+/* Operators: +, -, ==, &&, -> … */
+:global(.hl-operator)   { color: #79c0ff; }   /* sky blue / cyan   */
+
+/* Punctuation: {, }, (, ), ;, … */
+:global(.hl-punctuation){ color: #79c0ff; }   /* same as operators */

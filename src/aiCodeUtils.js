@@ -13,15 +13,14 @@
  */
 export function unescapeStructuralNewlines(code) {
   let result  = '';
-  let inDoubleQuote = false; // inside a C double-quoted string
-  let inSingleQuote = false; // inside a C single-quoted character constant
+  let inStr   = false; // inside a C double-quoted string
   let i       = 0;
 
   while (i < code.length) {
     const ch   = code[i];
     const next = code[i + 1];
 
-    if (inDoubleQuote) {
+    if (inStr) {
       if (ch === '\\') {
         // Any escape sequence inside a string — copy both chars as-is
         result += ch + (next ?? '');
@@ -29,42 +28,24 @@ export function unescapeStructuralNewlines(code) {
         continue;
       }
       if (ch === '"') {
-        inDoubleQuote = false; // closing quote
-      }
-      result += ch;
-      i++;
-    } else if (inSingleQuote) {
-      if (ch === '\\') {
-        // Any escape sequence inside a character literal — copy both chars as-is
-        result += ch + (next ?? '');
-        i += 2;
-        continue;
-      }
-      if (ch === "'") {
-        inSingleQuote = false; // closing quote
+        inStr = false; // closing quote
       }
       result += ch;
       i++;
     } else {
       if (ch === '"') {
-        inDoubleQuote = true; // opening double quote
+        inStr = true; // opening quote
         result += ch;
         i++;
         continue;
       }
-      if (ch === "'") {
-        inSingleQuote = true; // opening single quote
-        result += ch;
-        i++;
-        continue;
-      }
-      // Outside quotes: convert \n sequence → real newline
+      // Outside a string: convert \n sequence → real newline
       if (ch === '\\' && next === 'n') {
         result += '\n';
         i += 2;
         continue;
       }
-      // Outside quotes: convert \t sequence → real tab
+      // Outside a string: convert \t sequence → real tab
       if (ch === '\\' && next === 't') {
         result += '\t';
         i += 2;

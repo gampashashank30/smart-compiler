@@ -2709,10 +2709,7 @@ export function TutorDiagram({ type }) {
           </defs>
           <rect x="40" y="30" width="320" height="130" rx="10" fill="url(#back-grad)" fillOpacity="0.05" stroke="#6366f1" strokeWidth="1" strokeDasharray="4" />
           <circle cx="200" cy="85" r="28" fill="#e0e7ff" />
-          <g transform="translate(188, 73)" stroke="#4f46e5" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-          </g>
+          <text x="200" y="93" fill="#4f46e5" textAnchor="middle" fontSize="22">📚</text>
           
           <text x="200" y="138" fill="#4f46e5" textAnchor="middle" fontSize="11" fontWeight="bold" fontFamily="Inter, sans-serif">Concept Diagram Flow</text>
           <text x="200" y="152" fill="#64748b" textAnchor="middle" fontSize="9" fontFamily="Inter, sans-serif">Refer to the step descriptions for details on how this code operates.</text>

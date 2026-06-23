@@ -99,13 +99,7 @@ export default function Header({
           aria-label="Open AI Tutor overlay"
           title="AI Tutor"
         >
-          <span className={styles.aiTutorBtnIcon} aria-hidden="true">
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10 2L1 6.5l9 4.5 9-4.5L10 2z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4.5 8.25v4.5c0 1.5 2.5 2.25 5.5 2.25s5.5-.75 5.5-2.25v-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M17.5 9.5v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </span>
+          <span className={styles.aiTutorBtnIcon} aria-hidden="true">🎓</span>
           <span className={styles.aiTutorBtnLabel}>AI Tutor</span>
         </button>
 
