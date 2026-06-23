@@ -265,7 +265,6 @@ app.post('/api/ai', async (req, res) => {
 
 // ── Health endpoint ───────────────────────────────────────────────────────────
 app.get('/api/health', async (req, res) => {
-  resetDockerCache();
   const docker = await isDockerReady();
   const localGcc = await isLocalGccReady();
   res.json({
