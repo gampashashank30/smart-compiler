@@ -15,7 +15,6 @@ import { detectLanguage } from './languageDetector.js';
 import { callClaude, parseJSON } from './api.js';
 import { readUploadedFile } from './fileUploader.js';
 import { useAuth } from './useAuth.js';
-import { supabase } from './supabaseClient.js';
 import { analyticsStore } from './analytics.js';
 import { sanitizeAiCode } from './aiCodeUtils.js';
 import styles from './App.module.css';
@@ -34,9 +33,9 @@ const DETECT_CONFIDENCE_THRESHOLD = 28;
 export default function App() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
 
-  // Redirect to login if user is not authenticated and loading is complete (and Supabase is configured)
+  // Redirect to login if user is not authenticated and loading is complete
   useEffect(() => {
-    if (supabase && !loading && !user) {
+    if (!loading && !user) {
       window.location.href = '/login.html';
     }
   }, [user, loading]);
@@ -344,7 +343,7 @@ export default function App() {
 
   const isRunning = runStatus === 'compiling' || runStatus === 'running';
 
-  if (supabase && loading) {
+  if (loading) {
     return (
       <div style={{
         display: 'flex',
