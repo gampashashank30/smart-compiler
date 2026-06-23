@@ -11,22 +11,52 @@ export function useAuth() {
       return;
     }
 
+    // If there is an OAuth hash fragment in the URL, Supabase will parse it and fire SIGNED_IN.
+    // We shouldn't set loading to false on getSession() if it returns null, otherwise
+    // the page will redirect to login before the hash is fully parsed.
+    const hasAuthHash = window.location.hash.includes('access_token=') || 
+                        window.location.hash.includes('id_token=') || 
+                        window.location.hash.includes('error=');
+
+    let timeoutId;
+    if (hasAuthHash) {
+      // Safety timeout: If Supabase fails to parse the hash or doesn't fire an auth event
+      // within 4 seconds, set loading to false so the app doesn't hang.
+      timeoutId = setTimeout(() => {
+        setLoading(false);
+      }, 4000);
+    }
+
     // Get current session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+      if (session) {
+        setUser(session.user);
+        setLoading(false);
+      } else if (!hasAuthHash) {
+        setUser(null);
+        setLoading(false);
+      }
     }).catch(() => {
-      setLoading(false);
+      if (!hasAuthHash) {
+        setLoading(false);
+      }
     });
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
     });
 
     return () => {
       subscription?.unsubscribe();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, []);
 
