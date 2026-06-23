@@ -73,11 +73,20 @@ async function verifySupabaseToken(token) {
 const app = express();
 app.use(express.json({ limit: '150kb' }));
 
-// CORS
+// CORS — only allow requests from trusted origins
+// Requests from any other origin get no CORS headers → browser blocks them.
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin',  '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const origin = req.headers.origin || '';
+  const isAllowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+
+  if (isAllowed) {
+    res.setHeader('Access-Control-Allow-Origin',  origin); // reflect exact origin (not *)
+    res.setHeader('Vary', 'Origin');                        // tells CDNs to cache per-origin
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
