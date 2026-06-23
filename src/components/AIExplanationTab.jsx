@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { callClaude, parseJSON } from '../api.js';
 import { ANALYSIS_SYSTEM_PROMPT, CORRECTION_SYSTEM_PROMPT } from '../constants.js';
+import { sanitizeAiCode } from '../aiCodeUtils.js';
 import styles from './AIExplanationTab.module.css';
 
 /* ── SVG Icons ────────────────────────────────────────────── */
@@ -277,11 +278,10 @@ export default function AIExplanationTab({ code, onApplyFix }) {
         `Code:\n${code}\n\nIssues:\n${issuesSummary}`);
       const parsed = parseJSON(raw);
       const rawCode = parsed.corrected_code ?? '';
-      // Some LLMs emit literal \n (two chars) instead of real newlines.
-      // If the code has no actual newlines but has literal \n sequences, convert them.
-      const cleanCode = rawCode.includes('\n')
-        ? rawCode
-        : rawCode.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+      // sanitizeAiCode strips markdown fences and converts double-escaped
+      // structural \n sequences to real newlines while leaving C string
+      // escapes like printf("hello\n") intact.
+      const cleanCode = sanitizeAiCode(rawCode);
       setCorrectedCode(cleanCode);
       setLearningNotes(parsed.learning_notes ?? []);
     } catch (err) {

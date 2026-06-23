@@ -15,6 +15,7 @@ import { detectLanguage } from './languageDetector.js';
 import { callClaude, parseJSON } from './api.js';
 import { readUploadedFile } from './fileUploader.js';
 import { useAuth } from './useAuth.js';
+import { sanitizeAiCode } from './aiCodeUtils.js';
 import styles from './App.module.css';
 
 // WebSocket URL — Vite proxies /ws → ws://localhost:3001 in dev
@@ -25,61 +26,6 @@ const WS_URL = (() => {
 
 // Minimum confidence (0-100) required before we show the popup
 const DETECT_CONFIDENCE_THRESHOLD = 28;
-
-/**
- * When an LLM double-escapes every newline (structural \n and C-string \n
- * alike become the two-char sequence backslash-n), we need to unescape only
- * the STRUCTURAL ones (outside string literals) back to real newlines.
- * C-string escapes like printf("hello\n") must stay as backslash-n so
- * they compile and display correctly.
- */
-function unescapeStructuralNewlines(code) {
-  let result  = '';
-  let inStr   = false; // inside a C double-quoted string
-  let i       = 0;
-
-  while (i < code.length) {
-    const ch   = code[i];
-    const next = code[i + 1];
-
-    if (inStr) {
-      if (ch === '\\') {
-        // Any escape sequence inside a string — copy both chars as-is
-        result += ch + (next ?? '');
-        i += 2;
-        continue;
-      }
-      if (ch === '"') {
-        inStr = false; // closing quote
-      }
-      result += ch;
-      i++;
-    } else {
-      if (ch === '"') {
-        inStr = true; // opening quote
-        result += ch;
-        i++;
-        continue;
-      }
-      // Outside a string: convert \n sequence → real newline
-      if (ch === '\\' && next === 'n') {
-        result += '\n';
-        i += 2;
-        continue;
-      }
-      // Outside a string: convert \t sequence → real tab
-      if (ch === '\\' && next === 't') {
-        result += '\t';
-        i += 2;
-        continue;
-      }
-      result += ch;
-      i++;
-    }
-  }
-
-  return result;
-}
 
 
 
@@ -280,20 +226,9 @@ export default function App() {
       const parsed = parseJSON(raw);
       console.log('PARSED JSON:', parsed);
       if (parsed?.c_code) {
-        let cCode = parsed.c_code;
-        console.log('C CODE BEFORE UNESCAPE:', JSON.stringify(cCode));
-
-        // Strip accidental markdown fences
-        cCode = cCode.replace(/^```[\w]*\n?/m, '').replace(/\n?```$/m, '').trim();
-
-        // Edge case: LLM double-escaped every newline so there are no real
-        // newlines at all — every line break is a literal \n two-char sequence.
-        // We must unescape ONLY the structural \n (between code lines),
-        // NOT the \n inside C string literals like printf("hello\n").
-        if (!cCode.includes('\n')) {
-          cCode = unescapeStructuralNewlines(cCode);
-        }
-
+        // sanitizeAiCode strips markdown fences and fixes double-escaped
+        // structural newlines while preserving C string escapes.
+        const cCode = sanitizeAiCode(parsed.c_code);
         setCode(cCode);
         setShowLangPopup(false);
         dismissedCodeRef.current = null; // reset — converted code is fresh C

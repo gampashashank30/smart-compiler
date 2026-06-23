@@ -1,21 +1,7 @@
-import { useRef, useCallback, useMemo, useState, useEffect } from 'react';
-import { highlightC } from '../highlight.js';
+import { useRef, useCallback, useState, useEffect } from 'react';
+import Editor from '@monaco-editor/react';
 import { getAcceptString } from '../fileUploader.js';
 import styles from './EditorPanel.module.css';
-
-// ── Smart editor helpers ─────────────────────────────────────────────────────
-const OPEN_TO_CLOSE = { '(': ')', '{': '}', '[': ']', '"': '"', "'": "'" };
-const CLOSE_CHARS   = new Set([')', '}', ']', '"', "'"]);
-const OPEN_CHARS    = new Set(['(', '{', '[', '"', "'"]);
-
-/**
- * Returns the indentation (leading spaces/tabs) of the line containing `pos`.
- */
-function getLineIndent(text, pos) {
-  const lineStart = text.lastIndexOf('\n', pos - 1) + 1;
-  const match = text.slice(lineStart).match(/^[ \t]*/);
-  return match ? match[0] : '';
-}
 
 export default function EditorPanel({
   code, onChange, onRun, onKill, onClear,
@@ -30,56 +16,26 @@ export default function EditorPanel({
   onTabRename,
   onFileUpload,
 }) {
-  const textareaRef   = useRef(null);
-  const preRef        = useRef(null);
-  const gutterRef     = useRef(null);
+  const editorRef     = useRef(null);
   const renameInputRef = useRef(null);
 
-  // ── Undo / Redo history stack ─────────────────────────────────────────
-  // Each entry: { code, start, end }
-  const historyRef      = useRef([{ code, start: 0, end: 0 }]);
-  const historyIdxRef   = useRef(0);
-  const debounceTimer   = useRef(null);
-  // Stores the latest typed state before the debounce timer fires
-  const pendingEntryRef = useRef(null);
+  // ── Stable refs for Monaco command closures ──────────────────────────────
+  // Monaco's addCommand captures these at mount time, so we use refs to always
+  // have the latest values without re-registering commands.
+  const isRunningRef = useRef(isRunning);
+  const onRunRef     = useRef(onRun);
+  useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
+  useEffect(() => { onRunRef.current = onRun; }, [onRun]);
 
-  // Push a snapshot to the undo stack (called after every programmatic edit)
-  const pushHistory = useCallback((newCode, selStart, selEnd) => {
-    // Truncate any redo entries ahead of current index
-    historyRef.current = historyRef.current.slice(0, historyIdxRef.current + 1);
-    historyRef.current.push({ code: newCode, start: selStart ?? 0, end: selEnd ?? 0 });
-    historyIdxRef.current = historyRef.current.length - 1;
-  }, []);
+  // ── Per-tab Monaco view state (cursor, scroll, undo stack) ──────────────
+  const prevTabIdRef  = useRef(activeTabId);
+  const viewStatesRef = useRef({});       // { [tabId]: ICodeEditorViewState }
 
-  // Flush any pending debounced entry into the history immediately
-  const flushPending = useCallback(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-      debounceTimer.current = null;
-    }
-    if (pendingEntryRef.current) {
-      const { code: c, start: s, end: en } = pendingEntryRef.current;
-      pushHistory(c, s, en);
-      pendingEntryRef.current = null;
-    }
-  }, [pushHistory]);
-
-  // Keep the very first snapshot in sync when code is reset externally (tab switch)
-  useEffect(() => {
-    const cur = historyRef.current[historyIdxRef.current];
-    if (cur && cur.code === code) return; // no-op if already matches
-    // External reset (e.g. tab switch, AI convert) — clear history for new content
-    clearTimeout(debounceTimer.current);
-    pendingEntryRef.current = null;
-    historyRef.current  = [{ code, start: 0, end: 0 }];
-    historyIdxRef.current = 0;
-  }, [activeTabId]); // reset when the active tab changes
-
-  // ── Tab rename state ──────────────────────────────────────────────────
+  // ── Tab rename state ──────────────────────────────────────────────────────
   const [editingTabId, setEditingTabId] = useState(null);
   const [editingName,  setEditingName]  = useState('');
 
-  // ── Add-tab dropdown state ────────────────────────────────────────────
+  // ── Add-tab dropdown state ────────────────────────────────────────────────
   const [showAddMenu, setShowAddMenu] = useState(false);
   const addMenuRef   = useRef(null);
   const addBtnRef    = useRef(null);
@@ -115,9 +71,7 @@ export default function EditorPanel({
   // Handle file selection from the hidden <input>
   const handleFileChange = useCallback((e) => {
     const file = e.target.files?.[0];
-    if (file && onFileUpload) {
-      onFileUpload(file);
-    }
+    if (file && onFileUpload) onFileUpload(file);
     // Reset input so re-uploading the same file works
     e.target.value = '';
     setShowAddMenu(false);
@@ -138,267 +92,120 @@ export default function EditorPanel({
 
   const cancelRename = useCallback(() => setEditingTabId(null), []);
 
-  // Memoize the highlighted HTML so it only recomputes when code changes
-  const highlighted = useMemo(() => highlightC(code), [code]);
+  // ── Monaco: mount handler ─────────────────────────────────────────────────
+  const handleEditorDidMount = useCallback((editor, monaco) => {
+    editorRef.current = editor;
 
-  // Sync scroll between gutter, highlight layer, and textarea
-  const syncScroll = useCallback(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    if (preRef.current) {
-      preRef.current.scrollTop  = ta.scrollTop;
-      preRef.current.scrollLeft = ta.scrollLeft;
+    // ── Custom GitHub Dark theme — matches the app's existing colour palette ──
+    monaco.editor.defineTheme('github-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'keyword',              foreground: 'd2a8ff' },
+        { token: 'comment',              foreground: '444c56', fontStyle: 'italic' },
+        { token: 'comment.doc',          foreground: '444c56', fontStyle: 'italic' },
+        { token: 'string',               foreground: '7ee787' },
+        { token: 'string.escape',        foreground: '7ee787' },
+        { token: 'number',               foreground: 'ff7b72' },
+        { token: 'number.hex',           foreground: 'ff7b72' },
+        { token: 'number.float',         foreground: 'ff7b72' },
+        { token: 'delimiter',            foreground: '79c0ff' },
+        { token: 'delimiter.bracket',    foreground: '79c0ff' },
+        { token: 'delimiter.parenthesis',foreground: '79c0ff' },
+        { token: 'delimiter.square',     foreground: '79c0ff' },
+        { token: 'type',                 foreground: 'ffa657' },
+        { token: 'type.identifier',      foreground: 'ffa657' },
+        { token: 'identifier',           foreground: 'adbac7' },
+        { token: 'operator',             foreground: '79c0ff' },
+        { token: 'annotation',           foreground: 'd2a8ff' },
+        { token: 'keyword.directive',    foreground: 'd2a8ff' },
+        { token: 'keyword.directive.include', foreground: '7ee787' },
+      ],
+      colors: {
+        'editor.background':                   '#0d1117',
+        'editor.foreground':                   '#adbac7',
+        'editorLineNumber.foreground':         '#3d444d',
+        'editorLineNumber.activeForeground':   '#8b949e',
+        'editor.lineHighlightBackground':      '#161b2266',
+        'editor.lineHighlightBorder':          '#00000000',
+        'editorCursor.foreground':             '#c9d1d9',
+        'editor.selectionBackground':          '#264f78',
+        'editor.inactiveSelectionBackground':  '#264f7866',
+        'editorIndentGuide.background1':       '#21262d',
+        'editorIndentGuide.activeBackground1': '#30363d',
+        'editorWhitespace.foreground':         '#21262d',
+        'scrollbarSlider.background':          '#2d333b88',
+        'scrollbarSlider.hoverBackground':     '#444c56bb',
+        'scrollbarSlider.activeBackground':    '#484f58',
+        // Suggest / autocomplete widget
+        'editorWidget.background':             '#161b22',
+        'editorWidget.border':                 '#30363d',
+        'editorSuggestWidget.background':      '#161b22',
+        'editorSuggestWidget.border':          '#30363d',
+        'editorSuggestWidget.selectedBackground': '#21262d',
+        'editorSuggestWidget.highlightForeground': '#58a6ff',
+        // List + input
+        'list.hoverBackground':                '#21262d',
+        'list.activeSelectionBackground':      '#264f78',
+        'input.background':                    '#0d1117',
+        'input.border':                        '#30363d',
+        'focusBorder':                         '#58a6ff',
+        // Find widget
+        'editorFindMatch.background':          '#264f7866',
+        'editorFindMatchHighlight.background': '#264f7833',
+        'editorFindWidget.background':         '#161b22',
+      },
+    });
+    monaco.editor.setTheme('github-dark');
+
+    // ── Ctrl+Enter → Run ──────────────────────────────────────────────────────
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+      () => { if (!isRunningRef.current) onRunRef.current?.(); }
+    );
+
+    editor.focus();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Tab switch: save / restore per-tab Monaco view state ─────────────────
+  // This effect MUST be declared BEFORE the generic code-change effect so that
+  // React runs it first when both activeTabId and code change simultaneously.
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const prevId = prevTabIdRef.current;
+    if (prevId === activeTabId) return; // same tab — nothing to do
+
+    // Save the departing tab's view state (cursor, scroll, undo stack)
+    viewStatesRef.current[prevId] = editor.saveViewState();
+    prevTabIdRef.current = activeTabId;
+
+    // Load new tab's content (code is already the new tab's value here)
+    editor.setValue(code);
+
+    // Restore saved view state or snap to top of file
+    const saved = viewStatesRef.current[activeTabId];
+    if (saved) {
+      editor.restoreViewState(saved);
+    } else {
+      editor.setPosition({ lineNumber: 1, column: 1 });
+      editor.revealPosition({ lineNumber: 1, column: 1 });
     }
-    if (gutterRef.current) {
-      gutterRef.current.scrollTop = ta.scrollTop;
-    }
-  }, []);
+  }, [activeTabId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ^^ `code` is intentionally omitted — it is always current when activeTabId changes.
 
-  // ── Smart keyboard handler ──────────────────────────────────────────────────
-  const handleKeyDown = useCallback((e) => {
-    const ta    = textareaRef.current;
-    const start = ta.selectionStart;
-    const end   = ta.selectionEnd;
-    const key   = e.key;
+  // ── External code changes (AI fix, load from history, CLEAR, file upload) ─
+  // When Monaco itself typed the change, editor.getValue() === code → we skip.
+  // When something external updated the code prop, we push the new value in.
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    if (editor.getValue() === code) return; // no-op: Monaco already has this value
+    editor.setValue(code);
+  }, [code]);
 
-    // ── Ctrl+Z → Undo ────────────────────────────────────────────────────────
-    if ((e.ctrlKey || e.metaKey) && key === 'z' && !e.shiftKey) {
-      e.preventDefault();
-      // Commit any pending typed content into history first
-      flushPending();
-      if (historyIdxRef.current > 0) {
-        historyIdxRef.current -= 1;
-        const entry = historyRef.current[historyIdxRef.current];
-        onChange(entry.code);
-        requestAnimationFrame(() => {
-          if (textareaRef.current) {
-            textareaRef.current.selectionStart = entry.start;
-            textareaRef.current.selectionEnd   = entry.end;
-          }
-        });
-      }
-      return;
-    }
-
-    // ── Ctrl+Y / Ctrl+Shift+Z → Redo ─────────────────────────────────────────
-    if ((e.ctrlKey || e.metaKey) && (key === 'y' || (key === 'z' && e.shiftKey))) {
-      e.preventDefault();
-      // Commit any pending typed content into history first
-      flushPending();
-      if (historyIdxRef.current < historyRef.current.length - 1) {
-        historyIdxRef.current += 1;
-        const entry = historyRef.current[historyIdxRef.current];
-        onChange(entry.code);
-        requestAnimationFrame(() => {
-          if (textareaRef.current) {
-            textareaRef.current.selectionStart = entry.start;
-            textareaRef.current.selectionEnd   = entry.end;
-          }
-        });
-      }
-      return;
-    }
-
-    // ── Ctrl+Enter → Run ─────────────────────────────────────────────────────
-    if ((e.ctrlKey || e.metaKey) && key === 'Enter') {
-      e.preventDefault();
-      if (!isRunning) onRun();
-      return;
-    }
-
-    // ── Tab → 4 spaces (or un-indent selected block) ─────────────────────────
-    if (key === 'Tab') {
-      e.preventDefault();
-      const INDENT = '    ';
-
-      if (start === end) {
-        // No selection — insert 4 spaces
-        const next = code.substring(0, start) + INDENT + code.substring(end);
-        pushHistory(next, start + 4, start + 4);
-        onChange(next);
-        requestAnimationFrame(() => {
-          ta.selectionStart = ta.selectionEnd = start + 4;
-        });
-      } else {
-        // Selection — indent/un-indent all selected lines
-        const lineStart = code.lastIndexOf('\n', start - 1) + 1;
-        const lineEnd   = code.indexOf('\n', end - 1);
-        const block     = code.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
-        let   newBlock;
-        let   cursorDelta;
-
-        if (e.shiftKey) {
-          // Un-indent: remove up to 4 leading spaces per line
-          newBlock    = block.replace(/^    /gm, '');
-          cursorDelta = -(block.length - newBlock.length);
-        } else {
-          // Indent: add 4 spaces to every line
-          newBlock    = block.replace(/^/gm, INDENT);
-          cursorDelta = newBlock.length - block.length;
-        }
-        const next = code.slice(0, lineStart) + newBlock + code.slice(lineEnd === -1 ? code.length : lineEnd);
-        pushHistory(next, lineStart, lineStart + newBlock.length);
-        onChange(next);
-        requestAnimationFrame(() => {
-          ta.selectionStart = lineStart;
-          ta.selectionEnd   = lineStart + newBlock.length;
-        });
-      }
-      return;
-    }
-
-    // ── Enter — smart indent / bracket expansion ──────────────────────────────
-    if (key === 'Enter' && !e.ctrlKey && !e.metaKey) {
-      const before = code.substring(0, start);
-      const after  = code.substring(end);
-      const indent = getLineIndent(code, start);
-      const charBefore = before[before.length - 1];
-      const charAfter  = after[0];
-
-      // Bracket pair expansion: {| } → {\n    |\n}
-      if (charBefore === '{' && charAfter === '}') {
-        e.preventDefault();
-        const inner = '\n' + indent + '    ';
-        const outer = '\n' + indent;
-        const next  = before + inner + outer + after;
-        const pos   = start + inner.length;
-        pushHistory(next, pos, pos);
-        onChange(next);
-        requestAnimationFrame(() => {
-          ta.selectionStart = ta.selectionEnd = pos;
-        });
-        return;
-      }
-
-      // Normal Enter — preserve current line indentation
-      e.preventDefault();
-      const insert = '\n' + indent;
-      const next   = before + insert + after;
-      const pos    = start + insert.length;
-      pushHistory(next, pos, pos);
-      onChange(next);
-      requestAnimationFrame(() => {
-        ta.selectionStart = ta.selectionEnd = pos;
-      });
-      return;
-    }
-
-    // ── Backspace — smart pair deletion ──────────────────────────────────────
-    if (key === 'Backspace' && start === end) {
-      const charBefore = code[start - 1];
-      const charAfter  = code[start];
-      if (charBefore && OPEN_TO_CLOSE[charBefore] === charAfter) {
-        e.preventDefault();
-        const next = code.substring(0, start - 1) + code.substring(start + 1);
-        const pos  = start - 1;
-        pushHistory(next, pos, pos);
-        onChange(next);
-        requestAnimationFrame(() => {
-          ta.selectionStart = ta.selectionEnd = pos;
-        });
-        return;
-      }
-      // Delete <> pair on #include lines
-      if (charBefore === '<' && charAfter === '>') {
-        const ls = code.lastIndexOf('\n', start - 2) + 1;
-        if (/^\s*#\s*include\s*$/.test(code.slice(ls, start - 1))) {
-          e.preventDefault();
-          const next = code.substring(0, start - 1) + code.substring(start + 1);
-          const pos  = start - 1;
-          pushHistory(next, pos, pos);
-          onChange(next);
-          requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = pos; });
-          return;
-        }
-      }
-    }
-
-    // ── #include< → auto-insert matching > ─────────────────────────────────
-    if (key === '<' && start === end) {
-      const ls = code.lastIndexOf('\n', start - 1) + 1;
-      if (/^\s*#\s*include\s*$/.test(code.slice(ls, start))) {
-        e.preventDefault();
-        const next = code.substring(0, start) + '<>' + code.substring(start);
-        const pos  = start + 1;
-        pushHistory(next, pos, pos);
-        onChange(next);
-        requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = pos; });
-        return;
-      }
-    }
-
-    // ── Skip over > typed inside an #include<…> pair ──────────────────────
-    if (key === '>' && start === end && code[start] === '>') {
-      const ls = code.lastIndexOf('\n', start - 1) + 1;
-      if (code.slice(ls, start).includes('#include')) {
-        e.preventDefault();
-        requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = start + 1; });
-        return;
-      }
-    }
-
-    // ── Skip over closing bracket/quote ──────────────────────────────────────
-    if (CLOSE_CHARS.has(key) && start === end) {
-      const charAfter = code[start];
-      if (charAfter === key) {
-        e.preventDefault();
-        requestAnimationFrame(() => {
-          ta.selectionStart = ta.selectionEnd = start + 1;
-        });
-        return;
-      }
-    }
-
-    // ── Auto-close brackets & quotes ─────────────────────────────────────────
-    if (OPEN_CHARS.has(key) && start === end) {
-      const close     = OPEN_TO_CLOSE[key];
-      const charAfter = code[start];
-
-      // For quotes: don't auto-close if we're already inside a string
-      // (simple heuristic: if same quote char is immediately before cursor)
-      if ((key === '"' || key === "'") && code[start - 1] === key) {
-        return; // let default behavior happen
-      }
-
-      // Don't auto-close if next char is alphanumeric (likely typing a word)
-      if (charAfter && /\w/.test(charAfter)) return;
-
-      e.preventDefault();
-      const next = code.substring(0, start) + key + close + code.substring(end);
-      const pos  = start + 1;
-      pushHistory(next, pos, pos);
-      onChange(next);
-      requestAnimationFrame(() => {
-        ta.selectionStart = ta.selectionEnd = pos;
-      });
-      return;
-    }
-
-    // ── Home key — go to first non-whitespace char (or column 0 if already there) ──
-    if (key === 'Home' && !e.ctrlKey) {
-      e.preventDefault();
-      const lineStart  = code.lastIndexOf('\n', start - 1) + 1;
-      const lineText   = code.slice(lineStart);
-      const firstNonWs = lineText.search(/\S/);
-      const firstPos   = firstNonWs === -1 ? lineStart : lineStart + firstNonWs;
-
-      // Toggle: if already at first non-ws, go to column 0
-      const targetPos  = start === firstPos ? lineStart : firstPos;
-      requestAnimationFrame(() => {
-        if (e.shiftKey) {
-          ta.selectionStart = targetPos;
-          ta.selectionEnd   = end;
-        } else {
-          ta.selectionStart = ta.selectionEnd = targetPos;
-        }
-      });
-      return;
-    }
-  }, [code, onChange, onRun, isRunning]);
-
-  const lineCount = code.split('\n').length;
-
-  // ── Download active tab as .c file ──────────────────────────────────────────
+  // ── Download active tab as .c file ───────────────────────────────────────
   const handleDownload = useCallback(() => {
     const filename = tabs.find(t => t.id === activeTabId)?.name || 'main.c';
     const blob = new Blob([code], { type: 'text/plain' });
@@ -415,7 +222,7 @@ export default function EditorPanel({
   return (
     <div className={styles.panel}>
 
-      {/* ── Tab bar ────────────────────────────────────────────────────── */}
+      {/* ── Tab bar ─────────────────────────────────────────────────────────── */}
       <div className={styles.tabBar}>
         {/* Scrollable tab list */}
         <div className={styles.tabList}>
@@ -539,57 +346,58 @@ export default function EditorPanel({
         </div>
       </div>
 
-      {/* ── Editor body ──────────────────────────────────────────────────── */}
+      {/* ── Monaco Editor ───────────────────────────────────────────────────── */}
       <div className={styles.editorBody}>
-
-        {/* Line numbers gutter — rendered as a single text block to match
-             the textarea's continuous text rendering and prevent sub-pixel
-             rounding drift that occurs with individual div elements */}
-        <div className={styles.gutter} ref={gutterRef} aria-hidden="true">
-          <pre className={styles.lineNumbers}>
-            {Array.from({ length: lineCount }, (_, idx) => idx + 1).join('\n')}
-          </pre>
-        </div>
-
-        {/* Code overlay: pre (highlight layer) + textarea (input layer) */}
-        <div className={styles.codeWrapper}>
-          <pre
-            ref={preRef}
-            className={styles.highlight}
-            aria-hidden="true"
-            dangerouslySetInnerHTML={{ __html: highlighted + '\n' }}
-          />
-          <textarea
-            ref={textareaRef}
-            id="code-editor"
-            className={styles.textarea}
-            value={code}
-            onChange={(e) => {
-              const newCode = e.target.value;
-              const sel     = e.target.selectionStart;
-              // Store the latest typed state so flushPending() can commit it
-              pendingEntryRef.current = { code: newCode, start: sel, end: sel };
-              // Debounce history pushes for regular typing (group within 300 ms)
-              clearTimeout(debounceTimer.current);
-              debounceTimer.current = setTimeout(() => {
-                pushHistory(newCode, sel, sel);
-                pendingEntryRef.current = null;
-                debounceTimer.current   = null;
-              }, 300);
-              onChange(newCode);
-            }}
-            onScroll={syncScroll}
-            onKeyDown={handleKeyDown}
-            spellCheck={false}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            aria-label="C code editor"
-          />
-        </div>
+        <Editor
+          height="100%"
+          width="100%"
+          defaultLanguage="c"
+          defaultValue={code}
+          onMount={handleEditorDidMount}
+          onChange={(value) => onChange(value ?? '')}
+          loading={
+            <div className={styles.editorLoading}>
+              <span className={styles.editorLoadingDot} />
+              Loading editor…
+            </div>
+          }
+          options={{
+            fontSize:              13.5,
+            fontFamily:            "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace",
+            fontLigatures:         true,
+            lineHeight:            22,               // ≈ 13.5 × 1.65
+            minimap:               { enabled: false },
+            scrollBeyondLastLine:  false,
+            automaticLayout:       true,             // auto-resize on panel drag
+            tabSize:               4,
+            insertSpaces:          true,
+            autoIndent:            'full',
+            formatOnPaste:         true,
+            bracketPairColorization: { enabled: true },
+            cursorBlinking:        'smooth',
+            cursorSmoothCaretAnimation: 'on',
+            renderLineHighlight:   'line',
+            smoothScrolling:       true,
+            padding:               { top: 16, bottom: 16 },
+            scrollbar: {
+              verticalScrollbarSize:   8,
+              horizontalScrollbarSize: 8,
+            },
+            suggest: {
+              showKeywords:  true,
+              showSnippets:  true,
+              showFunctions: true,
+              showVariables: true,
+            },
+            wordWrap:              'off',
+            renderWhitespace:      'none',
+            occurrencesHighlight:  'off',
+            links:                 false,
+          }}
+        />
       </div>
 
-      {/* ── Bottom run bar ────────────────────────────────────────────────── */}
+      {/* ── Bottom run bar ──────────────────────────────────────────────────── */}
       <div className={styles.runBar}>
 
         {/* Download button */}

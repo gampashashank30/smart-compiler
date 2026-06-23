@@ -496,12 +496,14 @@ function attachWebSocketServer(httpServer) {
         // The PTY driver handles: echo, line-editing, Ctrl+C (SIGINT), Ctrl+D (EOF).
         // The setvbuf() in STDIO_INIT forces unbuffered I/O inside the container.
         try {
+          const ptyEnv = getCleanEnv();
+          ptyEnv.TERM = 'xterm-256color';
           ptyProc = nodePty.spawn('docker', runArgs, {
             name:  'xterm-256color',
             cols,
             rows,
             cwd:   os.tmpdir(),
-            env:   { ...process.env, TERM: 'xterm-256color' },
+            env:   ptyEnv,  // ✅ only safe keys — no API keys or secrets
           });
         } catch (err) {
           send({ type: 'error', data: `Failed to start program: ${err.message}` });
