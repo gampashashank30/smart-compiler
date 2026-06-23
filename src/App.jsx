@@ -15,6 +15,8 @@ import { detectLanguage } from './languageDetector.js';
 import { callClaude, parseJSON } from './api.js';
 import { readUploadedFile } from './fileUploader.js';
 import { useAuth } from './useAuth.js';
+import { supabase } from './supabaseClient.js';
+import { analyticsStore } from './analytics.js';
 import { sanitizeAiCode } from './aiCodeUtils.js';
 import styles from './App.module.css';
 
@@ -30,7 +32,34 @@ const DETECT_CONFIDENCE_THRESHOLD = 28;
 
 
 export default function App() {
-  const { user, signInWithGoogle, signOut } = useAuth();
+  const { user, loading, signInWithGoogle, signOut } = useAuth();
+
+  // Redirect to login if user is not authenticated and loading is complete (and Supabase is configured)
+  useEffect(() => {
+    if (supabase && !loading && !user) {
+      window.location.href = '/login.html';
+    }
+  }, [user, loading]);
+
+  // Initialize analytics store with the logged-in user
+  useEffect(() => {
+    analyticsStore.init(user);
+  }, [user]);
+
+  // Track time spent on the website when user is logged in (5-second heartbeats)
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      analyticsStore.addTimeSpent(5);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      analyticsStore.syncTimeSpent();
+    };
+  }, [user]);
+
+
 
   // ── History panel state ──────────────────────────────────────────────────
   const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
@@ -81,6 +110,7 @@ export default function App() {
   useEffect(() => {
     const unsub = bugTrackerStore.subscribe((stats) => {
       setBugErrorCount(stats.errors);
+      analyticsStore.recordErrors(stats.errors);
     });
     return unsub;
   }, []);
@@ -259,6 +289,7 @@ export default function App() {
     if (dismissedCodeRef.current === code) {
       setActiveTab('terminal');
       terminalRef.current?.connect(WS_URL, code);
+      analyticsStore.recordRun();
       return;
     }
 
@@ -279,6 +310,7 @@ export default function App() {
 
     // Connect terminal to WebSocket
     terminalRef.current?.connect(WS_URL, code);
+    analyticsStore.recordRun();
   }, [code, runStatus]);
 
   // ── Kill running program ──────────────────────────────────────────────────
@@ -311,6 +343,37 @@ export default function App() {
   }, []);
 
   const isRunning = runStatus === 'compiling' || runStatus === 'running';
+
+  if (supabase && loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#0d1117',
+        color: '#c9d1d9',
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #161b22',
+          borderTop: '3px solid #0fa57c',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+        <div style={{ marginTop: '16px', fontSize: '14px', color: '#8b949e' }}>Verifying session...</div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.appShell}>

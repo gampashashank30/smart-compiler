@@ -1,3 +1,8 @@
-// Supabase is disabled — stub exported so imports don't break.
-// Re-enable by installing @supabase/supabase-js and restoring the real client.
-export const supabase = null;
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey) 
+  : null;

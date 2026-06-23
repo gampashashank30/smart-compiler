@@ -5,6 +5,8 @@
 // The frontend calls our own /api/ai endpoint — never Groq directly.
 // This keeps the key off the frontend bundle and works without rebuilding.
 
+import { analyticsStore } from './analytics.js';
+
 /**
  * Call the Groq API via the server-side proxy (/api/ai)
  * @param {string} systemPrompt
@@ -12,6 +14,11 @@
  * @returns {Promise<string>}
  */
 export async function callClaude(systemPrompt, userMessage) {
+  // Enforce the 15,000 token limit per user
+  if (analyticsStore.isLimitReached()) {
+    throw new Error('AI Limit Reached: You have used all of your 15,000 free AI tokens. Upgrade to continue.');
+  }
+
   const response = await fetch('/api/ai', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -24,6 +31,12 @@ export async function callClaude(systemPrompt, userMessage) {
   }
 
   const data = await response.json();
+
+  // Record token usage if returned by the backend proxy
+  if (data.usage?.total_tokens) {
+    analyticsStore.recordTokens(data.usage.total_tokens);
+  }
+
   return data.content ?? '';
 }
 

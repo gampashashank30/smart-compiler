@@ -129,10 +129,10 @@ app.post('/api/ai', async (req, res) => {
       }
 
       // ✅ Success — return the result (include which key index was used for transparency)
-      if (i > 0) {
-        console.log(`[/api/ai] Succeeded with fallback key #${i + 1}`);
-      }
-      return res.json({ content: data.choices?.[0]?.message?.content ?? '' });
+      return res.json({
+        content: data.choices?.[0]?.message?.content ?? '',
+        usage: data.usage ?? { total_tokens: 0 }
+      });
 
     } catch (err) {
       console.error(`[/api/ai] Key #${i + 1} threw an error:`, err.message);

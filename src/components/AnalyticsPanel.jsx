@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { bugTrackerStore, ERROR_TYPES, TIPS, MAX_SESSIONS } from '../bugTracker.js';
+import { analyticsStore } from '../analytics.js';
 import styles from './AnalyticsPanel.module.css';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -802,10 +803,105 @@ function Section({ title, children }) {
 }
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
+// ─── Cloud Profile Component ──────────────────────────────────────────────────
+function CloudProfile({ stats }) {
+  if (!stats.email) return null; // Only show if user is logged in
+  
+  const tokenLimit = 15000;
+  const tokenPct = Math.min(100, (stats.ai_tokens_used / tokenLimit) * 100);
+  
+  // Format active time (seconds -> hh mm ss)
+  const formatTime = (totalSeconds) => {
+    if (!totalSeconds) return '0s';
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    
+    const parts = [];
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0) parts.push(`${m}m`);
+    if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+    return parts.join(' ');
+  };
+
+  const isNearingLimit = stats.ai_tokens_used >= 12000;
+  const isOverLimit = stats.ai_tokens_used >= 15000;
+  
+  let progressBarColor = '#10b981'; // Green
+  if (isOverLimit) progressBarColor = '#ef4444'; // Red
+  else if (isNearingLimit) progressBarColor = '#f59e0b'; // Amber
+
+  return (
+    <div className={styles.cloudCard}>
+      <div className={styles.cloudHeader}>
+        <div className={styles.cloudUser}>
+          <span className={styles.cloudUserIcon}>☁️</span>
+          <div className={styles.cloudUserInfo}>
+            <div className={styles.cloudEmail}>{stats.email}</div>
+            <div className={styles.cloudSyncStatus}>Connected & Synced</div>
+          </div>
+        </div>
+        <span className={styles.cloudPulse} />
+      </div>
+
+      <div className={styles.cloudStatsGrid}>
+        <div className={styles.cloudStatItem}>
+          <div className={styles.cloudStatValue}>{stats.total_runs}</div>
+          <div className={styles.cloudStatLabel}>Runs (All-Time)</div>
+        </div>
+        <div className={styles.cloudStatItem}>
+          <div className={styles.cloudStatValue} style={{ color: '#ef4444' }}>{stats.error_counts}</div>
+          <div className={styles.cloudStatLabel}>Errors Caught</div>
+        </div>
+        <div className={styles.cloudStatItem}>
+          <div className={styles.cloudStatValue}>{formatTime(stats.time_spent)}</div>
+          <div className={styles.cloudStatLabel}>Time Spent</div>
+        </div>
+      </div>
+
+      <div className={styles.tokenSection}>
+        <div className={styles.tokenHeaders}>
+          <span className={styles.tokenLabel}>AI Token Usage</span>
+          <span className={styles.tokenValue} style={isOverLimit ? { color: '#ef4444', fontWeight: 'bold' } : {}}>
+            {stats.ai_tokens_used.toLocaleString()} / {tokenLimit.toLocaleString()}
+          </span>
+        </div>
+        <div className={styles.tokenBarTrack}>
+          <div 
+            className={styles.tokenBarFill} 
+            style={{ 
+              width: `${tokenPct}%`, 
+              backgroundColor: progressBarColor 
+            }} 
+          />
+        </div>
+        {isOverLimit ? (
+          <div className={styles.tokenWarning}>
+            ⚠️ Free tier token limit reached (15k). AI analysis and Tutor features are disabled.
+          </div>
+        ) : isNearingLimit ? (
+          <div className={styles.tokenWarning} style={{ color: '#d97706' }}>
+            ⚠️ Approaching free tier limit of 15,000 AI tokens.
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Panel ───────────────────────────────────────────────────────────────
 export default function AnalyticsPanel({ onClose }) {
   const [sessions, setSessions] = useState(() => bugTrackerStore.sessions);
   const [stats, setStats] = useState(() => bugTrackerStore.getStats());
+  const [cloudStats, setCloudStats] = useState(() => analyticsStore.getStats());
   const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    const unsub = analyticsStore.subscribe((newCloudStats) => {
+      setCloudStats(newCloudStats);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     const unsub = bugTrackerStore.subscribe((newStats) => {
@@ -889,6 +985,7 @@ export default function AnalyticsPanel({ onClose }) {
 
         {/* ── Body ───────────────────────────────────────────────── */}
         <div className={styles.panelBody}>
+          <CloudProfile stats={cloudStats} />
           {!hasData ? (
             <EmptyState />
           ) : (
