@@ -807,7 +807,7 @@ function Section({ title, children }) {
 function CloudProfile({ stats }) {
   if (!stats.email) return null; // Only show if user is logged in
   
-  const tokenLimit = 15000;
+  const tokenLimit = stats.token_limit ?? 15000;
   const tokenPct = Math.min(100, (stats.ai_tokens_used / tokenLimit) * 100);
   
   // Format active time (seconds -> hh mm ss)
@@ -824,8 +824,8 @@ function CloudProfile({ stats }) {
     return parts.join(' ');
   };
 
-  const isNearingLimit = stats.ai_tokens_used >= 12000;
-  const isOverLimit = stats.ai_tokens_used >= 15000;
+  const isNearingLimit = stats.ai_tokens_used >= (tokenLimit * 0.8);
+  const isOverLimit = stats.ai_tokens_used >= tokenLimit;
   
   let progressBarColor = '#10b981'; // Green
   if (isOverLimit) progressBarColor = '#ef4444'; // Red
@@ -877,11 +877,11 @@ function CloudProfile({ stats }) {
         </div>
         {isOverLimit ? (
           <div className={styles.tokenWarning}>
-            ⚠️ Free tier token limit reached (15k). AI analysis and Tutor features are disabled.
+            ⚠️ Free tier token limit reached ({tokenLimit.toLocaleString()}). AI analysis and Tutor features are disabled.
           </div>
         ) : isNearingLimit ? (
           <div className={styles.tokenWarning} style={{ color: '#d97706' }}>
-            ⚠️ Approaching free tier limit of 15,000 AI tokens.
+            ⚠️ Approaching free tier limit of {tokenLimit.toLocaleString()} AI tokens.
           </div>
         ) : null}
       </div>

@@ -135,13 +135,12 @@ app.post('/api/ai', async (req, res) => {
     return res.status(400).json({ error: 'Input too large' });
   }
 
-  // ── 4. Server-side token limit check (cannot be bypassed from browser) ───
   // Fetch current token usage directly from Supabase using the user's own JWT.
-  const TOKEN_LIMIT = 15000;
   let currentTokens = 0;
+  let tokenLimit = 15000;
   try {
     const analyticsRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/user_analytics?id=eq.${supabaseUser.id}&select=ai_tokens_used`,
+      `${SUPABASE_URL}/rest/v1/user_analytics?id=eq.${supabaseUser.id}&select=ai_tokens_used,token_limit`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -152,17 +151,18 @@ app.post('/api/ai', async (req, res) => {
     if (analyticsRes.ok) {
       const rows = await analyticsRes.json();
       currentTokens = rows[0]?.ai_tokens_used ?? 0;
+      tokenLimit = rows[0]?.token_limit ?? 15000;
     }
   } catch (err) {
     console.error('[/api/ai] Failed to fetch token count:', err.message);
     // Fail open on DB errors — don't block the user if analytics DB is down
   }
 
-  if (currentTokens >= TOKEN_LIMIT) {
-    console.warn(`[/api/ai] User ${supabaseUser.id} hit token limit (${currentTokens}/${TOKEN_LIMIT})`);
+  if (currentTokens >= tokenLimit) {
+    console.warn(`[/api/ai] User ${supabaseUser.id} hit token limit (${currentTokens}/${tokenLimit})`);
     return res.status(429).json({
       error: 'Token limit reached',
-      message: `You have used all ${TOKEN_LIMIT.toLocaleString()} free AI tokens. Upgrade to continue.`,
+      message: `You have used all ${tokenLimit.toLocaleString()} free AI tokens. Upgrade to continue.`,
     });
   }
 

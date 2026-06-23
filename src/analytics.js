@@ -6,7 +6,8 @@ let localStats = {
   ai_tokens_used: 0,
   time_spent: 0,
   error_counts: 0,
-  email: ''
+  email: '',
+  token_limit: 15000
 };
 
 let listeners = [];
@@ -22,7 +23,8 @@ export const analyticsStore = {
         ai_tokens_used: 0,
         time_spent: 0,
         error_counts: 0,
-        email: ''
+        email: '',
+        token_limit: 15000
       };
       this.notify();
       return;
@@ -73,7 +75,8 @@ export const analyticsStore = {
         ai_tokens_used: data.ai_tokens_used ?? 0,
         time_spent: data.time_spent ?? 0,
         error_counts: data.error_counts ?? 0,
-        email: data.email ?? user.email
+        email: data.email ?? user.email,
+        token_limit: data.token_limit ?? 15000
       };
       
       this.notify();
@@ -89,7 +92,7 @@ export const analyticsStore = {
   isLimitReached() {
     // Only enforce limit if Supabase is active
     if (!supabase) return false;
-    return localStats.ai_tokens_used >= 15000;
+    return localStats.ai_tokens_used >= (localStats.token_limit ?? 15000);
   },
 
   // Record token usage
