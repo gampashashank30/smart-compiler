@@ -53,6 +53,30 @@ try {
 
 const execFileAsync = promisify(execFile);
 
+// ── Supabase JWT verification ─────────────────────────────────────────────────────────────────
+const SUPABASE_URL      = process.env.VITE_SUPABASE_URL      || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
+
+async function verifySupabaseToken(token) {
+  if (!token) return null;
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'apikey': SUPABASE_ANON_KEY,
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+// ── Per-IP WebSocket rate limiting ─────────────────────────────────────────────────────────
+const WS_CONNECTIONS_PER_IP = new Map(); // ip → count
+const MAX_WS_PER_IP = 5; // max simultaneous WebSocket connections per IP
+
 // ── Constants ────────────────────────────────────────────────────────────────
 const DOCKER_IMAGE    = 'gcc-runner:latest';
 const COMPILE_TIMEOUT = 12_000;   // 12 s compile timeout
@@ -213,7 +237,29 @@ function buildRunArgs(mountPath) {
 function attachWebSocketServer(httpServer) {
   const wss = new WebSocketServer({ server: httpServer, path: '/ws/run' });
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
+    // ── Per-IP rate limiting ────────────────────────────────────────────────────
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+      || req.socket?.remoteAddress
+      || 'unknown';
+
+    const currentCount = WS_CONNECTIONS_PER_IP.get(clientIp) || 0;
+    if (currentCount >= MAX_WS_PER_IP) {
+      console.warn(`[ws-executor] Rejected connection from ${clientIp} — too many open connections (${currentCount})`);
+      ws.close(1008, 'Too many connections from your IP. Please try again.');
+      return;
+    }
+    WS_CONNECTIONS_PER_IP.set(clientIp, currentCount + 1);
+
+    // Decrement count when this connection closes
+    const onWsClose = () => {
+      const n = WS_CONNECTIONS_PER_IP.get(clientIp) || 1;
+      if (n <= 1) WS_CONNECTIONS_PER_IP.delete(clientIp);
+      else WS_CONNECTIONS_PER_IP.set(clientIp, n - 1);
+    };
+    ws.on('close', onWsClose);
+    ws.on('error', onWsClose);
+
     let ptyProc   = null;   // node-pty process (PTY mode)
     let plainProc = null;   // regular child_process (fallback)
     let tmpDir    = null;
@@ -273,12 +319,20 @@ function attachWebSocketServer(httpServer) {
         return;
       }
 
-      // ── run: compile then execute ─────────────────────────────────────
+      // ── run: compile then execute ────────────────────────────────────────────────
       if (msg.type !== 'run') return;
 
-      const { code } = msg;
+      const { code, token } = msg;
       cols = Math.max(10, msg.cols || 80);
       rows = Math.max(4,  msg.rows || 24);
+
+      // ── JWT verification — reject unauthenticated users before touching Docker ──
+      const wsUser = await verifySupabaseToken(token);
+      if (!wsUser?.id) {
+        send({ type: 'error', data: 'Unauthorized: Please log in to compile and run code.' });
+        cleanup();
+        return;
+      }
 
       if (!code?.trim()) {
         send({ type: 'error', data: 'No code provided.' });

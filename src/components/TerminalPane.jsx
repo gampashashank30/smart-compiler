@@ -5,6 +5,7 @@ import '@xterm/xterm/css/xterm.css';
 import styles from './TerminalPane.module.css';
 import { classifyCompileError, extractLineHint } from '../bugTracker.js';
 import { compilationHistoryStore } from '../compilationHistory.js';
+import { supabase } from '../supabaseClient.js';
 
 /** Dispatch a bugtracker:record custom event — handled by App.jsx → bugTrackerStore */
 function dispatchBugEvent(payload) {
@@ -193,12 +194,17 @@ const TerminalPane = forwardRef(function TerminalPane(
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-    ws.onopen = () => {
+    ws.onopen = async () => {
+      // Get the current Supabase JWT so the server can verify we're logged in
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       ws.send(JSON.stringify({
         type: 'run',
         code,
         cols: term.cols,
         rows: term.rows,
+        token,   // 🔒 JWT for server-side auth verification
       }));
     };
 
