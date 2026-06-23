@@ -20,6 +20,13 @@ RUN npm install
 COPY index.html app.html login.html vite.config.js eslint.config.js ./
 COPY public/ ./public/
 COPY src/ ./src/
+
+# Accept Supabase config as Docker build args (must be set in Render → Docker Build Arguments)
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
 RUN npm run build
 
 # Copy server code
