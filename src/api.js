@@ -6,6 +6,7 @@
 // This keeps the key off the frontend bundle and works without rebuilding.
 
 import { analyticsStore } from './analytics.js';
+import { supabase } from './supabaseClient.js';
 
 /**
  * Call the Groq API via the server-side proxy (/api/ai)
@@ -19,10 +20,17 @@ export async function callClaude(systemPrompt, userMessage) {
     throw new Error('AI Limit Reached: You have used all of your 15,000 free AI tokens. Upgrade to continue.');
   }
 
+  // Attach the Supabase JWT so the server can verify the user is logged in
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token || '';
+
   const response = await fetch('/api/ai', {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ systemPrompt, userMessage }),
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ systemPrompt, userMessage }),
   });
 
   if (!response.ok) {

@@ -38,6 +38,37 @@ const MAX_CODE_BYTES = 100_000;
 const MAX_STDIN_BYTES = 10_000;
 const QUEUE_MAX_SIZE = 200;
 
+// Supabase config for JWT verification (server-side, anon key is fine here)
+const SUPABASE_URL      = process.env.VITE_SUPABASE_URL      || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
+
+// Allowed origins — requests from other origins are rejected
+const ALLOWED_ORIGINS = [
+  'https://smartcompiler.maadiotsolutions.co.in',
+  'http://localhost:5173',
+  'http://localhost:3001',
+];
+
+/**
+ * Verify a Supabase access token by calling Supabase's /auth/v1/user endpoint.
+ * Returns the user object if valid, or null if invalid/expired.
+ */
+async function verifySupabaseToken(token) {
+  if (!token) return null;
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'apikey': SUPABASE_ANON_KEY,
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 // ── Express app ──────────────────────────────────────────────────────────────
 const app = express();
 app.use(express.json({ limit: '150kb' }));
@@ -64,9 +95,30 @@ app.use('/api/compile', limiter);
 // ── AI proxy endpoint ─────────────────────────────────────────────────────────
 // Calls Groq (or Z.AI) from the server so the API key stays off the frontend bundle.
 // Supports up to 3 API keys with automatic fallback when one hits a rate limit.
+// 🔒 PROTECTED: Requires a valid Supabase JWT (logged-in user) + allowed origin.
 app.post('/api/ai', async (req, res) => {
+  // ── 1. Origin check ──────────────────────────────────────────────────────
+  const origin = req.headers.origin || '';
+  const isAllowedOrigin = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+  if (!isAllowedOrigin) {
+    console.warn(`[/api/ai] Blocked request from disallowed origin: ${origin}`);
+    return res.status(403).json({ error: 'Forbidden: Origin not allowed' });
+  }
+
+  // ── 2. JWT verification — must be a logged-in Supabase user ──────────────
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: No session token provided. Please log in.' });
+  }
+  const supabaseUser = await verifySupabaseToken(token);
+  if (!supabaseUser?.id) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or expired session. Please log in again.' });
+  }
+
   const { systemPrompt, userMessage } = req.body ?? {};
 
+  // ── 3. Input size limits ──────────────────────────────────────────────────
   if (!systemPrompt || !userMessage) {
     return res.status(400).json({ error: 'systemPrompt and userMessage are required' });
   }
