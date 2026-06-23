@@ -131,6 +131,40 @@ app.post('/api/ai', async (req, res) => {
   if (!systemPrompt || !userMessage) {
     return res.status(400).json({ error: 'systemPrompt and userMessage are required' });
   }
+  if (systemPrompt.length > 10000 || userMessage.length > 20000) {
+    return res.status(400).json({ error: 'Input too large' });
+  }
+
+  // ── 4. Server-side token limit check (cannot be bypassed from browser) ───
+  // Fetch current token usage directly from Supabase using the user's own JWT.
+  const TOKEN_LIMIT = 15000;
+  let currentTokens = 0;
+  try {
+    const analyticsRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/user_analytics?id=eq.${supabaseUser.id}&select=ai_tokens_used`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+      }
+    );
+    if (analyticsRes.ok) {
+      const rows = await analyticsRes.json();
+      currentTokens = rows[0]?.ai_tokens_used ?? 0;
+    }
+  } catch (err) {
+    console.error('[/api/ai] Failed to fetch token count:', err.message);
+    // Fail open on DB errors — don't block the user if analytics DB is down
+  }
+
+  if (currentTokens >= TOKEN_LIMIT) {
+    console.warn(`[/api/ai] User ${supabaseUser.id} hit token limit (${currentTokens}/${TOKEN_LIMIT})`);
+    return res.status(429).json({
+      error: 'Token limit reached',
+      message: `You have used all ${TOKEN_LIMIT.toLocaleString()} free AI tokens. Upgrade to continue.`,
+    });
+  }
 
   // Build the key rotation pool — filter out empty / placeholder values
   const PLACEHOLDER = 'your_second_api_key_here';
@@ -189,7 +223,25 @@ app.post('/api/ai', async (req, res) => {
         return res.status(response.status).json({ error: data?.error?.message || 'AI API error' });
       }
 
-      // ✅ Success — return the result (include which key index was used for transparency)
+      // ✅ Success — update token count in Supabase server-side, then return result
+      const tokensUsed = data.usage?.total_tokens ?? 0;
+      const newTotal = currentTokens + tokensUsed;
+
+      // Fire-and-forget Supabase update — don't delay the response
+      fetch(
+        `${SUPABASE_URL}/rest/v1/user_analytics?id=eq.${supabaseUser.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'apikey': SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({ ai_tokens_used: newTotal }),
+        }
+      ).catch(err => console.error('[/api/ai] Failed to update token count:', err.message));
+
       return res.json({
         content: data.choices?.[0]?.message?.content ?? '',
         usage: data.usage ?? { total_tokens: 0 }
