@@ -289,11 +289,45 @@ async function runWithWandbox(code, stdin) {
 // ── Local GCC fallback execution ──────────────────────────────────────────────
 let _localGccReady = null;
 
+function getCleanEnv() {
+  const cleanEnv = {};
+  const safeKeys = [
+    'PATH',
+    'TERM',
+    'TMPDIR',
+    'TEMP',
+    'TMP',
+    'SystemRoot',
+    'windir',
+    'USER',
+    'USERNAME',
+    'HOME',
+    'HOMEPATH',
+    'HOMEDRIVE'
+  ];
+  for (const key of safeKeys) {
+    if (process.env[key] !== undefined) {
+      cleanEnv[key] = process.env[key];
+    }
+  }
+  return cleanEnv;
+}
+
 async function isLocalGccReady() {
   if (_localGccReady !== null) return _localGccReady;
+
+  const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
+  if (process.env.DISABLE_LOCAL_GCC === 'true' || isProdOrStaging) {
+    console.warn('[executor] Local GCC fallback disabled for security (production/staging or DISABLE_LOCAL_GCC is set)');
+    _localGccReady = false;
+    return _localGccReady;
+  }
+
   try {
     await execFileAsync('gcc', ['--version'], { timeout: 3000 });
     _localGccReady = true;
+    console.warn('[executor] WARNING: Local GCC is available and will be used as a fallback.');
+    console.warn('[executor]          This executes user code directly on the host machine without sandboxing!');
   } catch {
     _localGccReady = false;
   }
@@ -317,7 +351,8 @@ async function runWithLocalGcc(code, stdin) {
     let compileOut = '';
     let compileExitCode = 0;
     try {
-      const { stdout, stderr } = await execFileAsync('gcc', [srcFile, '-Wall', '-Wextra', '-o', exeFile], { timeout: COMPILE_TIMEOUT });
+      const cleanEnv = getCleanEnv();
+      const { stdout, stderr } = await execFileAsync('gcc', [srcFile, '-Wall', '-Wextra', '-o', exeFile], { timeout: COMPILE_TIMEOUT, env: cleanEnv });
       compileOut = (stdout || '') + (stderr || '');
     } catch (err) {
       compileExitCode = err.code || 1;
@@ -341,7 +376,8 @@ async function runWithLocalGcc(code, stdin) {
 
     // Run
     return new Promise((resolve) => {
-      const proc = spawn(exeFile, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+      const cleanEnv = getCleanEnv();
+      const proc = spawn(exeFile, [], { stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv });
       let stdout = '';
       let stderr = '';
       let killed = false;

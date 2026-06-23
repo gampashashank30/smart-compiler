@@ -14,6 +14,7 @@ import { STARTER_CODE, LANG_TO_C_PROMPT } from './constants.js';
 import { detectLanguage } from './languageDetector.js';
 import { callClaude, parseJSON } from './api.js';
 import { readUploadedFile } from './fileUploader.js';
+import { useAuth } from './useAuth.js';
 import styles from './App.module.css';
 
 // WebSocket URL — Vite proxies /ws → ws://localhost:3001 in dev
@@ -83,6 +84,8 @@ function unescapeStructuralNewlines(code) {
 
 
 export default function App() {
+  const { user, signInWithGoogle, signOut } = useAuth();
+
   // ── History panel state ──────────────────────────────────────────────────
   const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
   const [historyCount, setHistoryCount] = useState(
@@ -385,6 +388,9 @@ export default function App() {
         analyticsOpen={analyticsPanelOpen}
         onAiTutorToggle={handleAiTutorToggle}
         aiTutorOpen={aiTutorOpen}
+        user={user}
+        onSignIn={signInWithGoogle}
+        onSignOut={signOut}
       />
 
       <div className={styles.workspace} ref={containerRef}>

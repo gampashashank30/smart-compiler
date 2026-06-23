@@ -17,6 +17,8 @@
  * }
  */
 
+import { supabase } from './supabaseClient';
+
 const STORAGE_KEY = 'sc_compilation_history';
 
 /**
@@ -76,6 +78,38 @@ function createHistoryStore() {
     listeners.forEach((fn) => fn(snapshot));
   }
 
+  // Fetch initial history from Supabase asynchronously
+  async function syncFromSupabase() {
+    try {
+      const { data, error } = await supabase
+        .from('compilation_history')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(MAX_ENTRIES);
+
+      if (error) throw error;
+      if (data && data.length > 0) {
+        // Merge and deduplicate (local entries + DB entries)
+        const mergedMap = new Map();
+        entries.forEach((e) => mergedMap.set(e.id, e));
+        data.forEach((e) => mergedMap.set(e.id, e));
+
+        // Sort descending by timestamp
+        entries = Array.from(mergedMap.values())
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(0, MAX_ENTRIES);
+
+        saveToStorage(entries);
+        notify();
+      }
+    } catch (err) {
+      console.warn('Could not sync compilation history from Supabase:', err.message);
+    }
+  }
+
+  // Trigger sync on initialization
+  syncFromSupabase();
+
   return {
     /** Push a new compilation entry */
     record(entry) {
@@ -95,6 +129,14 @@ function createHistoryStore() {
       entries = [newEntry, ...entries].slice(0, MAX_ENTRIES);
       saveToStorage(entries);
       notify();
+
+      // Sync to Supabase
+      supabase
+        .from('compilation_history')
+        .insert([newEntry])
+        .then(({ error }) => {
+          if (error) console.error('Failed to sync new run to Supabase:', error);
+        });
     },
 
     /** Delete a single entry by id */
@@ -102,6 +144,15 @@ function createHistoryStore() {
       entries = entries.filter((e) => e.id !== id);
       saveToStorage(entries);
       notify();
+
+      // Sync deletion to Supabase
+      supabase
+        .from('compilation_history')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) console.error('Failed to delete run from Supabase:', error);
+        });
     },
 
     /** Clear all entries */
@@ -109,6 +160,15 @@ function createHistoryStore() {
       entries = [];
       saveToStorage(entries);
       notify();
+
+      // Sync clear to Supabase (delete all rows since we are not user-isolated yet)
+      supabase
+        .from('compilation_history')
+        .delete()
+        .neq('id', '_')
+        .then(({ error }) => {
+          if (error) console.error('Failed to clear runs from Supabase:', error);
+        });
     },
 
     /** Get a snapshot of all entries (newest-first) */

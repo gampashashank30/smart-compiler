@@ -137,12 +137,46 @@ async function isDockerReady() {
 
 function resetDockerCache() { _dockerReady = null; }
 
+function getCleanEnv() {
+  const cleanEnv = {};
+  const safeKeys = [
+    'PATH',
+    'TERM',
+    'TMPDIR',
+    'TEMP',
+    'TMP',
+    'SystemRoot',
+    'windir',
+    'USER',
+    'USERNAME',
+    'HOME',
+    'HOMEPATH',
+    'HOMEDRIVE'
+  ];
+  for (const key of safeKeys) {
+    if (process.env[key] !== undefined) {
+      cleanEnv[key] = process.env[key];
+    }
+  }
+  return cleanEnv;
+}
+
 let _localGccReady = null;
 async function isLocalGccReady() {
   if (_localGccReady !== null) return _localGccReady;
+
+  const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
+  if (process.env.DISABLE_LOCAL_GCC === 'true' || isProdOrStaging) {
+    console.warn('[ws-executor] Local GCC fallback disabled for security (production/staging or DISABLE_LOCAL_GCC is set)');
+    _localGccReady = false;
+    return _localGccReady;
+  }
+
   try {
     await execFileAsync('gcc', ['--version'], { timeout: 3000 });
     _localGccReady = true;
+    console.warn('[ws-executor] WARNING: Local GCC is available and will be used as a fallback.');
+    console.warn('[ws-executor]          This executes user code directly on the host machine without sandboxing!');
   } catch {
     _localGccReady = false;
   }
@@ -278,7 +312,8 @@ function attachWebSocketServer(httpServer) {
           let compileExitCode = 0;
 
           await new Promise((resolve) => {
-            const cp = spawn('gcc', [srcFile, '-Wall', '-Wextra', '-D__USE_MINGW_ANSI_STDIO', '-o', exeFile], { stdio: ['ignore', 'pipe', 'pipe'] });
+            const cleanEnv = getCleanEnv();
+            const cp = spawn('gcc', [srcFile, '-Wall', '-Wextra', '-D__USE_MINGW_ANSI_STDIO', '-o', exeFile], { stdio: ['ignore', 'pipe', 'pipe'], env: cleanEnv });
             cp.stdout.on('data', d => { compileOut += d.toString(); });
             cp.stderr.on('data', d => { compileOut += d.toString(); });
             const t = setTimeout(() => { cp.kill(); compileTimeout = true; resolve(); }, COMPILE_TIMEOUT);
@@ -309,12 +344,14 @@ function attachWebSocketServer(httpServer) {
 
           if (nodePty) {
             try {
+              const cleanEnv = getCleanEnv();
+              cleanEnv.TERM = 'xterm-256color';
               ptyProc = nodePty.spawn(exeFile, [], {
                 name:  'xterm-256color',
                 cols,
                 rows,
                 cwd:   tmpDir,
-                env:   { ...process.env, TERM: 'xterm-256color' },
+                env:   cleanEnv,
               });
             } catch (err) {
               send({ type: 'error', data: `Failed to start local program: ${err.message}` });
@@ -344,7 +381,8 @@ function attachWebSocketServer(httpServer) {
             });
 
           } else {
-            plainProc = spawn(exeFile, [], { cwd: tmpDir, stdio: ['pipe', 'pipe', 'pipe'] });
+            const cleanEnv = getCleanEnv();
+            plainProc = spawn(exeFile, [], { cwd: tmpDir, stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv });
 
             const normalize = d => d.toString().replace(/\r?\n/g, '\r\n');
 
