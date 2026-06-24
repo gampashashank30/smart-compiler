@@ -1,10 +1,22 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="40" height="40" rx="11" fill="url(#sc-grad)" />
-  <polygon points="24,8 13,23 20,23 16,33 27,18 20,18" fill="white" fillRule="evenodd" />
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="sc-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+    <!-- Gradient for the rounded square -->
+    <linearGradient id="sc-grad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stopColor="#10b981" />
       <stop offset="100%" stopColor="#0ea5e9" />
     </linearGradient>
+
+    <!-- Glow/Drop shadow filter -->
+    <filter id="sc-glow" x="-20%" y="-20%" width="140%" height="140%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#10b981" floodOpacity="0.4" />
+    </filter>
   </defs>
+
+  <!-- Apply the filter to the rounded square container -->
+  <g filter="url(#sc-glow)">
+    <rect x="4" y="4" width="40" height="40" rx="11" fill="url(#sc-grad)" />
+  </g>
+
+  <!-- Lightning bolt, shifted by 4px in both x and y to align with the rect -->
+  <polygon points="28,12 17,27 24,27 20,37 31,22 24,22" fill="white" fillRule="evenodd" />
 </svg>
