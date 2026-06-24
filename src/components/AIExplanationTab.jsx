@@ -256,7 +256,7 @@ export default function AIExplanationTab({ code, onApplyFix }) {
     try {
       // Prepend line numbers so the AI sees exact line positions
       const numberedCode = code.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n');
-      const raw    = await callClaude(ANALYSIS_SYSTEM_PROMPT, 'Here is the C code to analyze:\n\n' + numberedCode);
+      const raw    = await callClaude(ANALYSIS_SYSTEM_PROMPT, 'Code:\n' + numberedCode);
       const parsed = parseJSON(raw);
       setIssues(parsed);
     } catch (err) {
