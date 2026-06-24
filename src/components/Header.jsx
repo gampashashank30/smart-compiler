@@ -13,6 +13,8 @@ import styles from './Header.module.css';
  *   onBugTrackerToggle — called when the Bug Tracker button is clicked
  *   bugTrackerErrorCount — number to show in the red badge (0 = hide badge)
  */
+const ADMIN_EMAIL = 'gampashashank30@gmail.com';
+
 export default function Header({
   onBugTrackerToggle,
   bugTrackerErrorCount = 0,
@@ -22,6 +24,8 @@ export default function Header({
   analyticsOpen = false,
   onAiTutorToggle,
   aiTutorOpen = false,
+  onAdminToggle,
+  adminDashboardOpen = false,
   user = null,
   onSignIn,
   onSignOut
@@ -90,6 +94,21 @@ export default function Header({
 
       {/* ── RIGHT: AI Tutor + Analytics + History + Bug Tracker buttons ──── */}
       <div className={styles.rightSection}>
+
+        {/* Admin Dashboard button — only visible to admin */}
+        {user?.email === ADMIN_EMAIL && (
+          <button
+            id="admin-dashboard-btn"
+            className={`${styles.aiTutorBtn} ${adminDashboardOpen ? styles.aiTutorBtnActive : ''}`}
+            onClick={onAdminToggle}
+            aria-label="Open Admin Dashboard"
+            title="Admin Dashboard"
+            style={adminDashboardOpen ? { borderColor: '#a7f3d0', color: '#059669', background: '#f0fdf4' } : {}}
+          >
+            <span className={styles.aiTutorBtnIcon} aria-hidden="true" style={{ fontSize: '14px' }}>⚙️</span>
+            <span className={styles.aiTutorBtnLabel}>Admin</span>
+          </button>
+        )}
 
         {/* AI Tutor button */}
         <button

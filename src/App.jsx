@@ -8,6 +8,7 @@ import BugTrackerPanel from './components/BugTrackerPanel.jsx';
 import CompilationHistoryPanel from './components/CompilationHistoryPanel.jsx';
 import AnalyticsPanel from './components/AnalyticsPanel.jsx';
 import AiTutorPanel from './components/AiTutorPanel.jsx';
+import AdminDashboard from './components/AdminDashboard.jsx';
 import { bugTrackerStore } from './bugTracker.js';
 import { compilationHistoryStore } from './compilationHistory.js';
 import { STARTER_CODE, LANG_TO_C_PROMPT } from './constants.js';
@@ -93,6 +94,12 @@ export default function App() {
   const [aiTutorOpen, setAiTutorOpen] = useState(false);
   const handleAiTutorToggle = useCallback(() => {
     setAiTutorOpen(prev => !prev);
+  }, []);
+
+  // ── Admin Dashboard state ──────────────────────────────────────
+  const [adminDashboardOpen, setAdminDashboardOpen] = useState(false);
+  const handleAdminToggle = useCallback(() => {
+    setAdminDashboardOpen(prev => !prev);
   }, []);
 
   // Listen for bugtracker:record events dispatched by TerminalPane
@@ -385,6 +392,8 @@ export default function App() {
         analyticsOpen={analyticsPanelOpen}
         onAiTutorToggle={handleAiTutorToggle}
         aiTutorOpen={aiTutorOpen}
+        onAdminToggle={handleAdminToggle}
+        adminDashboardOpen={adminDashboardOpen}
         user={user}
         onSignIn={signInWithGoogle}
         onSignOut={signOut}
@@ -470,6 +479,11 @@ export default function App() {
       {/* AI Tutor Panel — full screen overlay */}
       {aiTutorOpen && (
         <AiTutorPanel onClose={() => setAiTutorOpen(false)} />
+      )}
+
+      {/* Admin Dashboard — only rendered for admin email, modal overlay */}
+      {adminDashboardOpen && (
+        <AdminDashboard onClose={() => setAdminDashboardOpen(false)} />
       )}
 
       {/* OCR/Upload Overlay */}

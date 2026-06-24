@@ -39,8 +39,12 @@ const MAX_STDIN_BYTES = 10_000;
 const QUEUE_MAX_SIZE = 200;
 
 // Supabase config for JWT verification (server-side, anon key is fine here)
-const SUPABASE_URL      = process.env.VITE_SUPABASE_URL      || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
+const SUPABASE_URL         = process.env.VITE_SUPABASE_URL      || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
+const SUPABASE_ANON_KEY    = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
+// Service role key bypasses RLS — only used server-side, NEVER sent to the frontend
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY   || '';
+
+const ADMIN_EMAIL = 'gampashashank30@gmail.com';
 
 // Allowed origins — requests from other origins are rejected
 const ALLOWED_ORIGINS = [
@@ -262,6 +266,61 @@ app.post('/api/ai', async (req, res) => {
   });
 });
 
+
+// ── Admin analytics endpoint ───────────────────────────────────────────────
+// Returns ALL rows from user_analytics.
+// Protected: only the verified admin email can call this.
+// Uses the service role key (server-side only) to bypass RLS.
+app.get('/api/admin/analytics', async (req, res) => {
+  // 1. Origin check
+  const origin = req.headers.origin || '';
+  const isAllowedOrigin = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+  if (!isAllowedOrigin) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  // 2. Verify JWT and confirm it belongs to the admin
+  const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  const supabaseUser = await verifySupabaseToken(token);
+  if (!supabaseUser?.email) return res.status(401).json({ error: 'Invalid token' });
+  if (supabaseUser.email !== ADMIN_EMAIL) {
+    return res.status(403).json({ error: 'Forbidden: Admin only' });
+  }
+
+  // 3. Fetch all rows using service role key (bypasses RLS)
+  // Fall back to the admin's own JWT token + anon key if service key is not configured.
+  // This allows the admin to read all rows if RLS policies are set up to allow the admin email.
+  const useServiceKey = !!SUPABASE_SERVICE_KEY;
+  const bearerToken = useServiceKey ? SUPABASE_SERVICE_KEY : token;
+  const apiKey = useServiceKey ? SUPABASE_SERVICE_KEY : SUPABASE_ANON_KEY;
+
+  try {
+    const apiRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/user_analytics?select=*&order=total_runs.desc`,
+      {
+        headers: {
+          'Authorization': `Bearer ${bearerToken}`,
+          'apikey':        apiKey,
+          'Content-Type':  'application/json',
+        },
+      }
+    );
+
+    if (!apiRes.ok) {
+      const errText = await apiRes.text();
+      console.error('[/api/admin/analytics] Supabase error:', errText);
+      return res.status(502).json({ error: 'DB fetch failed', detail: errText });
+    }
+
+    const rows = await apiRes.json();
+    return res.json({ rows });
+  } catch (err) {
+    console.error('[/api/admin/analytics] Error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Health endpoint ───────────────────────────────────────────────────────────
 app.get('/api/health', async (req, res) => {

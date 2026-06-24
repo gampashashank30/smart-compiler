@@ -129,11 +129,12 @@ function generateInsights(sessions, stats) {
 }
 
 // ─── 1. KPI Hero Cards ────────────────────────────────────────────────────────
-function HeroStats({ stats, sessions }) {
+function HeroStats({ stats, sessions, cloudStreak }) {
   const { totalRuns, successes } = stats;
   const successRate = totalRuns > 0 ? ((successes / totalRuns) * 100).toFixed(1) : null;
   const avgFix = computeAvgFixTime(sessions);
-  const streak = computeStreak(sessions);
+  // Prefer DB-backed streak (authoritative across sessions) over local computation
+  const streak = cloudStreak ?? computeStreak(sessions);
 
   const cards = [
     { label: 'Total Runs', value: totalRuns || '0', icon: '▶', color: '#3b82f6', bg: '#eff6ff' },
@@ -838,7 +839,7 @@ function CloudProfile({ stats }) {
           <span className={styles.cloudUserIcon}>☁️</span>
           <div className={styles.cloudUserInfo}>
             <div className={styles.cloudEmail}>{stats.email}</div>
-            <div className={styles.cloudSyncStatus}>Connected & Synced</div>
+            <div className={styles.cloudSyncStatus}>Connected &amp; Synced ✓</div>
           </div>
         </div>
         <span className={styles.cloudPulse} />
@@ -856,6 +857,12 @@ function CloudProfile({ stats }) {
         <div className={styles.cloudStatItem}>
           <div className={styles.cloudStatValue}>{formatTime(stats.time_spent)}</div>
           <div className={styles.cloudStatLabel}>Time Spent</div>
+        </div>
+        <div className={styles.cloudStatItem}>
+          <div className={styles.cloudStatValue} style={{ color: '#f97316' }}>
+            {stats.current_streak ?? 0} 🔥
+          </div>
+          <div className={styles.cloudStatLabel}>Day Streak</div>
         </div>
       </div>
 
@@ -992,7 +999,7 @@ export default function AnalyticsPanel({ onClose }) {
             <>
               {/* 1 — Hero KPIs */}
               <Section title="Overview">
-                <HeroStats stats={stats} sessions={sessions} />
+                <HeroStats stats={stats} sessions={sessions} cloudStreak={cloudStats.current_streak} />
               </Section>
 
               {/* 2 — Heatmap */}

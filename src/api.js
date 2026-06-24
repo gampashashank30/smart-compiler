@@ -40,7 +40,8 @@ export async function callClaude(systemPrompt, userMessage) {
 
   const data = await response.json();
 
-  // Record token usage if returned by the backend proxy
+  // Reload the authoritative token count from DB so the local counter stays accurate.
+  // The server already wrote the correct new total — we just need to reflect it locally.
   if (data.usage?.total_tokens) {
     analyticsStore.recordTokens(data.usage.total_tokens);
   }
