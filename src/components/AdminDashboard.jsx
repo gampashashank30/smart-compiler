@@ -99,7 +99,10 @@ export default function AdminDashboard({ onClose }) {
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Server returned ${res.status}`);
+          const errMsg = body.detail 
+            ? `${body.error} (${body.detail})` 
+            : (body.error || `Server returned ${res.status}`);
+          throw new Error(errMsg);
         }
 
         const { rows } = await res.json();
