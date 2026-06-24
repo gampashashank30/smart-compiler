@@ -215,16 +215,11 @@ app.post('/api/ai', async (req, res) => {
 
       const data = await response.json();
 
-      if (response.status === 429 || response.status === 401) {
-        // Rate-limited or bad key — try the next key
-        const reason = response.status === 429 ? 'rate-limited' : 'auth error';
-        console.warn(`[/api/ai] Key #${i + 1} ${reason} — trying next key...`);
-        lastError = data?.error?.message || `Key #${i + 1} ${reason}`;
-        continue; // 👈 move to next key
-      }
-
       if (!response.ok) {
-        return res.status(response.status).json({ error: data?.error?.message || 'AI API error' });
+        const errorMsg = data?.error?.message || `API error ${response.status}`;
+        console.warn(`[/api/ai] Key #${i + 1} failed with status ${response.status}: ${errorMsg} — trying next key...`);
+        lastError = errorMsg;
+        continue; // 👈 move to next key
       }
 
       // ✅ Success — update token count in Supabase server-side, then return result

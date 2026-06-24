@@ -254,6 +254,12 @@ export default function App() {
   // ── Convert to C via AI ───────────────────────────────────────────────────
   const handleConvertToC = useCallback(async () => {
     if (!langDetect) return;
+    const stats = analyticsStore.getStats();
+    if (analyticsStore.isLimitReached()) {
+      alert(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
+      setShowLangPopup(false);
+      return;
+    }
     setConverting(true);
     try {
       const userMessage = `The following is ${langDetect.language} code. Please translate it to C:\n\n${code}`;
@@ -275,6 +281,9 @@ export default function App() {
       }
     } catch (err) {
       console.error('[LangDetect] Conversion failed:', err);
+      if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
+        alert(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
+      }
       // Don't crash the app — just close the popup
       setShowLangPopup(false);
     } finally {

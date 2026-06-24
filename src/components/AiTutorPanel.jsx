@@ -4,6 +4,7 @@ import { TUTOR_CURRICULUM, TUTOR_LEVELS } from '../tutorData';
 import { TutorDiagram } from './TutorDiagrams';
 import { callClaude, parseJSON, compileC } from '../api';
 import { TUTOR_LOGIC_SYSTEM_PROMPT, TUTOR_CODE_SYSTEM_PROMPT, TUTOR_AI_SOLUTION_PROMPT } from '../constants';
+import { analyticsStore } from '../analytics';
 import { highlightC } from '../highlight';
 
 
@@ -138,6 +139,16 @@ export default function AiTutorPanel({ onClose }) {
       return;
     }
 
+    const stats = analyticsStore.getStats();
+    if (analyticsStore.isLimitReached()) {
+      setLogicResult({
+        correct: false,
+        feedback: `You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`,
+        hints: []
+      });
+      return;
+    }
+
     setIsValidatingLogic(true);
     setLogicResult(null);
 
@@ -159,11 +170,19 @@ ${logicText}
       setLogicResult(parsed);
     } catch (err) {
       console.error(err);
-      setLogicResult({
-        correct: false,
-        feedback: `Validation failed: ${err.message || err}. Please try again.`,
-        hints: ["Make sure the compiler backend/AI endpoint is connected and running."]
-      });
+      if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
+        setLogicResult({
+          correct: false,
+          feedback: `You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`,
+          hints: []
+        });
+      } else {
+        setLogicResult({
+          correct: false,
+          feedback: `Validation failed: ${err.message || err}. Please try again.`,
+          hints: ["Make sure the compiler backend/AI endpoint is connected and running."]
+        });
+      }
     } finally {
       setIsValidatingLogic(false);
     }
@@ -190,6 +209,16 @@ ${logicText}
 
   // ── AI-personalized solution based on student's current code ──────
   const handleGenerateAiSolution = async () => {
+    const stats = analyticsStore.getStats();
+    if (analyticsStore.isLimitReached()) {
+      setAiSolution({
+        c_code: currentTopic.referenceSolution || '',
+        explanation: `You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`,
+        steps: []
+      });
+      return;
+    }
+
     setIsGeneratingAiSolution(true);
     setAiSolution(null);
     try {
@@ -213,11 +242,19 @@ ${currentTopic.referenceSolution}
       setAiSolution(parsed);
     } catch (err) {
       console.error(err);
-      setAiSolution({
-        c_code: currentTopic.referenceSolution || '',
-        explanation: `Could not generate personalized solution: ${err.message}. Showing reference solution instead.`,
-        steps: ['Check your network connection and try again.']
-      });
+      if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
+        setAiSolution({
+          c_code: currentTopic.referenceSolution || '',
+          explanation: `You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`,
+          steps: []
+        });
+      } else {
+        setAiSolution({
+          c_code: currentTopic.referenceSolution || '',
+          explanation: `Could not generate personalized solution: ${err.message}. Showing reference solution instead.`,
+          steps: ['Check your network connection and try again.']
+        });
+      }
     } finally {
       setIsGeneratingAiSolution(false);
     }
@@ -260,6 +297,17 @@ ${currentTopic.referenceSolution}
       return;
     }
     setLangWarning(null);
+
+    const stats = analyticsStore.getStats();
+    if (analyticsStore.isLimitReached()) {
+      setCodeResult({
+        correct: false,
+        feedback: `You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`,
+        issues: []
+      });
+      return;
+    }
+
     setIsValidatingCode(true);
     setCodeResult(null);
 
@@ -292,11 +340,19 @@ ${codeText}
       }
     } catch (err) {
       console.error(err);
-      setCodeResult({
-        correct: false,
-        feedback: `Verification failed: ${err.message || err}. Please try again.`,
-        issues: [{ line: null, description: "Check connection to backend / Groq AI proxy." }]
-      });
+      if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
+        setCodeResult({
+          correct: false,
+          feedback: `You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`,
+          issues: []
+        });
+      } else {
+        setCodeResult({
+          correct: false,
+          feedback: `Verification failed: ${err.message || err}. Please try again.`,
+          issues: [{ line: null, description: "Check connection to backend / Groq AI proxy." }]
+        });
+      }
     } finally {
       setIsValidatingCode(false);
     }

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { callClaude, parseJSON } from '../api.js';
 import { ANALYSIS_SYSTEM_PROMPT, CORRECTION_SYSTEM_PROMPT } from '../constants.js';
 import { sanitizeAiCode } from '../aiCodeUtils.js';
+import { analyticsStore } from '../analytics.js';
 import styles from './AIExplanationTab.module.css';
 
 /* ── SVG Icons ────────────────────────────────────────────── */
@@ -240,6 +241,11 @@ export default function AIExplanationTab({ code, onApplyFix }) {
 
   /* ── Analyze ── */
   const handleAnalyze = useCallback(async () => {
+    const stats = analyticsStore.getStats();
+    if (analyticsStore.isLimitReached()) {
+      setAnalysisError(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
+      return;
+    }
     setIsAnalyzing(true);
     setIssues(null);
     setAnalysisError(null);
@@ -255,7 +261,11 @@ export default function AIExplanationTab({ code, onApplyFix }) {
       setIssues(parsed);
     } catch (err) {
       console.error('Analysis error:', err);
-      setAnalysisError('Analysis failed. Check your connection and try again.');
+      if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
+        setAnalysisError(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
+      } else {
+        setAnalysisError(`Analysis failed: ${err.message}. Check your connection and try again.`);
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -264,6 +274,11 @@ export default function AIExplanationTab({ code, onApplyFix }) {
   /* ── Generate corrected code ── */
   const handleGenerate = useCallback(async () => {
     if (!issues) return;
+    const stats = analyticsStore.getStats();
+    if (analyticsStore.isLimitReached()) {
+      setGenerateError(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
+      return;
+    }
     setIsGenerating(true);
     setGenerateError(null);
     setCorrectedCode(null);
@@ -286,7 +301,11 @@ export default function AIExplanationTab({ code, onApplyFix }) {
       setLearningNotes(parsed.learning_notes ?? []);
     } catch (err) {
       console.error('Generate error:', err);
-      setGenerateError('Could not generate the fix. Please try again.');
+      if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
+        setGenerateError(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
+      } else {
+        setGenerateError(`Could not generate the fix: ${err.message}. Please try again.`);
+      }
     } finally {
       setIsGenerating(false);
     }
