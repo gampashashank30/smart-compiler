@@ -81,7 +81,7 @@ app.use(express.json({ limit: '150kb' }));
 // Requests from any other origin get no CORS headers → browser blocks them.
 app.use((req, res, next) => {
   const origin = req.headers.origin || '';
-  const isAllowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+  const isAllowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes('onrender.com');
 
   if (isAllowed) {
     res.setHeader('Access-Control-Allow-Origin',  origin); // reflect exact origin (not *)
@@ -112,7 +112,7 @@ app.use('/api/compile', limiter);
 app.post('/api/ai', async (req, res) => {
   // ── 1. Origin check ──────────────────────────────────────────────────────
   const origin = req.headers.origin || '';
-  const isAllowedOrigin = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+  const isAllowedOrigin = !origin || ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes('onrender.com');
   if (!isAllowedOrigin) {
     console.warn(`[/api/ai] Blocked request from disallowed origin: ${origin}`);
     return res.status(403).json({ error: 'Forbidden: Origin not allowed' });
@@ -274,7 +274,7 @@ app.post('/api/ai', async (req, res) => {
 app.get('/api/admin/analytics', async (req, res) => {
   // 1. Origin check
   const origin = req.headers.origin || '';
-  const isAllowedOrigin = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+  const isAllowedOrigin = !origin || ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes('onrender.com');
   if (!isAllowedOrigin) {
     return res.status(403).json({ error: 'Forbidden' });
   }
