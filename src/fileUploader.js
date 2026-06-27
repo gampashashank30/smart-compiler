@@ -122,121 +122,112 @@ function extractCodeFromText(text, docType = 'document') {
   // Helper to check if a line looks like programming code
   const isCodeLikeLine = (line) => {
     const trimmed = line.trim();
-    if (trimmed === '') return true;
-    
-    // Comments
-    if (trimmed.startsWith('#') || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.endsWith('*/') || trimmed.startsWith('*')) {
-      return true;
-    }
-    
-    // Keywords at the start of the line
+    if (trimmed === '')     // Keywords at the start of the line
     if (/^(def|class|import|from|print|return|if|else|elif|for|while|try|except|finally|with|as|pass|break|continue|void|int|float|double|char|struct|typedef|public|static|package|using|const|let|var|function)\b/.test(trimmed)) {
       // def (Python function)
       if (/^\s*def\b/.test(trimmed)) {
-        return /^\s*def\s+[a-zA-Z_]\w*\s*\(/.test(trimmed);
+        if (/^\s*def\s+[a-zA-Z_]\w*\s*\(/.test(trimmed)) return true;
       }
       
       // class (Python/Java/C++)
       if (/^\s*class\b/.test(trimmed)) {
-        return /^\s*(?:public\s+|private\s+|protected\s+)?class\s+[a-zA-Z_]\w*(?:\s*\(.*\))?\s*(?:[:{;]|\bextends\b|\bimplements\b)(?:\s*(?:\/\/|#).*|$)$/.test(trimmed);
+        if (/^\s*(?:public\s+|private\s+|protected\s+)?class\s+[a-zA-Z_]\w*(?:\s*\(.*\))?\s*(?:[:{;]|\bextends\b|\bimplements\b)(?:\s*(?:\/\/|#).*|$)$/.test(trimmed)) return true;
       }
       
       // import (JS/Python/Java)
       if (/^\s*import\b/.test(trimmed)) {
-        return /^\s*import\s+(?:[\w\s,{}*]+\s+from\s+['"].+['"]|[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*(?:\s+as\s+[a-zA-Z_]\w*)?(?:\s*,\s*[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*(?:\s+as\s+[a-zA-Z_]\w*)?)*\s*;?)$/.test(trimmed);
+        if (/^\s*import\s+(?:[\w\s,{}*]+\s+from\s+['"].+['"]|[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*(?:\s+as\s+[a-zA-Z_]\w*)?(?:\s*,\s*[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*(?:\s+as\s+[a-zA-Z_]\w*)?)*\s*;?)$/.test(trimmed)) return true;
       }
       
       // from (Python import)
       if (/^\s*from\b/.test(trimmed)) {
-        return /^\s*from\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s+import\s+[\w\s,{}*()]+$/.test(trimmed);
+        if (/^\s*from\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s+import\s+[\w\s,{}*()]+$/.test(trimmed)) return true;
       }
       
       // package (Java/Go)
       if (/^\s*package\b/.test(trimmed)) {
-        return /^\s*package\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s*;?$/.test(trimmed);
+        if (/^\s*package\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s*;?$/.test(trimmed)) return true;
       }
       
       // using (C#)
       if (/^\s*using\b/.test(trimmed)) {
-        return /^\s*using\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s*;?$/.test(trimmed);
+        if (/^\s*using\s+[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*\s*;?$/.test(trimmed)) return true;
       }
       
       // const, let, var (JS/TS)
       if (/^\s*(const|let|var)\b/.test(trimmed)) {
-        return /^\s*(const|let|var)\s+[a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)*\s*(?:=|\s*;?)(?:\s*(?:\/\/|#).*|$)$/.test(trimmed);
+        if (/^\s*(const|let|var)\s+(?:\*+\s*)*[a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)*\s*(?:=|\s*;?)(?:\s*(?:\/\/|#).*|$)$/.test(trimmed)) return true;
       }
       
       // function (JS/TS)
       if (/^\s*function\b/.test(trimmed)) {
-        return /^\s*function\s+[a-zA-Z_$]\w*\s*\([^)]*\)\s*(?:{)?(?:\s*(?:\/\/|#).*|$)$/.test(trimmed);
+        if (/^\s*function\s+[a-zA-Z_$]\w*\s*\([^)]*\)\s*(?:{)?(?:\s*(?:\/\/|#).*|$)$/.test(trimmed)) return true;
       }
       
       // print, printf, println, console.log
       if (/^\s*(print|printf|println|console\.log|System\.out)\b/.test(trimmed)) {
-        return /^\s*(print|printf|println|console\.log|System\.out\.(print|println|printf))\s*\(/.test(trimmed);
+        if (/^\s*(print|printf|println|console\.log|System\.out\.(print|println|printf))\s*\(/.test(trimmed)) return true;
       }
       
       // return
       if (/^\s*return\b/.test(trimmed)) {
-        return !/^\s*return\s+(?:after|home|tomorrow|to|before|back|from|in|on|at|by|with|means|is|giving|going|here|there)\b/i.test(trimmed);
+        if (!/^\s*return\s+(?:after|home|tomorrow|to|before|back|from|in|on|at|by|with|means|is|giving|going|here|there)\b/i.test(trimmed)) return true;
       }
       
       // if
       if (/^\s*if\b/.test(trimmed)) {
-        return /^\s*if\s*(?:\(|.*[:{]\s*(?:#|\/\/|$))/.test(trimmed);
+        if (/^\s*if\s*(?:\(|.*[:{]\s*(?:#|\/\/|$))/.test(trimmed)) return true;
       }
       
       // else
       if (/^\s*else\b/.test(trimmed)) {
-        return /^\s*else(?:\s*if\b|\s*[:{]|\s*(?:#|\/\/)|$)/.test(trimmed);
+        if (/^\s*else(?:\s*if\b|\s*[:{]|\s*(?:#|\/\/)|$)/.test(trimmed)) return true;
       }
       
       // elif
       if (/^\s*elif\b/.test(trimmed)) {
-        return /^\s*elif\s*(?:\(|.*[:{]\s*(?:#|\/\/|$))/.test(trimmed);
+        if (/^\s*elif\s*(?:\(|.*[:{]\s*(?:#|\/\/|$))/.test(trimmed)) return true;
       }
       
       // for
       if (/^\s*for\b/.test(trimmed)) {
-        return /^\s*for\s*(?:\(|.*\bin\b.*[:{])/.test(trimmed);
+        if (/^\s*for\s*(?:\(|.*\bin\b.*[:{])/.test(trimmed)) return true;
       }
       
       // while
       if (/^\s*while\b/.test(trimmed)) {
-        return /^\s*while\s*(?:\(|.*[:{])/.test(trimmed);
+        if (/^\s*while\s*(?:\(|.*[:{])/.test(trimmed)) return true;
       }
       
       // try, finally
       if (/^\s*(try|finally)\b/.test(trimmed)) {
-        return /^\s*(try|finally)(?:\s*[:{]|\s*(?:#|\/\/)|$)/.test(trimmed);
+        if (/^\s*(try|finally)(?:\s*[:{]|\s*(?:#|\/\/)|$)/.test(trimmed)) return true;
       }
       
       // except
       if (/^\s*except\b/.test(trimmed)) {
-        return /^\s*except(?:\s*:|\s+.*:)/.test(trimmed);
+        if (/^\s*except(?:\s*:|\s+.*:)/.test(trimmed)) return true;
       }
       
       // with
       if (/^\s*with\b/.test(trimmed)) {
-        return /^\s*with\s+.*[({:]/.test(trimmed);
+        if (/^\s*with\s+.*[({:]/.test(trimmed)) return true;
       }
       
       // pass, break, continue
       if (/^\s*(pass|break|continue)\b/.test(trimmed)) {
-        return /^\s*(pass|break|continue)(?:\s*;|\s*(?:#|\/\/)|$)/.test(trimmed);
+        if (/^\s*(pass|break|continue)(?:\s*;|\s*(?:#|\/\/)|$)/.test(trimmed)) return true;
       }
       
       // C type declarations
       if (/^\s*(void|int|float|double|char|struct|typedef|long|short|unsigned|signed|enum)\b/.test(trimmed)) {
-        return /^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+(?!means\b|is\b|stands\b|refers\b|speaking\b|monitors\b)[a-zA-Z_]\w*\s*(?:[=;(),]|$)/.test(trimmed);
+        if (/^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+(?:\*+\s*)*(?!means\b|is\b|stands\b|refers\b|speaking\b|monitors\b)[a-zA-Z_]\w*\s*(?:[=;(),]|$)/.test(trimmed)) return true;
       }
       
       // Java public/private/protected/static modifiers
       if (/^\s*(public|private|protected|static)\b/.test(trimmed)) {
-        return /^\s*(public|private|protected|static)\s+.*[;{=():]\s*(?:\/\/|#|$)/.test(trimmed);
+        if (/^\s*(public|private|protected|static)\s+.*[;{=():]\s*(?:\/\/|#|$)/.test(trimmed)) return true;
       }
-
-      return false;
     }
     
     // Assignments (including update assignments like +=, -=, etc.)
