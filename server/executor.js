@@ -177,12 +177,14 @@ async function runWithDocker(code, stdin) {
  */
 function runDockerCommand(mountDir, command, stdin, timeoutMs) {
   return new Promise((resolve) => {
+    const containerName = `sc-exec-${uuidv4()}`;
     // Convert Windows path to Docker-compatible format
     const mountPath = mountDir.replace(/\\/g, '/').replace(/^([A-Z]):/, (_, d) => `//${d.toLowerCase()}`);
 
     const args = [
       'run',
       '--rm',                          // auto-remove container after exit
+      '--name', containerName,
       '--init',                         // proper PID 1 (handles signals correctly)
       '--network', 'none',              // no network access
       '--memory', MEMORY_LIMIT,         // RAM cap
@@ -234,7 +236,7 @@ function runDockerCommand(mountDir, command, stdin, timeoutMs) {
       proc.kill('SIGKILL');
       // Also force-kill the Docker container (belt and suspenders)
       try {
-        execFile('docker', ['kill', proc.pid?.toString() ?? ''], () => {});
+        execFile('docker', ['kill', containerName], () => {});
       } catch { /* ignore */ }
     }, timeoutMs);
   });

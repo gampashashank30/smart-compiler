@@ -213,8 +213,8 @@ function toDockerPath(p) {
 }
 
 // ── Shared Docker base args for the run step ──────────────────────────────────
-function buildRunArgs(mountPath) {
-  return [
+function buildRunArgs(mountPath, runId) {
+  const args = [
     'run', '--rm', '--init',
     '-i',                              // keep stdin pipe open
     '--network', 'none',               // no network inside container
@@ -228,9 +228,12 @@ function buildRunArgs(mountPath) {
     '--cap-drop', 'ALL',
     '--security-opt', 'no-new-privileges',
     '-e', 'TERM=xterm-256color',
-    DOCKER_IMAGE,
-    '/sandbox/prog',
   ];
+  if (runId) {
+    args.push('--name', `sc-run-${runId}`);
+  }
+  args.push(DOCKER_IMAGE, '/sandbox/prog');
+  return args;
 }
 
 // ── Attach WebSocket server ───────────────────────────────────────────────────
@@ -252,7 +255,10 @@ function attachWebSocketServer(httpServer) {
     WS_CONNECTIONS_PER_IP.set(clientIp, currentCount + 1);
 
     // Decrement count when this connection closes
+    let countDecremented = false;
     const onWsClose = () => {
+      if (countDecremented) return;
+      countDecremented = true;
       const n = WS_CONNECTIONS_PER_IP.get(clientIp) || 1;
       if (n <= 1) WS_CONNECTIONS_PER_IP.delete(clientIp);
       else WS_CONNECTIONS_PER_IP.set(clientIp, n - 1);
@@ -260,14 +266,16 @@ function attachWebSocketServer(httpServer) {
     ws.on('close', onWsClose);
     ws.on('error', onWsClose);
 
-    let ptyProc   = null;   // node-pty process (PTY mode)
-    let plainProc = null;   // regular child_process (fallback)
-    let tmpDir    = null;
-    let killTimer = null;
-    let cleaned   = false;
-    let startTime = 0;
-    let cols      = 80;
-    let rows      = 24;
+    let ptyProc     = null;   // node-pty process (PTY mode)
+    let plainProc   = null;   // regular child_process (fallback)
+    let compileProc = null;   // active compiler process
+    let runId       = null;   // active run/execution ID
+    let tmpDir      = null;
+    let killTimer   = null;
+    let cleaned     = false;
+    let startTime   = 0;
+    let cols        = 80;
+    let rows        = 24;
 
     // ── Helpers ───────────────────────────────────────────────────────────
     function send(obj) {
@@ -282,6 +290,16 @@ function attachWebSocketServer(httpServer) {
       if (plainProc && !plainProc.killed) {
         try { plainProc.kill('SIGKILL'); } catch {}
         plainProc = null;
+      }
+      if (compileProc && !compileProc.killed) {
+        try { compileProc.kill('SIGKILL'); } catch {}
+        compileProc = null;
+      }
+      if (runId) {
+        try {
+          execFile('docker', ['kill', `sc-compile-${runId}`], () => {});
+          execFile('docker', ['kill', `sc-run-${runId}`], () => {});
+        } catch {}
       }
       if (tmpDir) {
         try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
@@ -340,7 +358,7 @@ function attachWebSocketServer(httpServer) {
       }
 
       cleaned = false;
-      const runId = uuidv4();
+      runId = uuidv4();
       tmpDir = path.join(os.tmpdir(), `sc-ws-${runId}`);
       fs.mkdirSync(tmpDir, { recursive: true });
 
@@ -367,18 +385,19 @@ function attachWebSocketServer(httpServer) {
 
           await new Promise((resolve) => {
             const cleanEnv = getCleanEnv();
-            const cp = spawn('gcc', [srcFile, '-Wall', '-Wextra', '-D__USE_MINGW_ANSI_STDIO', '-o', exeFile], { stdio: ['ignore', 'pipe', 'pipe'], env: cleanEnv });
-            cp.stdout.on('data', d => { compileOut += d.toString(); });
-            cp.stderr.on('data', d => { compileOut += d.toString(); });
-            const t = setTimeout(() => { cp.kill(); compileTimeout = true; resolve(); }, COMPILE_TIMEOUT);
-            cp.on('close', (code) => { compileExitCode = code; clearTimeout(t); resolve(); });
-            cp.on('error', err => {
+            compileProc = spawn('gcc', [srcFile, '-Wall', '-Wextra', '-D__USE_MINGW_ANSI_STDIO', '-o', exeFile], { stdio: ['ignore', 'pipe', 'pipe'], env: cleanEnv });
+            compileProc.stdout.on('data', d => { compileOut += d.toString(); });
+            compileProc.stderr.on('data', d => { compileOut += d.toString(); });
+            const t = setTimeout(() => { if (compileProc) compileProc.kill(); compileTimeout = true; resolve(); }, COMPILE_TIMEOUT);
+            compileProc.on('close', (code) => { compileExitCode = code; clearTimeout(t); resolve(); });
+            compileProc.on('error', err => {
               clearTimeout(t);
               compileTimeout = true;
               compileOut += `\nLocal GCC error: ${err.message}`;
               resolve();
             });
           });
+          compileProc = null;
 
           const compileMsg = compileOut.replace(new RegExp(tmpDir.replace(/\\/g, '\\\\'), 'g'), '').trim();
 
@@ -484,6 +503,7 @@ function attachWebSocketServer(httpServer) {
 
       const compileArgs = [
         'run', '--rm', '--init', '--network', 'none',
+        '--name', `sc-compile-${runId}`,
         '--memory', MEMORY_LIMIT, '--cpus', CPU_LIMIT,
         '--pids-limit', PIDS_LIMIT, '--read-only',
         '--tmpfs', '/tmp:size=10m',
@@ -500,18 +520,19 @@ function attachWebSocketServer(httpServer) {
       let compileTimeout = false;
 
       await new Promise((resolve) => {
-        const cp = spawn('docker', compileArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
-        cp.stdout.on('data', d => { compileOut += d.toString(); });
-        cp.stderr.on('data', d => { compileOut += d.toString(); });
-        const t = setTimeout(() => { cp.kill(); compileTimeout = true; resolve(); }, COMPILE_TIMEOUT);
-        cp.on('close', () => { clearTimeout(t); resolve(); });
-        cp.on('error', err => {
+        compileProc = spawn('docker', compileArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
+        compileProc.stdout.on('data', d => { compileOut += d.toString(); });
+        compileProc.stderr.on('data', d => { compileOut += d.toString(); });
+        const t = setTimeout(() => { if (compileProc) compileProc.kill(); compileTimeout = true; resolve(); }, COMPILE_TIMEOUT);
+        compileProc.on('close', () => { clearTimeout(t); resolve(); });
+        compileProc.on('error', err => {
           clearTimeout(t);
           compileTimeout = true;
           compileOut += `\nDocker error: ${err.message}`;
           resolve();
         });
       });
+      compileProc = null;
 
       // Parse compile result
       const compileLines = compileOut.split('\n');
@@ -542,7 +563,7 @@ function attachWebSocketServer(httpServer) {
       send({ type: 'status', data: 'running' });
       startTime = Date.now();
 
-      const runArgs = buildRunArgs(mountPath);
+      const runArgs = buildRunArgs(mountPath, runId);
 
       if (nodePty) {
         // ── PTY mode (node-pty) ───────────────────────────────────────

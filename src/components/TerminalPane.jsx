@@ -165,6 +165,10 @@ const TerminalPane = forwardRef(function TerminalPane(
       term.dispose();
       termRef.current = null;
       fitRef.current = null;
+      if (wsRef.current) {
+        try { wsRef.current.close(); } catch {}
+        wsRef.current = null;
+      }
     };
   }, []);
 
