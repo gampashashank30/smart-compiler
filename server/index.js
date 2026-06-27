@@ -44,7 +44,11 @@ const SUPABASE_ANON_KEY    = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishab
 // Service role key bypasses RLS — only used server-side, NEVER sent to the frontend
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY   || '';
 
-const ADMIN_EMAIL = 'gampashashank30@gmail.com';
+const ADMIN_EMAILS = [
+  'gampashashank30@gmail.com',
+  'maadiotsolutions@gmail.com',
+  'ceo@greenguardai-fw.biz'
+];
 
 // Allowed origins — requests from other origins are rejected
 const ALLOWED_ORIGINS = [
@@ -280,7 +284,7 @@ app.get('/api/admin/analytics', async (req, res) => {
 
   const supabaseUser = await verifySupabaseToken(token);
   if (!supabaseUser?.email) return res.status(401).json({ error: 'Invalid token' });
-  if (supabaseUser.email !== ADMIN_EMAIL) {
+  if (!ADMIN_EMAILS.includes(supabaseUser.email)) {
     return res.status(403).json({ error: 'Forbidden: Admin only' });
   }
 

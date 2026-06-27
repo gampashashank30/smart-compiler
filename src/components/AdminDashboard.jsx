@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient.js';
 import styles from './AdminDashboard.module.css';
 
-const ADMIN_EMAIL = 'gampashashank30@gmail.com';
+const ADMIN_EMAILS = [
+  'gampashashank30@gmail.com',
+  'maadiotsolutions@gmail.com',
+  'ceo@greenguardai-fw.biz'
+];
 
 // Donut chart using SVG — no external lib needed
 function DonutChart({ data }) {
