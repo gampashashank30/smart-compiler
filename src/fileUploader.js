@@ -13,22 +13,17 @@ const PLAIN_TEXT_EXTENSIONS = new Set([
   'py', 'java', 'js', 'jsx', 'ts', 'tsx', 'go', 'rs', 'rb',
   'swift', 'kt', 'kts', 'scala', 'cs', 'vb', 'php', 'pl', 'r',
   'lua', 'dart', 'zig', 'nim', 'v', 'odin', 'asm', 's',
-  // Scripting / config
-  'sh', 'bash', 'zsh', 'bat', 'cmd', 'ps1',
-  'json', 'xml', 'yaml', 'yml', 'toml', 'ini', 'cfg',
   // Web
   'html', 'htm', 'css', 'scss', 'sass', 'less',
   // Plain text
-  'txt', 'text', 'md', 'markdown', 'log', 'csv',
-  // SQL / data
-  'sql',
+  'txt', 'text', 'md', 'markdown',
 ]);
 
 // Word document extension
 const DOCX_EXTENSION = 'docx';
 
 // Image extensions for OCR code extraction
-const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp', 'bmp']);
+const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg']);
 
 // Max file size: 5 MB (allows screenshot and document uploads)
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -70,7 +65,7 @@ export function getAcceptString() {
  *
  * If no C-style code markers are found, returns the full text as-is.
  */
-function extractCodeFromWordText(text) {
+function extractCodeFromText(text, docType = 'document') {
   // Normalize carriage returns, vertical tabs, soft breaks, and non-breaking spaces
   let normalizedText = text
     .replace(/\r\n/g, '\n')
@@ -121,7 +116,7 @@ function extractCodeFromWordText(text) {
 
   // If no code marker found, throw an error to reject plain text
   if (firstMatchIdx === -1) {
-    throw new Error('No programming code found in the Word document. Please ensure your document contains code starting with standard markers like #include, def, class, or import.');
+    throw new Error(`No programming code found in the ${docType}. Please ensure your document contains code starting with standard markers like #include, def, class, or import.`);
   }
 
   // Helper to check if a line looks like programming code
@@ -357,7 +352,7 @@ async function readDocxFile(file) {
     throw new Error('The Word document appears to be empty.');
   }
 
-  return extractCodeFromWordText(rawText);
+  return extractCodeFromText(rawText, 'Word document');
 }
 
 /**
@@ -373,7 +368,7 @@ async function readImageFile(file) {
     throw new Error('No text could be extracted from the image.');
   }
 
-  return extractCodeFromWordText(rawText);
+  return extractCodeFromText(rawText, 'image');
 }
 
 /**
@@ -410,7 +405,7 @@ export async function readUploadedFile(file) {
   // Unsupported extension
   if (!PLAIN_TEXT_EXTENSIONS.has(ext) && ext !== DOCX_EXTENSION && !IMAGE_EXTENSIONS.has(ext)) {
     throw new Error(
-      `Unsupported file type: .${ext}\n\nSupported: programming files, Word documents (.docx), and images (.png, .jpg, .jpeg, .webp, .bmp).`
+      `Unsupported file type: .${ext}\n\nSupported: programming files, Word documents (.docx), and images (.png, .jpg, .jpeg).`
     );
   }
 
@@ -422,6 +417,14 @@ export async function readUploadedFile(file) {
     content = await readImageFile(file);
   } else {
     content = await readTextFile(file);
+    const textExtensions = new Set(['txt', 'text', 'md', 'markdown']);
+    if (textExtensions.has(ext)) {
+      if (!content.trim()) {
+        throw new Error('The uploaded document is empty.');
+      }
+      const label = ext.startsWith('m') ? 'Markdown file' : 'text file';
+      content = extractCodeFromText(content, label);
+    }
   }
 
   // Strip BOM if present
