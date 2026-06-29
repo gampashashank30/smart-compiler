@@ -38,11 +38,19 @@ const MAX_CODE_BYTES = 100_000;
 const MAX_STDIN_BYTES = 10_000;
 const QUEUE_MAX_SIZE = 200;
 
-// Supabase config for JWT verification (server-side, anon key is fine here)
-const SUPABASE_URL         = process.env.VITE_SUPABASE_URL      || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
-const SUPABASE_ANON_KEY    = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
+// Supabase config for JWT verification — MUST be set as environment variables on Render.
+// Never hardcode these values here; they are baked into the deployed Docker image via build args.
+const SUPABASE_URL         = process.env.VITE_SUPABASE_URL      || '';
+const SUPABASE_ANON_KEY    = process.env.VITE_SUPABASE_ANON_KEY || '';
 // Service role key bypasses RLS — only used server-side, NEVER sent to the frontend
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY   || '';
+
+// Crash fast at startup if critical env vars are missing (rather than silently using bad values)
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('[FATAL] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set as environment variables.');
+  console.error('[FATAL] Set them in Render → Environment → Environment Variables.');
+  process.exit(1);
+}
 
 const ADMIN_EMAILS = [
   'gampashashank30@gmail.com',

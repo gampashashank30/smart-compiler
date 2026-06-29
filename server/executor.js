@@ -318,9 +318,13 @@ function getCleanEnv() {
 async function isLocalGccReady() {
   if (_localGccReady !== null) return _localGccReady;
 
+  // Disable on Render (RENDER=true is auto-set), production, staging, or explicit flag.
+  // Local GCC runs code directly on the host machine with NO sandbox — never allow in cloud.
+  const isCloud = process.env.RENDER === 'true' || process.env.RAILWAY_ENVIRONMENT || process.env.FLY_APP_NAME;
   const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
-  if (process.env.DISABLE_LOCAL_GCC === 'true' || isProdOrStaging) {
-    console.warn('[executor] Local GCC fallback disabled for security (production/staging or DISABLE_LOCAL_GCC is set)');
+  if (isCloud || isProdOrStaging || process.env.DISABLE_LOCAL_GCC === 'true') {
+    console.warn('[executor] Local GCC fallback DISABLED — cloud/production environment detected.');
+    console.warn('[executor]   Code will fall back to Wandbox API instead.');
     _localGccReady = false;
     return _localGccReady;
   }

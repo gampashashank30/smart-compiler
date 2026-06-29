@@ -54,8 +54,8 @@ try {
 const execFileAsync = promisify(execFile);
 
 // ── Supabase JWT verification ─────────────────────────────────────────────────────────────────
-const SUPABASE_URL      = process.env.VITE_SUPABASE_URL      || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
+const SUPABASE_URL      = process.env.VITE_SUPABASE_URL      || '';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
 
 async function verifySupabaseToken(token) {
   if (!token) return null;
