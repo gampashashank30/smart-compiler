@@ -5,9 +5,8 @@
  * Zero network calls — all regex / string matching.
  *
  * Supports 20+ languages with deeply researched signals:
- *   C, C++, Python, Java, JavaScript, TypeScript, Go, Rust,
- *   Ruby, PHP, C#, Swift, Kotlin, R, Bash/Shell, SQL,
- *   HTML, CSS, Lua, Perl, Scala, Dart, Haskell, MATLAB
+ *   C, C++, Python, Java, JavaScript, TypeScript,
+ *   PHP, C#, SQL, HTML, CSS, Perl, Scala, MATLAB
  *
  * Architecture:
  *   Phase 1 — QUICK_KEYWORDS: Definitive, exclusive keywords checked first.
@@ -30,14 +29,14 @@ const QUICK_KEYWORDS = [
   // ── Python ──────────────────────────────────────────────────────────────
   { lang: 'python', confidence: 95, label: 'elif keyword',          test: (c) => /\belif\b/.test(c) },
   { lang: 'python', confidence: 92, label: 'from X import Y',       test: (c) => /^\s*from\s+[\w.]+\s+import/m.test(c) },
-  { lang: 'python', confidence: 90, label: 'def + colon block',     test: (c) => /^\s*def\s+\w+\s*\(.*\)\s*:/m.test(c) },
+  { lang: 'python', confidence: 90, label: 'def + colon block',     test: (c) => /^\s*def\s+\w+\s*\(.*?\)(?:\s*->\s*[^:]+)?\s*:/m.test(c) },
   { lang: 'python', confidence: 88, label: 'f-string literal',      test: (c) => /\bf["']/.test(c) },
   { lang: 'python', confidence: 88, label: 'float/int(input())',    test: (c) => /\b(float|int|str)\s*\(\s*input\s*\(/.test(c) },
   // Python print() — require NOT preceded by '.' (excludes System.out.print) and
   // NOT in a context with C-style function/type declarations
   { lang: 'python', confidence: 85, label: 'print() call',         test: (c) => /(?<!\.)\bprint\s*\(/.test(c) && !/\b(void|int|float|double)\s+\w+\s*\(/.test(c) },
   { lang: 'python', confidence: 85, label: 'input() call',          test: (c) => /(?<!\.)\binput\s*\(/.test(c) },
-  { lang: 'python', confidence: 85, label: 'import statement',      test: (c) => /^\s*import\s+[\w.]+/m.test(c) && !/^\s*import\s+(UIKit|SwiftUI|Foundation|AppKit)\b/m.test(c) },
+  { lang: 'python', confidence: 85, label: 'import statement',      test: (c) => /^\s*import\s+[\w.]+(?!\s*;)/m.test(c) && !/^\s*import\s+(UIKit|SwiftUI|Foundation|AppKit)\b/m.test(c) },
   { lang: 'python', confidence: 85, label: 'True/False/None',       test: (c) => /\b(True|False|None)\b/.test(c) },
   { lang: 'python', confidence: 85, label: '__name__==__main__',    test: (c) => /__name__\s*==\s*['"]__main__['"]/.test(c) },
   { lang: 'python', confidence: 82, label: 'list comprehension',    test: (c) => /\[.+\bfor\b.+\bin\b.+\]/.test(c) },
@@ -100,28 +99,6 @@ const QUICK_KEYWORDS = [
   { lang: 'java', confidence: 82, label: 'extends/implements',     test: (c) => /\b(extends|implements)\s+\w+/.test(c) },
   { lang: 'java', confidence: 80, label: 'throws keyword',         test: (c) => /\bthrows\s+\w+Exception/.test(c) },
 
-  // ── Go ───────────────────────────────────────────────────────────────────
-  { lang: 'go', confidence: 98, label: 'package main',             test: (c) => /^\s*package\s+main\b/m.test(c) },
-  { lang: 'go', confidence: 95, label: 'package declaration',      test: (c) => /^\s*package\s+\w+/m.test(c) },
-  { lang: 'go', confidence: 95, label: 'func keyword',             test: (c) => /^\s*func\s+\w+\s*\(/m.test(c) },
-  { lang: 'go', confidence: 92, label: 'fmt.Println/Printf',       test: (c) => /\bfmt\.(Println|Printf|Sprintf|Fprintf|Scan|Scanf)\s*\(/.test(c) },
-  { lang: 'go', confidence: 90, label: ':= short assignment',      test: (c) => /\w+\s*:=\s*/.test(c) },
-  { lang: 'go', confidence: 88, label: 'import "fmt"/"os"',        test: (c) => /\bimport\s+["(`]/.test(c) },
-  { lang: 'go', confidence: 85, label: 'goroutine/channel',        test: (c) => /\bgo\s+\w+\s*\(|\bchan\b/.test(c) },
-  { lang: 'go', confidence: 82, label: 'var declaration block',    test: (c) => /^\s*var\s+\w+\s+\w+/m.test(c) },
-  { lang: 'go', confidence: 80, label: 'defer keyword',            test: (c) => /\bdefer\s+/.test(c) },
-
-  // ── Rust ─────────────────────────────────────────────────────────────────
-  { lang: 'rust', confidence: 98, label: 'fn main()',              test: (c) => /^\s*fn\s+main\s*\(\s*\)/m.test(c) },
-  { lang: 'rust', confidence: 95, label: 'println! macro',         test: (c) => /\bprintln!\s*\(/.test(c) },
-  { lang: 'rust', confidence: 95, label: 'let mut / let binding',  test: (c) => /\blet\s+mut\b/.test(c) },
-  { lang: 'rust', confidence: 92, label: 'use std:: / use crate::', test: (c) => /^\s*use\s+(std|crate|self)::/m.test(c) },
-  { lang: 'rust', confidence: 90, label: 'impl block',             test: (c) => /\bimpl\s+\w+/.test(c) },
-  { lang: 'rust', confidence: 88, label: 'fn keyword',             test: (c) => /\bfn\s+\w+\s*\(/.test(c) },
-  { lang: 'rust', confidence: 85, label: '-> return type arrow',   test: (c) => /\)\s*->\s*\w+/.test(c) },
-  { lang: 'rust', confidence: 82, label: 'match expression',       test: (c) => /\bmatch\s+\w+\s*\{/.test(c) },
-  { lang: 'rust', confidence: 80, label: 'vec!/format! macro',     test: (c) => /\b(vec!|format!|eprintln!|panic!)\s*[(\[]/.test(c) },
-  { lang: 'rust', confidence: 80, label: '& lifetime/borrow',      test: (c) => /&\s*\w+|\bOwned\b|\bBox</.test(c) },
 
   // ── Ruby ─────────────────────────────────────────────────────────────────
   { lang: 'ruby', confidence: 95, label: 'do...end block',         test: (c) => /\bdo\s*\|[\w,\s]+\|/.test(c) },
@@ -142,92 +119,6 @@ const QUICK_KEYWORDS = [
   { lang: 'php', confidence: 82, label: 'namespace declaration',   test: (c) => /^\s*namespace\s+[\w\\]+;/m.test(c) },
   { lang: 'php', confidence: 80, label: 'array() / [] syntax',     test: (c) => /\barray\s*\(/.test(c) },
 
-  // ── C# ───────────────────────────────────────────────────────────────────
-  { lang: 'csharp', confidence: 95, label: 'using System;',        test: (c) => /^\s*using\s+System\s*;/m.test(c) },
-  { lang: 'csharp', confidence: 95, label: 'namespace declaration', test: (c) => /^\s*namespace\s+[\w.]+/m.test(c) },
-  { lang: 'csharp', confidence: 92, label: 'Console.Write/ReadLine',test: (c) => /\bConsole\.(Write|WriteLine|ReadLine|ReadKey)\s*\(/.test(c) },
-  { lang: 'csharp', confidence: 90, label: 'static void Main',     test: (c) => /\bstatic\s+void\s+Main\s*\(/.test(c) },
-  { lang: 'csharp', confidence: 88, label: 'class + : base',       test: (c) => /\bclass\s+\w+\s*:\s*\w+/.test(c) },
-  { lang: 'csharp', confidence: 85, label: 'get; set; properties', test: (c) => /\b(get|set)\s*;/.test(c) },
-  { lang: 'csharp', confidence: 82, label: 'var keyword C#-style', test: (c) => /\bvar\s+\w+\s*=\s*new\s+/.test(c) },
-  { lang: 'csharp', confidence: 80, label: 'LINQ query',           test: (c) => /\.(Where|Select|OrderBy|GroupBy|FirstOrDefault|ToList)\s*\(/.test(c) },
-
-  // ── Swift ────────────────────────────────────────────────────────────────
-  { lang: 'swift', confidence: 95, label: 'import UIKit/SwiftUI',  test: (c) => /^\s*import\s+(UIKit|SwiftUI|Foundation|AppKit)\b/m.test(c) },
-  { lang: 'swift', confidence: 92, label: 'var/let + type annotation',test: (c) => /\b(var|let)\s+\w+\s*:\s*[A-Z]\w+/.test(c) },
-  { lang: 'swift', confidence: 90, label: 'guard let / if let',    test: (c) => /\b(guard|if)\s+let\s+\w+/.test(c) },
-  { lang: 'swift', confidence: 88, label: 'optional ? / !',        test: (c) => /\w+\?\s*[.{]|\w+!\s*[.{]/.test(c) },
-  { lang: 'swift', confidence: 85, label: 'func + -> return type', test: (c) => /\bfunc\s+\w+\s*\(.*\)\s*->\s*\w+/.test(c) },
-  { lang: 'swift', confidence: 82, label: 'struct/class Swift',    test: (c) => /^\s*(struct|class|protocol|extension)\s+\w+/m.test(c) && /\bfunc\b/.test(c) },
-  // NOTE: print() removed — too generic, clashes with Python
-
-  // ── Kotlin ───────────────────────────────────────────────────────────────
-  { lang: 'kotlin', confidence: 98, label: 'fun main() Kotlin',    test: (c) => /^\s*fun\s+main\s*\(/m.test(c) },
-  { lang: 'kotlin', confidence: 95, label: 'val/var declaration',  test: (c) => /^\s*(val|var)\s+\w+\s*[:=]/m.test(c) },
-  // Kotlin println() must NOT be preceded by a dot (would match Java's System.out.println)
-  { lang: 'kotlin', confidence: 92, label: 'println() call',       test: (c) => /(?<!\.\w{0,20})\bprintln\s*\(/.test(c) && !/\bSystem\.out\b/.test(c) },
-  { lang: 'kotlin', confidence: 90, label: 'data class',           test: (c) => /\bdata\s+class\s+\w+/.test(c) },
-  { lang: 'kotlin', confidence: 88, label: 'fun keyword',          test: (c) => /\bfun\s+\w+\s*\(/.test(c) },
-  { lang: 'kotlin', confidence: 85, label: 'companion object',     test: (c) => /\bcompanion\s+object\b/.test(c) },
-  { lang: 'kotlin', confidence: 82, label: 'when expression',      test: (c) => /\bwhen\s*\(/.test(c) },
-
-
-  // ── R ────────────────────────────────────────────────────────────────────
-  { lang: 'r', confidence: 95, label: '<- assignment operator',    test: (c) => /\w+\s*<-\s*/.test(c) },
-  { lang: 'r', confidence: 92, label: 'library() call',            test: (c) => /^\s*library\s*\(/m.test(c) },
-  { lang: 'r', confidence: 88, label: 'c() vector',                test: (c) => /\bc\s*\([\d"',\s]+\)/.test(c) },
-  { lang: 'r', confidence: 85, label: 'data.frame/tibble',         test: (c) => /\bdata\.frame\s*\(|\btibble\s*\(/.test(c) },
-  { lang: 'r', confidence: 82, label: 'ggplot/ggplot2',            test: (c) => /\bggplot\s*\(/.test(c) },
-  { lang: 'r', confidence: 80, label: 'print()/cat() R',           test: (c) => /^\s*(cat|message)\s*\(/m.test(c) },
-
-  // ── Bash / Shell ─────────────────────────────────────────────────────────
-  { lang: 'bash', confidence: 99, label: '#!/bin/bash shebang',    test: (c) => /^#!\/bin\/(bash|sh|zsh|fish|ksh)\b/.test(c) },
-  { lang: 'bash', confidence: 95, label: '#!/usr/bin/env bash',    test: (c) => /^#!\/usr\/bin\/env\s+(bash|sh|zsh)\b/.test(c) },
-  { lang: 'bash', confidence: 90, label: '$() subshell or ${var}', test: (c) => /\$\([^)]+\)|\$\{[^}]+\}/.test(c) },
-  { lang: 'bash', confidence: 88, label: 'if/fi block',            test: (c) => /^\s*if\s+\[.+\][\s\S]*?^\s*fi\s*$/m.test(c) },
-  { lang: 'bash', confidence: 85, label: 'echo $variable',         test: (c) => /\becho\s+.*("|'|\$)/.test(c) },
-  { lang: 'bash', confidence: 82, label: 'for/do/done loop',       test: (c) => /\bfor\s+\w+\s+in\s+[\s\S]*?\bdo\b/.test(c) },
-  { lang: 'bash', confidence: 80, label: '[ ] / [[ ]] test',       test: (c) => /\[\[?\s*.+\s*\]\]?/.test(c) },
-
-  // ── SQL ──────────────────────────────────────────────────────────────────
-  { lang: 'sql', confidence: 92, label: 'SELECT ... FROM',         test: (c) => /\bSELECT\b.+\bFROM\b/is.test(c) },
-  { lang: 'sql', confidence: 90, label: 'CREATE TABLE',            test: (c) => /\bCREATE\s+TABLE\b/i.test(c) },
-  { lang: 'sql', confidence: 88, label: 'INSERT INTO',             test: (c) => /\bINSERT\s+INTO\b/i.test(c) },
-  { lang: 'sql', confidence: 88, label: 'UPDATE ... SET',          test: (c) => /\bUPDATE\s+\w+\s+SET\b/i.test(c) },
-  { lang: 'sql', confidence: 85, label: 'WHERE clause',            test: (c) => /\bWHERE\s+\w+/.test(c) },
-  { lang: 'sql', confidence: 82, label: 'JOIN clause',             test: (c) => /\b(INNER|LEFT|RIGHT|FULL|CROSS)?\s*JOIN\b/i.test(c) },
-  { lang: 'sql', confidence: 80, label: 'GROUP BY / ORDER BY',     test: (c) => /\b(GROUP|ORDER)\s+BY\b/i.test(c) },
-
-  // ── HTML ─────────────────────────────────────────────────────────────────
-  { lang: 'html', confidence: 99, label: '<!DOCTYPE html>',        test: (c) => /<!DOCTYPE\s+html>/i.test(c) },
-  { lang: 'html', confidence: 95, label: '<html> tag',             test: (c) => /<html[\s>]/i.test(c) },
-  { lang: 'html', confidence: 90, label: '<head>/<body> tags',     test: (c) => /<(head|body)[\s>]/i.test(c) },
-  { lang: 'html', confidence: 88, label: '<div>/<p>/<span>',       test: (c) => /<(div|p|span|h[1-6]|a|ul|li|table|form|input)\b/i.test(c) },
-  { lang: 'html', confidence: 82, label: 'class="/id=" attribute', test: (c) => /\s(class|id)=["']/.test(c) },
-
-  // CSS property: value; — require at start of line to avoid matching inside strings/comments
-  { lang: 'css', confidence: 92, label: 'CSS property: value;',    test: (c) => /^\s*(color|background|margin|padding|font-size|font-family|width|height|display|position|border|flex|grid|overflow|opacity|z-index|transform|transition|text-align|line-height)\s*:\s*[^;{]+;/m.test(c) },
-  // CSS selector + { } — MUST start with . # * : @ or a known HTML element name
-  // This prevents function/class/method declarations from matching
-  { lang: 'css', confidence: 88, label: 'CSS selector + { }',      test: (c) => /^(?:[.#*:@]|(?:a|p|ul|li|ol|div|span|h[1-6]|body|html|form|input|button|select|textarea|section|article|nav|header|footer|main|table|thead|tbody|tr|td|th|img|video|canvas|svg|figure|aside)(?=[\s,{>~+:])).*\{/m.test(c) },
-  { lang: 'css', confidence: 85, label: '@media query',            test: (c) => /@media\s*\(/.test(c) },
-  { lang: 'css', confidence: 82, label: ':hover/:focus pseudo',    test: (c) => /:(hover|focus|active|first-child|last-child|nth-child)\b/.test(c) },
-
-  // ── Lua ──────────────────────────────────────────────────────────────────
-  { lang: 'lua', confidence: 95, label: 'print() Lua style',       test: (c) => /^\s*print\s*\(/m.test(c) && /--/.test(c) },
-  { lang: 'lua', confidence: 92, label: 'function...end',          test: (c) => /^\s*function\s+\w+\s*\([\s\S]*?^\s*end\s*$/m.test(c) },
-  { lang: 'lua', confidence: 90, label: 'local keyword',           test: (c) => /\blocal\s+\w+/.test(c) },
-  { lang: 'lua', confidence: 88, label: 'then/do/end',             test: (c) => /\bthen\b|\bdo\b|\bend\b/.test(c) && /--/.test(c) },
-  { lang: 'lua', confidence: 85, label: 'Lua comment --',          test: (c) => /^\s*--/.test(c) },
-  { lang: 'lua', confidence: 82, label: 'require("module")',       test: (c) => /\brequire\s*\(["']/.test(c) },
-
-  // ── Perl ─────────────────────────────────────────────────────────────────
-  { lang: 'perl', confidence: 99, label: '#!/usr/bin/perl',        test: (c) => /^#!.*perl\b/.test(c) },
-  { lang: 'perl', confidence: 95, label: 'use strict/warnings',    test: (c) => /^\s*use\s+(strict|warnings);/m.test(c) },
-  { lang: 'perl', confidence: 90, label: 'my $variable',           test: (c) => /\bmy\s+\$\w+/.test(c) },
-  { lang: 'perl', confidence: 88, label: 'print/say + STDOUT',     test: (c) => /\bprint\s+STDOUT|\bsay\s+/.test(c) },
-  { lang: 'perl', confidence: 85, label: '@array / %hash',         test: (c) => /\@\w+|\%\w+/.test(c) },
-
   // ── Scala ────────────────────────────────────────────────────────────────
   { lang: 'scala', confidence: 95, label: 'object App / extends App',test: (c) => /\bobject\s+\w+\s*(extends\s+App)?\s*\{/.test(c) },
   { lang: 'scala', confidence: 92, label: 'println() Scala',       test: (c) => /\bprintln\s*\(/.test(c) && /\bval\b|\bvar\b|\bdef\b/.test(c) },
@@ -235,21 +126,7 @@ const QUICK_KEYWORDS = [
   { lang: 'scala', confidence: 85, label: 'case class',            test: (c) => /\bcase\s+class\s+\w+/.test(c) },
   { lang: 'scala', confidence: 82, label: 'match/case Scala',      test: (c) => /\bmatch\s*\{[\s\S]*?\bcase\b/.test(c) },
 
-  // ── Dart ─────────────────────────────────────────────────────────────────
-  { lang: 'dart', confidence: 95, label: 'void main() Dart',       test: (c) => /^\s*void\s+main\s*\(\s*\)/m.test(c) },
-  { lang: 'dart', confidence: 92, label: 'print() Dart',           test: (c) => /\bprint\s*\(/.test(c) && /\bvoid\b/.test(c) },
-  { lang: 'dart', confidence: 90, label: 'import dart: package',   test: (c) => /^\s*import\s+['"]dart:/m.test(c) },
-  { lang: 'dart', confidence: 88, label: 'final/const Dart',       test: (c) => /\b(final|const)\s+\w+/.test(c) && /;/.test(c) },
 
-  // ── Haskell ──────────────────────────────────────────────────────────────
-  { lang: 'haskell', confidence: 95, label: 'module Main',         test: (c) => /^\s*module\s+\w+\s+where/m.test(c) },
-  { lang: 'haskell', confidence: 92, label: 'main :: IO ()',        test: (c) => /\bmain\s*::\s*IO\s*\(\s*\)/.test(c) },
-  { lang: 'haskell', confidence: 90, label: ':: type signature',    test: (c) => /\w+\s*::\s*[A-Z]/.test(c) },
-  { lang: 'haskell', confidence: 88, label: 'import Data/Control',  test: (c) => /^\s*import\s+(Data\.|Control\.|System\.)/m.test(c) },
-  { lang: 'haskell', confidence: 85, label: 'do-notation',          test: (c) => /\bdo\b[\s\S]*?<-/.test(c) },
-  { lang: 'haskell', confidence: 82, label: 'let-in / where',       test: (c) => /\bwhere\b|\blet\b.+\bin\b/.test(c) },
-
-  // ── MATLAB/Octave ────────────────────────────────────────────────────────
   { lang: 'matlab', confidence: 95, label: 'disp()/fprintf()',      test: (c) => /\b(disp|fprintf|sprintf)\s*\(/.test(c) },
   { lang: 'matlab', confidence: 92, label: 'end keyword (MATLAB)',  test: (c) => /^\s*end\s*$/m.test(c) && !/\bdef\b/.test(c) && !/\bclass\b/.test(c) },
   { lang: 'matlab', confidence: 88, label: 'function declaration',  test: (c) => /^\s*function\s+(\w+\s*=\s*)?\w+\s*\(/m.test(c) && /^\s*end\s*$/m.test(c) },
@@ -305,7 +182,7 @@ const LANGUAGE_SIGNALS = {
   python: [
     { label: 'def keyword',            weight: 50, test: (c) => /^\s*def\s+\w+\s*\(/m.test(c) },
     { label: 'print() call',           weight: 35, test: (c) => /\bprint\s*\(/.test(c) },
-    { label: 'import statement',       weight: 40, test: (c) => /^\s*import\s+[\w.]+/m.test(c) },
+    { label: 'import statement',       weight: 40, test: (c) => /^\s*import\s+[\w.]+(?!\s*;)/m.test(c) },
     { label: 'from X import Y',        weight: 40, test: (c) => /^\s*from\s+[\w.]+\s+import/m.test(c) },
     { label: 'input() call',           weight: 30, test: (c) => /\binput\s*\(/.test(c) },
     { label: 'elif keyword',           weight: 45, test: (c) => /\belif\b/.test(c) },
@@ -322,6 +199,9 @@ const LANGUAGE_SIGNALS = {
     { label: 'lambda expression',      weight: 20, test: (c) => /\blambda\s+[\w,\s]+:/.test(c) },
     { label: 'with statement',         weight: 18, test: (c) => /^\s*with\s+/m.test(c) },
     { label: 'float/int(input())',      weight: 30, test: (c) => /\b(float|int|str)\s*\(\s*input\s*\(/.test(c) },
+    // Python type-hinted function: def f(a: int, b: str) -> bool:
+    // The -> must be followed by a Python built-in or identifier AND terminated with :
+    { label: 'type-hinted def ->',      weight: 35, test: (c) => /^\s*def\s+\w+\s*\(.*?\)\s*->\s*[\w\[\]|, ]+\s*:/m.test(c) },
     { label: 'enumerate/zip/map',      weight: 18, test: (c) => /\b(enumerate|zip|map|filter|sorted|reversed)\s*\(/.test(c) },
   ],
 
@@ -420,7 +300,7 @@ const LANGUAGE_SIGNALS = {
     { label: 'nil keyword',           weight: 15, test: (c) => /\bnil\b/.test(c) },
   ],
 
-  php: [
+  bash: [
     { label: '<?php tag',             weight: 60, test: (c) => /<\?php\b/i.test(c) },
     { label: '$variable',             weight: 45, test: (c) => /\$[a-zA-Z_]\w*/.test(c) },
     { label: 'echo statement',        weight: 35, test: (c) => /^\s*echo\s+/m.test(c) },
@@ -433,69 +313,12 @@ const LANGUAGE_SIGNALS = {
     { label: 'NULL/TRUE/FALSE PHP',   weight: 12, test: (c) => /\b(NULL|TRUE|FALSE)\b/.test(c) },
   ],
 
-  csharp: [
-    { label: 'using System;',         weight: 45, test: (c) => /^\s*using\s+System\s*;/m.test(c) },
-    { label: 'namespace',             weight: 42, test: (c) => /^\s*namespace\s+[\w.]+/m.test(c) },
-    { label: 'Console.WriteLine',     weight: 40, test: (c) => /\bConsole\.(Write|WriteLine|ReadLine|ReadKey)\s*\(/.test(c) },
-    { label: 'static void Main',      weight: 40, test: (c) => /\bstatic\s+void\s+Main\s*\(/.test(c) },
-    { label: 'get; set; props',       weight: 30, test: (c) => /\b(get|set)\s*;/.test(c) },
-    { label: 'var = new',             weight: 25, test: (c) => /\bvar\s+\w+\s*=\s*new\s+/.test(c) },
-    { label: 'using (resource)',       weight: 22, test: (c) => /\busing\s*\(\s*\w+/.test(c) },
-    { label: 'LINQ .Where/.Select',   weight: 28, test: (c) => /\.(Where|Select|OrderBy|GroupBy|FirstOrDefault|ToList|Any|All)\s*\(/.test(c) },
-    { label: 'string interpolation',  weight: 20, test: (c) => /\$".*\{/.test(c) },
-    { label: 'async Task<>',          weight: 22, test: (c) => /\basync\s+Task\b/.test(c) },
-    { label: 'class : base',          weight: 18, test: (c) => /\bclass\s+\w+\s*:\s*\w+/.test(c) },
-    // Lower-weight generic C#-like signals
-    { label: 'class declaration C#',  weight: 12, test: (c) => /\bclass\s+[A-Z]\w*\s*\{/.test(c) && !/#include\b/.test(c) },
-    { label: 'typed field (int/bool)', weight: 10, test: (c) => /^\s+(int|string|bool|double|float|char|long|decimal)\s+\w+\s*;/m.test(c) },
-  ],
-
-  swift: [
-    { label: 'import UIKit/SwiftUI',  weight: 50, test: (c) => /^\s*import\s+(UIKit|SwiftUI|Foundation|AppKit)\b/m.test(c) },
-    { label: 'var/let : Type',        weight: 40, test: (c) => /\b(var|let)\s+\w+\s*:\s*[A-Z]\w+/.test(c) },
-    { label: 'guard let / if let',    weight: 42, test: (c) => /\b(guard|if)\s+let\s+\w+/.test(c) },
-    { label: 'optional ? / !',        weight: 35, test: (c) => /\w+\?\.|\w+!\s*[.{]/.test(c) },
-    { label: 'func + -> type',        weight: 38, test: (c) => /\bfunc\s+\w+\s*\(.*\)\s*->\s*\w+/.test(c) },
-    { label: 'struct/protocol Swift', weight: 28, test: (c) => /^\s*(struct|protocol|extension)\s+\w+/m.test(c) },
-    { label: 'print() Swift',         weight: 20, test: (c) => /\bprint\s*\(/.test(c) },
-    { label: 'closure { in }',        weight: 30, test: (c) => /\{[\s\w,]+\bin\b/.test(c) },
-    { label: 'nil value Swift',       weight: 15, test: (c) => /\bnil\b/.test(c) },
-    { label: '@IBOutlet/@IBAction',   weight: 35, test: (c) => /@(IBOutlet|IBAction|State|Published|ObservedObject)/.test(c) },
-  ],
-
-  kotlin: [
-    { label: 'fun main()',            weight: 55, test: (c) => /^\s*fun\s+main\s*\(/m.test(c) },
-    { label: 'val/var declaration',   weight: 45, test: (c) => /^\s*(val|var)\s+\w+\s*[:=]/m.test(c) },
-    { label: 'println() call',        weight: 40, test: (c) => /(?<!\.\w{0,20})\bprintln\s*\(/.test(c) },
-    { label: 'data class',            weight: 42, test: (c) => /\bdata\s+class\s+\w+/.test(c) },
-    { label: 'fun keyword',           weight: 38, test: (c) => /\bfun\s+\w+\s*\(/.test(c) },
-    { label: 'companion object',      weight: 35, test: (c) => /\bcompanion\s+object\b/.test(c) },
-    { label: 'when expression',       weight: 32, test: (c) => /\bwhen\s*\(/.test(c) },
-    { label: 'string template ${}',   weight: 28, test: (c) => /\$\{[^}]+\}/.test(c) },
-    { label: '?: Elvis operator',     weight: 30, test: (c) => /\?:/.test(c) },
-    { label: '?.safe call',           weight: 25, test: (c) => /\?\.\w+/.test(c) },
-    { label: 'import kotlin.',        weight: 22, test: (c) => /\bimport\s+kotlin\./.test(c) },
-  ],
-
-  r: [
-    { label: '<- assignment',         weight: 55, test: (c) => /\w+\s*<-\s*\S/.test(c) },
-    { label: 'library() call',        weight: 45, test: (c) => /^\s*library\s*\(/m.test(c) },
-    { label: 'c() vector',            weight: 40, test: (c) => /\bc\s*\([\d"',\s]+\)/.test(c) },
-    { label: 'data.frame',            weight: 38, test: (c) => /\bdata\.frame\s*\(/.test(c) },
-    { label: 'ggplot function',       weight: 35, test: (c) => /\bggplot\s*\(/.test(c) },
-    { label: 'cat()/message()',       weight: 28, test: (c) => /\b(cat|message)\s*\(/.test(c) },
-    { label: '# comment R style',     weight: 12, test: (c) => /^\s*#/.test(c) },
-    { label: 'if (cond) {} R',        weight: 15, test: (c) => /\bif\s*\([^)]+\)\s*\{/.test(c) },
-    { label: 'print() R',             weight: 18, test: (c) => /\bprint\s*\(/.test(c) },
-    { label: 'for (x in seq)',        weight: 25, test: (c) => /\bfor\s*\(\s*\w+\s+in\s+/.test(c) },
-  ],
-
   bash: [
     { label: '#!/bin/bash shebang',   weight: 60, test: (c) => /^#!\/bin\/(bash|sh|zsh)/.test(c) },
     { label: '#!/usr/bin/env bash',   weight: 58, test: (c) => /^#!\/usr\/bin\/env\s+(bash|sh|zsh)/.test(c) },
     { label: '$() subshell',          weight: 40, test: (c) => /\$\([^)]+\)/.test(c) },
     { label: '${var} substitution',   weight: 38, test: (c) => /\$\{\w+\}/.test(c) },
-    { label: 'if [ ] / [[ ]]',        weight: 35, test: (c) => /\[\[?\s*.+\s*\]\]?/.test(c) },
+    { label: 'if [ ] / [[ ]]',        weight: 35, test: (c) => /\[\[?\s+[^\]\[]+\s+\]\]?/.test(c) && !/^\s*(def|class|for|if|while|print|import|from)\b/m.test(c) },
     { label: 'echo + $var',           weight: 30, test: (c) => /\becho\s+.*("|'|\$)/.test(c) },
     { label: 'for...in...do...done',  weight: 32, test: (c) => /\bfor\s+\w+\s+in\s+[\s\S]*?\bdo\b/.test(c) },
     { label: 'fi/esac/done keywords', weight: 28, test: (c) => /\b(fi|esac|done)\b/.test(c) },
@@ -541,19 +364,6 @@ const LANGUAGE_SIGNALS = {
     { label: 'rgba/hex colors',       weight: 18, test: (c) => /rgba?\(|#[0-9a-fA-F]{3,6}\b/.test(c) },
   ],
 
-  lua: [
-    { label: 'local keyword',         weight: 45, test: (c) => /\blocal\s+\w+/.test(c) },
-    { label: 'function...end Lua',    weight: 42, test: (c) => /\bfunction\s+\w+\s*\(/.test(c) },
-    { label: 'then/end block',        weight: 38, test: (c) => /\bthen\b[\s\S]*?^\s*end\s*$/m.test(c) },
-    { label: '-- comment Lua',        weight: 30, test: (c) => /^\s*--/.test(c) },
-    { label: 'require("mod")',        weight: 32, test: (c) => /\brequire\s*\(["']/.test(c) },
-    { label: 'pairs()/ipairs()',      weight: 35, test: (c) => /\b(pairs|ipairs|tostring|tonumber|type)\s*\(/.test(c) },
-    { label: 'print() Lua',          weight: 20, test: (c) => /\bprint\s*\(/.test(c) },
-    { label: 'nil Lua',              weight: 15, test: (c) => /\bnil\b/.test(c) },
-    { label: 'table.insert/sort',    weight: 28, test: (c) => /\btable\.(insert|remove|sort|concat)\s*\(/.test(c) },
-    { label: '#table length',        weight: 20, test: (c) => /#\w+/.test(c) },
-  ],
-
   perl: [
     { label: '#!/usr/bin/perl',      weight: 60, test: (c) => /^#!.*perl\b/.test(c) },
     { label: 'use strict/warnings',  weight: 50, test: (c) => /^\s*use\s+(strict|warnings);/m.test(c) },
@@ -562,38 +372,6 @@ const LANGUAGE_SIGNALS = {
     { label: 'print STDOUT',         weight: 35, test: (c) => /\bprint\s+(STDOUT|STDERR|\$\w+)?/.test(c) },
     { label: 'chomp/chop',           weight: 32, test: (c) => /\b(chomp|chop)\s*\(/.test(c) },
     { label: 'qw() quote words',     weight: 30, test: (c) => /\bqw\s*[(\[\/]/.test(c) },
-  ],
-
-  scala: [
-    { label: 'object extends App',   weight: 50, test: (c) => /\bobject\s+\w+\s*(extends\s+App)?\s*\{/.test(c) },
-    { label: 'println() Scala',      weight: 42, test: (c) => /\bprintln\s*\(/.test(c) },
-    { label: 'val/var Scala',        weight: 40, test: (c) => /^\s*(val|var)\s+\w+\s*[:=]/m.test(c) },
-    { label: 'case class',           weight: 45, test: (c) => /\bcase\s+class\s+\w+/.test(c) },
-    { label: 'match/case Scala',     weight: 40, test: (c) => /\bmatch\s*\{[\s\S]*?\bcase\b/.test(c) },
-    { label: 'def keyword',          weight: 35, test: (c) => /\bdef\s+\w+\s*[:(=]/.test(c) },
-    { label: 'import scala.',        weight: 32, test: (c) => /\bimport\s+scala\./.test(c) },
-    { label: 'sealed trait',         weight: 38, test: (c) => /\bsealed\s+(trait|class)\b/.test(c) },
-  ],
-
-  dart: [
-    { label: 'void main() Dart',     weight: 55, test: (c) => /^\s*void\s+main\s*\(\s*\)/m.test(c) },
-    { label: 'print() Dart',         weight: 40, test: (c) => /\bprint\s*\(/.test(c) },
-    { label: 'import dart:',         weight: 50, test: (c) => /^\s*import\s+['"]dart:/m.test(c) },
-    { label: 'final/const Dart',     weight: 35, test: (c) => /\b(final|const)\s+\w+/.test(c) },
-    { label: 'class + extends',      weight: 28, test: (c) => /\bclass\s+\w+\s*(extends|implements|with)\b/.test(c) },
-    { label: 'async/await Dart',     weight: 30, test: (c) => /\bFuture<\w+>|\basync\s*\{|\bawait\s+/.test(c) },
-    { label: '? nullable type',      weight: 25, test: (c) => /\w+\?\s+\w+/.test(c) },
-  ],
-
-  haskell: [
-    { label: 'module...where',       weight: 55, test: (c) => /^\s*module\s+\w+\s+where/m.test(c) },
-    { label: 'main :: IO ()',         weight: 50, test: (c) => /\bmain\s*::\s*IO\s*\(\s*\)/.test(c) },
-    { label: ':: type signature',    weight: 45, test: (c) => /\w+\s*::\s*[A-Z]/.test(c) },
-    { label: 'import Data/Control',  weight: 40, test: (c) => /^\s*import\s+(Data\.|Control\.|System\.)/m.test(c) },
-    { label: 'do-notation',          weight: 38, test: (c) => /\bdo\b[\s\S]*?<-/.test(c) },
-    { label: 'where clause',         weight: 32, test: (c) => /\bwhere\b/.test(c) },
-    { label: 'putStrLn/getLine',     weight: 40, test: (c) => /\b(putStrLn|putStr|getLine|readLn)\s*/.test(c) },
-    { label: 'pattern matching',     weight: 28, test: (c) => /^[a-z]\w*\s+[A-Z][\w\s]*=/.test(c) },
   ],
 
   matlab: [
@@ -607,6 +385,7 @@ const LANGUAGE_SIGNALS = {
     { label: '; suppress output',    weight: 15, test: (c) => /;\s*$/.test(c) },
   ],
 };
+
 
 // ─── Pre-compute max scores ───────────────────────────────────────────────────
 const MAX_SCORES = Object.fromEntries(
@@ -743,23 +522,13 @@ export const LANG_NAMES = {
   java:       'Java',
   javascript: 'JavaScript',
   typescript: 'TypeScript',
-  go:         'Go',
-  rust:       'Rust',
-  ruby:       'Ruby',
   php:        'PHP',
   csharp:     'C#',
-  swift:      'Swift',
-  kotlin:     'Kotlin',
-  r:          'R',
-  bash:       'Bash/Shell',
   sql:        'SQL',
   html:       'HTML',
   css:        'CSS',
-  lua:        'Lua',
   perl:       'Perl',
   scala:      'Scala',
-  dart:       'Dart',
-  haskell:    'Haskell',
   matlab:     'MATLAB',
   unknown:    'Unknown',
 };
@@ -772,23 +541,13 @@ export const LANG_COLORS = {
   java:       '#e35535',
   javascript: '#f0db4f',
   typescript: '#3178c6',
-  go:         '#00acd7',
-  rust:       '#ce422b',
-  ruby:       '#cc342d',
   php:        '#8892be',
   csharp:     '#9b4f96',
-  swift:      '#fa7343',
-  kotlin:     '#7f52ff',
-  r:          '#276dc3',
-  bash:       '#4eaa25',
   sql:        '#f29111',
   html:       '#e34c26',
   css:        '#563d7c',
-  lua:        '#000080',
   perl:       '#39457e',
   scala:      '#dc322f',
-  dart:       '#00b4ab',
-  haskell:    '#5e5086',
   matlab:     '#e16737',
   unknown:    '#8b949e',
 };
