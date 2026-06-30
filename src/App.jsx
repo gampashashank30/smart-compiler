@@ -158,6 +158,8 @@ export default function App() {
   // { language, confidence, signals, scores }
   const [showLangPopup, setShowLangPopup] = useState(false);
   const [converting, setConverting]       = useState(false);
+  // Brief success toast shown after a successful conversion
+  const [conversionToast, setConversionToast] = useState(null);
   // Stores the exact code the user dismissed detection for ("Keep as C")
   const dismissedCodeRef = useRef(null);
 
@@ -271,18 +273,19 @@ export default function App() {
         // sanitizeAiCode strips markdown fences and fixes double-escaped
         // structural newlines while preserving C string escapes.
         const cCode = sanitizeAiCode(parsed.c_code);
-        // 1. Load converted C code into the editor.
+        // 1. Load converted C code into the editor and close the popup.
         setCode(cCode);
         setShowLangPopup(false);
         dismissedCodeRef.current = cCode; // mark as C so next Run skips popup
-        // 2. After React has flushed the state update, switch to terminal
-        //    and run the newly converted C code — no second click needed.
-        setActiveTab('terminal');
-        setTimeout(() => {
-          terminalRef.current?.clear?.();
-          terminalRef.current?.connect(WS_URL, cCode);
-          analyticsStore.recordRun();
-        }, 50);
+        // 2. The editor is always on the left — show a success toast so the
+        //    user knows the code has been loaded and they can click Run.
+        setConversionToast(`✓ Converted to C! Click Run ▶ to execute.`);
+        setTimeout(() => setConversionToast(null), 5000);
+      } else {
+        // AI responded but returned no c_code field — show useful error
+        const preview = raw ? raw.slice(0, 200) : '(empty response)';
+        alert(`Conversion failed: The AI did not return valid C code.\n\nAI response preview:\n${preview}`);
+        setShowLangPopup(false);
       }
     } catch (err) {
       console.error('[LangDetect] Conversion failed:', err);
@@ -296,7 +299,7 @@ export default function App() {
     } finally {
       setConverting(false);
     }
-  }, [code, langDetect]);
+  }, [code, langDetect, setCode]);
 
   // ── Run — connect WebSocket and send code for interactive execution ─────
   const handleRun = useCallback(() => {
@@ -511,6 +514,41 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Conversion success toast — shown after "Yes, Convert to C" */}
+      {conversionToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'linear-gradient(135deg, #0fa57c, #0d8f6a)',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '10px',
+          fontFamily: "'Inter', sans-serif",
+          fontSize: '14px',
+          fontWeight: 600,
+          letterSpacing: '0.02em',
+          boxShadow: '0 8px 32px rgba(15,165,124,0.45)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          animation: 'slideUp 0.3s ease',
+          cursor: 'pointer',
+        }} onClick={() => setConversionToast(null)}>
+          <span style={{ fontSize: '18px' }}>✓</span>
+          <span>{conversionToast}</span>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

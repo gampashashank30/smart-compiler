@@ -922,4 +922,3 @@
 :global(.hl-preproc-val){ color: #7ee787; }   /* green like strings */
 :global(.hl-operator)   { color: #79c0ff; }   /* sky blue / cyan   */
 :global(.hl-punctuation){ color: #79c0ff; }   /* same as operators */
-
