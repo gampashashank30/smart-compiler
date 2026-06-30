@@ -276,8 +276,10 @@ export default function App() {
         dismissedCodeRef.current = null; // reset — converted code is fresh C
         // Brief visual feedback — switch to terminal tab
         setActiveTab('terminal');
-        // Show a note in terminal if available
+        // Clear terminal and connect immediately
         terminalRef.current?.clear?.();
+        terminalRef.current?.connect(WS_URL, cCode);
+        analyticsStore.recordRun();
       }
     } catch (err) {
       console.error('[LangDetect] Conversion failed:', err);
