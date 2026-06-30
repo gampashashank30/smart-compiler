@@ -214,7 +214,14 @@ app.post('/api/ai', async (req, res) => {
           { role: 'user',   content: userMessage  },
         ],
       };
-      if (isZai) payload.thinking = { type: 'disabled' };
+      if (isZai) {
+        payload.thinking = { type: 'disabled' };
+      } else {
+        // Enforce JSON mode for Groq models when systemPrompt contains "JSON"
+        if (systemPrompt.toLowerCase().includes('json')) {
+          payload.response_format = { type: 'json_object' };
+        }
+      }
 
       const response = await fetch(apiUrl, {
         method:  'POST',

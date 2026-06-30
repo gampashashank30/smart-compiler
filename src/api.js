@@ -126,19 +126,26 @@ export function parseJSON(raw) {
     }
   }
 
-  // Stage 2: Try to extract the outer-most JSON object {...}
-  const firstBrace = text.indexOf('{');
+  // Stage 2: Try to extract the JSON object {...}
+  // If there are multiple open braces (e.g. C code preceding the JSON),
+  // search from right-to-left (last to first) to find the start of the JSON block.
   const lastBrace = text.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    const content = text.substring(firstBrace, lastBrace + 1);
-    try {
-      return JSON.parse(content);
-    } catch (_) {
+  if (lastBrace !== -1) {
+    let searchIndex = text.length;
+    while (true) {
+      const braceIndex = text.lastIndexOf('{', searchIndex);
+      if (braceIndex === -1) break;
+      const content = text.substring(braceIndex, lastBrace + 1);
       try {
-        return JSON.parse(sanitizeRawControlChars(content));
+        return JSON.parse(content);
       } catch (_) {
-        // Fall through
+        try {
+          return JSON.parse(sanitizeRawControlChars(content));
+        } catch (_) {
+          // Continue searching leftwards
+        }
       }
+      searchIndex = braceIndex - 1;
     }
   }
 
