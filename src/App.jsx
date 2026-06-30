@@ -271,11 +271,18 @@ export default function App() {
         // sanitizeAiCode strips markdown fences and fixes double-escaped
         // structural newlines while preserving C string escapes.
         const cCode = sanitizeAiCode(parsed.c_code);
-        // Load converted C code into the editor and close the popup.
-        // The user can review it and click Run themselves.
+        // 1. Load converted C code into the editor.
         setCode(cCode);
         setShowLangPopup(false);
-        dismissedCodeRef.current = null; // reset — converted code is fresh C
+        dismissedCodeRef.current = cCode; // mark as C so next Run skips popup
+        // 2. After React has flushed the state update, switch to terminal
+        //    and run the newly converted C code — no second click needed.
+        setActiveTab('terminal');
+        setTimeout(() => {
+          terminalRef.current?.clear?.();
+          terminalRef.current?.connect(WS_URL, cCode);
+          analyticsStore.recordRun();
+        }, 50);
       }
     } catch (err) {
       console.error('[LangDetect] Conversion failed:', err);
