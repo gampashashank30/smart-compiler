@@ -283,6 +283,8 @@ export default function App() {
       console.error('[LangDetect] Conversion failed:', err);
       if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
         alert(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
+      } else {
+        alert(`Failed to convert code: ${err.message || 'Unknown error'}`);
       }
       // Don't crash the app — just close the popup
       setShowLangPopup(false);

@@ -108,16 +108,60 @@ function sanitizeRawControlChars(text) {
  * then falls back to sanitization if the first parse attempt fails.
  */
 export function parseJSON(raw) {
-  let text = raw.trim();
-  // Strip markdown code fences the model may have added
-  text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+  const text = raw.trim();
 
-  // Fast path: try normal parse first — avoids any modification for valid JSON
+  // Stage 1: Try to extract from markdown code fences first
+  const fenceRegex = /```(?:[a-zA-Z0-9+#-]+)?\s*([\s\S]*?)\s*```/;
+  const fenceMatch = text.match(fenceRegex);
+  if (fenceMatch) {
+    const content = fenceMatch[1].trim();
+    try {
+      return JSON.parse(content);
+    } catch (_) {
+      try {
+        return JSON.parse(sanitizeRawControlChars(content));
+      } catch (_) {
+        // If code fence contents failed to parse, fall through to other strategies
+      }
+    }
+  }
+
+  // Stage 2: Try to extract the outer-most JSON object {...}
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    const content = text.substring(firstBrace, lastBrace + 1);
+    try {
+      return JSON.parse(content);
+    } catch (_) {
+      try {
+        return JSON.parse(sanitizeRawControlChars(content));
+      } catch (_) {
+        // Fall through
+      }
+    }
+  }
+
+  // Stage 3: Try to extract the outer-most JSON array [...]
+  const firstBracket = text.indexOf('[');
+  const lastBracket = text.lastIndexOf(']');
+  if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+    const content = text.substring(firstBracket, lastBracket + 1);
+    try {
+      return JSON.parse(content);
+    } catch (_) {
+      try {
+        return JSON.parse(sanitizeRawControlChars(content));
+      } catch (_) {
+        // Fall through
+      }
+    }
+  }
+
+  // Stage 4: Fallback to direct parse of the entire string
   try {
     return JSON.parse(text);
   } catch (_) {
-    // Slow path: LLM inserted raw newlines/tabs inside a string value.
-    // Sanitize with the state machine and retry.
     return JSON.parse(sanitizeRawControlChars(text));
   }
 }
