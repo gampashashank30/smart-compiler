@@ -271,15 +271,11 @@ export default function App() {
         // sanitizeAiCode strips markdown fences and fixes double-escaped
         // structural newlines while preserving C string escapes.
         const cCode = sanitizeAiCode(parsed.c_code);
+        // Load converted C code into the editor and close the popup.
+        // The user can review it and click Run themselves.
         setCode(cCode);
         setShowLangPopup(false);
         dismissedCodeRef.current = null; // reset — converted code is fresh C
-        // Brief visual feedback — switch to terminal tab
-        setActiveTab('terminal');
-        // Clear terminal and connect immediately
-        terminalRef.current?.clear?.();
-        terminalRef.current?.connect(WS_URL, cCode);
-        analyticsStore.recordRun();
       }
     } catch (err) {
       console.error('[LangDetect] Conversion failed:', err);
