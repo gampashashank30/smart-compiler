@@ -16,7 +16,7 @@ const PLAIN_TEXT_EXTENSIONS = new Set([
   // Web
   'html', 'htm', 'css', 'scss', 'sass', 'less',
   // Plain text
-  'txt', 'text', 'md', 'markdown',
+  'md', 'markdown',
 ]);
 
 // Word document extension
@@ -408,13 +408,12 @@ export async function readUploadedFile(file) {
     content = await readImageFile(file);
   } else {
     content = await readTextFile(file);
-    const textExtensions = new Set(['txt', 'text', 'md', 'markdown']);
+    const textExtensions = new Set(['md', 'markdown']);
     if (textExtensions.has(ext)) {
       if (!content.trim()) {
         throw new Error('The uploaded document is empty.');
       }
-      const label = ext.startsWith('m') ? 'Markdown file' : 'text file';
-      content = extractCodeFromText(content, label);
+      content = extractCodeFromText(content, 'Markdown file');
     }
   }
 
