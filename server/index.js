@@ -172,7 +172,10 @@ app.use('/api/', apiLimiter);
 app.post('/api/ai', aiLimiter, async (req, res) => {
   // ── 1. Origin check ──────────────────────────────────────────────────────
   const origin = req.headers.origin || '';
-  const isAllowedOrigin = !origin || ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes('onrender.com');
+  const RENDER_ORIGIN_RE = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
+  const isAllowedOrigin = !origin 
+    || ALLOWED_ORIGINS.some(o => origin === o)
+    || RENDER_ORIGIN_RE.test(origin);
   if (!isAllowedOrigin) {
     console.warn(`[/api/ai] Blocked request from disallowed origin: ${origin}`);
     return res.status(403).json({ error: 'Forbidden: Origin not allowed' });
@@ -353,7 +356,10 @@ app.get('/api/admin/is-admin', adminLimiter, async (req, res) => {
 app.get('/api/admin/analytics', adminLimiter, async (req, res) => {
   // 1. Origin check
   const origin = req.headers.origin || '';
-  const isAllowedOrigin = !origin || ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes('onrender.com');
+  const RENDER_ORIGIN_RE = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
+  const isAllowedOrigin = !origin 
+    || ALLOWED_ORIGINS.some(o => origin === o)
+    || RENDER_ORIGIN_RE.test(origin);
   if (!isAllowedOrigin) {
     return res.status(403).json({ error: 'Forbidden' });
   }

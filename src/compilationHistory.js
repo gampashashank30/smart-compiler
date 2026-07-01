@@ -77,12 +77,12 @@ function createHistoryStore() {
       const newEntry = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         timestamp: Date.now(),
-        code: entry.code ?? '',
+        code: (entry.code ?? '').slice(0, 5000),
         status: entry.status ?? 'error',
         exitCode: entry.exitCode ?? null,
         timeMs: entry.timeMs ?? null,
-        output: stripAnsi(entry.output ?? ''),
-        stdout: stripAnsi(entry.stdout ?? entry.output ?? ''),
+        output: stripAnsi(entry.output ?? '').slice(0, 10000),
+        stdout: stripAnsi(entry.stdout ?? entry.output ?? '').slice(0, 10000),
         errorType: entry.errorType ?? null,
         killed: entry.killed ?? false,
       };

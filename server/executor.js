@@ -213,8 +213,23 @@ function runDockerCommand(mountDir, command, stdin, timeoutMs) {
     }
     proc.stdin.end();
 
-    proc.stdout.on('data', (d) => { output += d.toString(); });
-    proc.stderr.on('data', (d) => { output += d.toString(); }); // capture docker errors
+    const MAX_OUTPUT_LIMIT = 512 * 1024; // 512 KB
+    proc.stdout.on('data', (d) => {
+      if (output.length < MAX_OUTPUT_LIMIT) {
+        output += d.toString();
+        if (output.length >= MAX_OUTPUT_LIMIT) {
+          output += '\n... [stdout truncated due to size limit] ...';
+        }
+      }
+    });
+    proc.stderr.on('data', (d) => {
+      if (output.length < MAX_OUTPUT_LIMIT) {
+        output += d.toString();
+        if (output.length >= MAX_OUTPUT_LIMIT) {
+          output += '\n... [stderr truncated due to size limit] ...';
+        }
+      }
+    }); // capture docker errors
 
     proc.on('close', (code, sig) => {
       clearTimeout(timer);
@@ -394,8 +409,23 @@ async function runWithLocalGcc(code, stdin) {
       }
       proc.stdin.end();
 
-      proc.stdout.on('data', (d) => { stdout += d.toString(); });
-      proc.stderr.on('data', (d) => { stderr += d.toString(); });
+      const MAX_OUTPUT_LIMIT = 512 * 1024; // 512 KB
+      proc.stdout.on('data', (d) => {
+        if (stdout.length < MAX_OUTPUT_LIMIT) {
+          stdout += d.toString();
+          if (stdout.length >= MAX_OUTPUT_LIMIT) {
+            stdout += '\n... [stdout truncated due to size limit] ...';
+          }
+        }
+      });
+      proc.stderr.on('data', (d) => {
+        if (stderr.length < MAX_OUTPUT_LIMIT) {
+          stderr += d.toString();
+          if (stderr.length >= MAX_OUTPUT_LIMIT) {
+            stderr += '\n... [stderr truncated due to size limit] ...';
+          }
+        }
+      });
 
       const timer = setTimeout(() => {
         killed = true;
