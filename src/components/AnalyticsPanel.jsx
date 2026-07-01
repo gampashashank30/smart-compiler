@@ -75,11 +75,11 @@ function generateInsights(sessions, stats) {
 
     // Insight 1 — Success rate
     if (successRate >= 80) {
-      insights.push({ icon: '🌟', title: 'Great accuracy!', text: `${successRate.toFixed(0)}% success rate — you write clean C code. Keep it up!`, color: '#059669' });
+      insights.push({ icon: 'star', title: 'Great accuracy!', text: `${successRate.toFixed(0)}% success rate — you write clean C code. Keep it up!`, color: '#059669' });
     } else if (successRate >= 50) {
-      insights.push({ icon: '📈', title: 'Improving steadily', text: `${successRate.toFixed(0)}% success rate. Try reading errors top-down to fix root causes faster.`, color: '#0ea5e9' });
+      insights.push({ icon: 'trending', title: 'Improving steadily', text: `${successRate.toFixed(0)}% success rate. Try reading errors top-down to fix root causes faster.`, color: '#0ea5e9' });
     } else if (totalRuns >= 3) {
-      insights.push({ icon: '💡', title: 'Error patterns detected', text: `${(100 - successRate).toFixed(0)}% of runs have errors. Focus on one error type at a time.`, color: '#f59e0b' });
+      insights.push({ icon: 'bulb', title: 'Error patterns detected', text: `${(100 - successRate).toFixed(0)}% of runs have errors. Focus on one error type at a time.`, color: '#f59e0b' });
     }
 
     // Insight 2 — Top error
@@ -88,41 +88,41 @@ function generateInsights(sessions, stats) {
       const [type, count] = topErr;
       const tips = TIPS[type];
       if (tips?.length) {
-        insights.push({ icon: '🎯', title: `Top mistake: ${type}`, text: `You've hit this ${count} time${count>1?'s':''} — ${tips[0]}`, color: ERROR_TYPES[type]?.color ?? '#6366f1' });
+        insights.push({ icon: 'target', title: `Top mistake: ${type}`, text: `You've hit this ${count} time${count>1?'s':''} — ${tips[0]}`, color: ERROR_TYPES[type]?.color ?? '#6366f1' });
       }
     }
 
     // Insight 3 — TLE
     if (consecutiveTLE >= 2) {
-      insights.push({ icon: '∞', title: 'Infinite loop pattern', text: `${consecutiveTLE} consecutive TLEs — check your loop increment (i++) and condition.`, color: '#d97706' });
+      insights.push({ icon: 'infinity', title: 'Infinite loop pattern', text: `${consecutiveTLE} consecutive TLEs — check your loop increment (i++) and condition.`, color: '#d97706' });
     }
 
     // Insight 4 — Fix time
     if (avgFixTime !== null) {
       if (avgFixTime < 30) {
-        insights.push({ icon: '⚡', title: 'Lightning fast fixes!', text: `You fix errors in ~${avgFixTime}s on average — excellent debugging instincts.`, color: '#8b5cf6' });
+        insights.push({ icon: 'bolt', title: 'Lightning fast fixes!', text: `You fix errors in ~${avgFixTime}s on average — excellent debugging instincts.`, color: '#8b5cf6' });
       } else if (avgFixTime > 120) {
-        insights.push({ icon: '🔍', title: 'Take it step by step', text: `Avg fix time is ${avgFixTime}s. Try fixing the first error only, then recompile.`, color: '#64748b' });
+        insights.push({ icon: 'search', title: 'Take it step by step', text: `Avg fix time is ${avgFixTime}s. Try fixing the first error only, then recompile.`, color: '#64748b' });
       }
     }
 
     // Insight 5 — streak
     const streak = computeStreak(sessions);
     if (streak >= 3) {
-      insights.push({ icon: '🔥', title: `${streak}-day coding streak!`, text: `You've compiled code for ${streak} days in a row. Consistency is the key to mastery.`, color: '#f97316' });
+      insights.push({ icon: 'fire', title: `${streak}-day coding streak!`, text: `You've compiled code for ${streak} days in a row. Consistency is the key to mastery.`, color: '#f97316' });
     }
 
     // Insight 6 — no errors today
     const todaySuccess = checkErrorFreeDay(sessions);
     if (todaySuccess) {
-      insights.push({ icon: '💎', title: 'Error-free session today!', text: `All your runs today compiled successfully. You\'re on fire!`, color: '#06b6d4' });
+      insights.push({ icon: 'gem', title: 'Error-free session today!', text: `All your runs today compiled successfully. You\'re on fire!`, color: '#06b6d4' });
     }
 
   } catch { /* safe */ }
 
   // Always return at least 1 insight
   if (insights.length === 0) {
-    insights.push({ icon: '🚀', title: 'Getting started', text: 'Run some code to unlock personalized insights based on your patterns!', color: '#10b981' });
+    insights.push({ icon: 'rocket', title: 'Getting started', text: 'Run some code to unlock personalized insights based on your patterns!', color: '#10b981' });
   }
 
   return insights.slice(0, 4);
@@ -713,6 +713,34 @@ function SessionSummary({ sessions }) {
 }
 
 // ─── 10. AI Insight Cards ─────────────────────────────────────────────────────
+function InsightIcon({ name, color }) {
+  const s = { width: 22, height: 22, display: 'block', flexShrink: 0 };
+  switch (name) {
+    case 'star':
+      return (<svg style={s} viewBox="0 0 24 24" fill={color}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>);
+    case 'trending':
+      return (<svg style={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>);
+    case 'bulb':
+      return (<svg style={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0018 8 6 6 0 006 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 018.91 14"/></svg>);
+    case 'target':
+      return (<svg style={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>);
+    case 'infinity':
+      return (<svg style={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 12c-2-2.5-4-4-6-4a4 4 0 000 8c2 0 4-1.5 6-4z"/><path d="M12 12c2 2.5 4 4 6 4a4 4 0 000-8c-2 0-4 1.5-6 4z"/></svg>);
+    case 'bolt':
+      return (<svg style={s} viewBox="0 0 24 24" fill={color}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>);
+    case 'search':
+      return (<svg style={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
+    case 'fire':
+      return (<svg style={s} viewBox="0 0 24 24" fill={color}><path d="M12 2c0 0-5 5.5-5 10a5 5 0 0010 0c0-4.5-5-10-5-10zm0 14a2 2 0 01-2-2c0-2 2-4.5 2-4.5s2 2.5 2 4.5a2 2 0 01-2 2z"/></svg>);
+    case 'gem':
+      return (<svg style={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="12" y1="3" x2="6" y2="9"/><line x1="12" y1="3" x2="18" y2="9"/></svg>);
+    case 'rocket':
+      return (<svg style={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>);
+    default:
+      return (<svg style={s} viewBox="0 0 24 24" fill={color}><circle cx="12" cy="12" r="5"/></svg>);
+  }
+}
+
 function InsightCards({ sessions, stats }) {
   const [active, setActive] = useState(0);
   const insights = generateInsights(sessions, stats);
@@ -732,7 +760,7 @@ function InsightCards({ sessions, stats }) {
   return (
     <div className={styles.insightWrap}>
       <div className={styles.insightCard} key={active} style={{ borderLeftColor: ins.color }}>
-        <div className={styles.insightIcon}>{ins.icon}</div>
+        <div className={styles.insightIcon}><InsightIcon name={ins.icon} color={ins.color} /></div>
         <div className={styles.insightContent}>
           <div className={styles.insightTitle} style={{ color: ins.color }}>{ins.title}</div>
           <div className={styles.insightText}>{ins.text}</div>
@@ -1061,7 +1089,7 @@ export default function AnalyticsPanel({ onClose }) {
               </Section>
 
               {/* 10 — AI Insights */}
-              <Section title="💡 Personalized Insights">
+              <Section title="Personalized Insights">
                 <InsightCards sessions={sessions} stats={stats} />
               </Section>
             </>

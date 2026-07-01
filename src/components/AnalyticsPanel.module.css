@@ -803,8 +803,12 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 .insightIcon {
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 22px;
+  height: 22px;
   margin-top: 1px;
 }
 .insightContent {
