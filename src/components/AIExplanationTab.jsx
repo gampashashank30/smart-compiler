@@ -258,27 +258,57 @@ export default function AIExplanationTab({ code, onApplyFix }) {
       const numberedCode = code.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n');
       const raw    = await callClaude(ANALYSIS_SYSTEM_PROMPT, 'Code:\n' + numberedCode);
       let parsed = parseJSON(raw);
-      // Defensive: the AI should return an array. If it returned a wrapped object
-      // (e.g. { issues: [...] }) due to json_object mode, auto-unwrap it.
-      if (parsed && !Array.isArray(parsed)) {
-        const keys = Object.keys(parsed);
-        const firstArray = keys.find(k => Array.isArray(parsed[k]));
-        if (firstArray) {
-          parsed = parsed[firstArray];
+
+      // Normalise whatever the AI returns into the array format we need.
+      // Groq / z.ai can return the data in several shapes depending on whether
+      // json_object mode is active, so we handle all known cases gracefully.
+      if (parsed !== null && !Array.isArray(parsed) && typeof parsed === 'object') {
+        const vals = Object.values(parsed);
+
+        // Case A: { issues: [{...}], ... }  — one key holds the array
+        const arrVal = vals.find(v => Array.isArray(v));
+        if (arrVal) {
+          parsed = arrVal;
+
+        // Case B: { "1": {...}, "2": {...} }  — numbered-key object
+        } else if (vals.every(v => v && typeof v === 'object' && ('type' in v || 'id' in v))) {
+          parsed = vals;
+
+        // Case C: the object IS a single issue  { id, type, hint, ... }
+        } else if ('type' in parsed || 'id' in parsed) {
+          parsed = [parsed];
+
+        // Case D: totally unknown shape — build a generic issue so UI doesn't blank
         } else {
-          throw new Error('AI returned an unexpected format. Please try again.');
+          const rawText = JSON.stringify(parsed);
+          parsed = [{ id: 1, type: 'logical', hint: 'See description', line: null,
+                      description: rawText.slice(0, 120), fix: '', corrected_code_snippet: '' }];
         }
       }
+
+      // Last-resort: if it's still not an array, extract anything useful from raw text
       if (!Array.isArray(parsed) || parsed.length === 0) {
-        throw new Error('AI returned an empty or invalid response. Please try again.');
+        // Try one more time — scan the raw string for any bracketed JSON array
+        const arrMatch = raw.match(/\[[\s\S]*\]/);
+        if (arrMatch) {
+          try { parsed = JSON.parse(arrMatch[0]); } catch (_) { /* ignore */ }
+        }
       }
+
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        // Absolute fallback: show a generic message rather than a blank screen
+        parsed = [{ id: 0, type: 'clean', hint: 'Analysis inconclusive', line: null,
+                    description: 'No issues were detected, or the AI response could not be parsed.',
+                    fix: '', corrected_code_snippet: '' }];
+      }
+
       setIssues(parsed);
     } catch (err) {
       console.error('Analysis error:', err);
       if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
         setAnalysisError(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
       } else {
-        setAnalysisError(`Analysis failed: ${err.message}. Check your connection and try again.`);
+        setAnalysisError(`Analysis failed: ${err.message.replace(/\.+$/, '')}. Check your connection and try again.`);
       }
     } finally {
       setIsAnalyzing(false);

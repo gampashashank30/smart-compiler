@@ -126,9 +126,33 @@ export function parseJSON(raw) {
     }
   }
 
-  // Stage 2: Try to extract the JSON object {...}
-  // If there are multiple open braces (e.g. C code preceding the JSON),
-  // search from right-to-left (last to first) to find the start of the JSON block.
+  // Stage 2: Try to extract a JSON array [...] FIRST.
+  // This must come before the object search because when the response contains
+  // a JSON array like [{...},{...}], searching for the last '}' would extract
+  // only the last object element, destroying the array structure.
+  const firstBracket = text.indexOf('[');
+  const lastBracket  = text.lastIndexOf(']');
+  if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+    // Only try array extraction if '[' appears before any '{', OR if the text
+    // starts with '[' — so we don't accidentally grab an array that's nested
+    // inside a larger object when the outer object is what we actually want.
+    const firstBrace = text.indexOf('{');
+    if (firstBrace === -1 || firstBracket <= firstBrace) {
+      const content = text.substring(firstBracket, lastBracket + 1);
+      try {
+        return JSON.parse(content);
+      } catch (_) {
+        try {
+          return JSON.parse(sanitizeRawControlChars(content));
+        } catch (_) {
+          // Fall through to object search
+        }
+      }
+    }
+  }
+
+  // Stage 3: Try to extract the JSON object {...}
+  // Search from right-to-left (last to first) to find the start of the JSON block.
   const lastBrace = text.lastIndexOf('}');
   if (lastBrace !== -1) {
     let searchIndex = text.length;
@@ -149,9 +173,7 @@ export function parseJSON(raw) {
     }
   }
 
-  // Stage 3: Try to extract the outer-most JSON array [...]
-  const firstBracket = text.indexOf('[');
-  const lastBracket = text.lastIndexOf(']');
+  // Stage 4: Object search failed — try the full array range now (covers nested arrays inside objects)
   if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
     const content = text.substring(firstBracket, lastBracket + 1);
     try {
@@ -165,7 +187,7 @@ export function parseJSON(raw) {
     }
   }
 
-  // Stage 4: Fallback to direct parse of the entire string
+  // Stage 5: Fallback to direct parse of the entire string
   try {
     return JSON.parse(text);
   } catch (_) {
