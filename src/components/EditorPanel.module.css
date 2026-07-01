@@ -299,6 +299,7 @@
   color: #3d444d;
   text-align: right;
   padding-right: 14px;
+  font-variant-ligatures: none; /* disable ligatures so == stays as == */
 }
 
 /* ─── Code wrapper (overlay container) ───────────────────── */
@@ -325,6 +326,7 @@
   white-space: pre;
   word-break: normal;
   overflow-wrap: normal;
+  font-variant-ligatures: none; /* disable ligatures so == stays as == */
 }
 
 /* ─── Highlight layer (pre) ─────────────────────────────── */

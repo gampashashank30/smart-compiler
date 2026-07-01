@@ -38,6 +38,7 @@ textarea {
   resize: none;
   outline: none;
   border: none;
+  font-variant-ligatures: none; /* disable ligatures so == stays as == */
 }
 
 ::-webkit-scrollbar {
