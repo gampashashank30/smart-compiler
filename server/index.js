@@ -21,6 +21,7 @@ const fs             = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const express        = require('express');
+const helmet         = require('helmet');
 const rateLimit      = require('express-rate-limit');
 const { execute, isDockerReady, isLocalGccReady, resetDockerCache } = require('./executor');
 const { attachWebSocketServer } = require('./ws-executor');
@@ -87,13 +88,30 @@ async function verifySupabaseToken(token) {
 
 // ── Express app ──────────────────────────────────────────────────────────────
 const app = express();
+
+// Trust exactly one proxy hop (Render's load balancer) so rate-limiting
+// reads the real client IP from X-Forwarded-For, not the proxy's IP.
+app.set('trust proxy', 1);
+
+// ── Security headers via Helmet ───────────────────────────────────────────────
+// Sets: X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy, etc.
+app.use(helmet({
+  // CSP is kept permissive here because xterm.js needs inline styles;
+  // tighten this when you have a complete nonce-based CSP.
+  contentSecurityPolicy: false,
+}));
+// Remove server fingerprint
+app.disable('x-powered-by');
+
 app.use(express.json({ limit: '150kb' }));
 
-// CORS — only allow requests from trusted origins
+// CORS — only allow requests from explicitly listed trusted origins
 // Requests from any other origin get no CORS headers → browser blocks them.
+const RENDER_ORIGIN_RE = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
 app.use((req, res, next) => {
   const origin = req.headers.origin || '';
-  const isAllowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes('onrender.com');
+  const isAllowed = ALLOWED_ORIGINS.some(o => origin === o)
+                 || RENDER_ORIGIN_RE.test(origin);
 
   if (isAllowed) {
     res.setHeader('Access-Control-Allow-Origin',  origin); // reflect exact origin (not *)
@@ -107,21 +125,51 @@ app.use((req, res, next) => {
   next();
 });
 
-// ── Rate limiter ─────────────────────────────────────────────────────────────
-const limiter = rateLimit({
-  windowMs:         60 * 1000,
-  max:              30,
-  standardHeaders:  true,
-  legacyHeaders:    false,
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+// General API limiter — applied to all /api/* routes
+const apiLimiter = rateLimit({
+  windowMs:        60 * 1000,
+  max:             60,
+  standardHeaders: true,
+  legacyHeaders:   false,
   message: { error: 'Too many requests', message: 'Please wait a minute.' },
 });
-app.use('/api/compile', limiter);
+
+// Stricter limiter for the compile endpoint (spins up Docker containers)
+const compileLimiter = rateLimit({
+  windowMs:        60 * 1000,
+  max:             30,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message: { error: 'Too many requests', message: 'Please wait a minute.' },
+});
+
+// Very strict limiter for the AI endpoint (costs real money per call)
+const aiLimiter = rateLimit({
+  windowMs:        60 * 1000,
+  max:             20,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message: { error: 'Too many AI requests', message: 'Please wait a minute before trying again.' },
+});
+
+// Admin endpoints — low limit, any abuse is suspicious
+const adminLimiter = rateLimit({
+  windowMs:        60 * 1000,
+  max:             15,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message: { error: 'Too many admin requests' },
+});
+
+// Apply the general limiter to all /api/* routes
+app.use('/api/', apiLimiter);
 
 // ── AI proxy endpoint ─────────────────────────────────────────────────────────
 // Calls Groq (or Z.AI) from the server so the API key stays off the frontend bundle.
 // Supports up to 3 API keys with automatic fallback when one hits a rate limit.
 // 🔒 PROTECTED: Requires a valid Supabase JWT (logged-in user) + allowed origin.
-app.post('/api/ai', async (req, res) => {
+app.post('/api/ai', aiLimiter, async (req, res) => {
   // ── 1. Origin check ──────────────────────────────────────────────────────
   const origin = req.headers.origin || '';
   const isAllowedOrigin = !origin || ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes('onrender.com');
@@ -182,13 +230,14 @@ app.post('/api/ai', async (req, res) => {
     });
   }
 
-  // Build the key rotation pool — filter out empty / placeholder values
-  const PLACEHOLDER = 'your_second_api_key_here';
+  // Build the key rotation pool — filter out empty / placeholder values.
+  // IMPORTANT: only use server-side keys (no VITE_ prefix — those would bake into the bundle).
+  const PLACEHOLDER_FRAGMENTS = ['your_', 'REPLACE_WITH', 'your_second_api_key_here'];
   const allKeys = [
-    process.env.GROQ_API_KEY   || process.env.VITE_GROQ_API_KEY,
+    process.env.GROQ_API_KEY,
     process.env.GROQ_API_KEY_2,
     process.env.GROQ_API_KEY_3,
-  ].filter((k) => k && k.trim() && !k.startsWith(PLACEHOLDER) && !k.includes('your_'));
+  ].filter((k) => k && k.trim() && !PLACEHOLDER_FRAGMENTS.some(p => k.includes(p)));
 
   if (allKeys.length === 0) {
     return res.status(503).json({ error: 'AI service not configured (no valid GROQ_API_KEY found)' });
@@ -286,11 +335,22 @@ app.post('/api/ai', async (req, res) => {
 });
 
 
+// ── Admin: is-admin check ──────────────────────────────────────────────────
+// Returns { isAdmin: true } if the JWT belongs to an admin, { isAdmin: false } otherwise.
+// The frontend uses this to conditionally show the Admin button — no emails in the bundle.
+app.get('/api/admin/is-admin', adminLimiter, async (req, res) => {
+  const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+  if (!token) return res.json({ isAdmin: false });
+  const supabaseUser = await verifySupabaseToken(token);
+  if (!supabaseUser?.email) return res.json({ isAdmin: false });
+  return res.json({ isAdmin: ADMIN_EMAILS.includes(supabaseUser.email) });
+});
+
 // ── Admin analytics endpoint ───────────────────────────────────────────────
 // Returns ALL rows from user_analytics.
 // Protected: only the verified admin email can call this.
 // Uses the service role key (server-side only) to bypass RLS.
-app.get('/api/admin/analytics', async (req, res) => {
+app.get('/api/admin/analytics', adminLimiter, async (req, res) => {
   // 1. Origin check
   const origin = req.headers.origin || '';
   const isAllowedOrigin = !origin || ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes('onrender.com');
@@ -356,7 +416,19 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ── POST /api/compile  (legacy batch mode) ────────────────────────────────────
-app.post('/api/compile', async (req, res) => {
+// 🔒 PROTECTED: Requires a valid Supabase JWT — unauthenticated users cannot run code.
+app.post('/api/compile', compileLimiter, async (req, res) => {
+  // Auth check — must be a logged-in user
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: Please log in to compile code.' });
+  }
+  const compileUser = await verifySupabaseToken(token);
+  if (!compileUser?.id) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or expired session. Please log in again.' });
+  }
+
   const { code = '', stdin = '' } = req.body ?? {};
 
   if (typeof code !== 'string' || !code.trim()) {
@@ -396,19 +468,32 @@ const distDir = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(distDir)) {
   app.use(express.static(distDir));
 
-  // Clean /app route serves the React editor
-  app.get('/app', (req, res) => {
+  // /app route serves the React editor — requires a valid Supabase JWT cookie/header.
+  // This is a defence-in-depth guard; the React app also redirects to /login.html.
+  app.get('/app', async (req, res) => {
+    // Accept token from Authorization header OR from ?token= query param
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7).trim()
+      : (req.query.token || '');
+
+    const appUser = token ? await verifySupabaseToken(token) : null;
+    if (!appUser?.id) {
+      // Not authenticated — redirect to login
+      return res.redirect('/login.html');
+    }
     res.sendFile(path.join(distDir, 'app.html'));
   });
 
   // Root and any other non-API route serves the landing page
   app.get('*', (req, res) => {
+    // Prevent 404 error message from reflecting the raw request path
     res.sendFile(path.join(distDir, 'index.html'));
   });
 } else {
   // Dev fallback — Vite handles the frontend
   app.use((req, res) => {
-    res.status(404).json({ error: `No route: ${req.method} ${req.path}` });
+    res.status(404).json({ error: 'Route not found' });
   });
 }
 

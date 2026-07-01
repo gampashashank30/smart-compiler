@@ -236,9 +236,29 @@ function buildRunArgs(mountPath, runId) {
   return args;
 }
 
-// ── Attach WebSocket server ───────────────────────────────────────────────────
+// ── Attach WebSocket server ──────────────────────────────────────────────────
 function attachWebSocketServer(httpServer) {
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws/run' });
+  // Validate the JWT during the HTTP upgrade handshake — before the WS is established.
+  // The client sends the token as ?token=<jwt> in the WS URL query string.
+  const wss = new WebSocketServer({
+    server: httpServer,
+    path: '/ws/run',
+    verifyClient: async ({ req }, done) => {
+      try {
+        const url = new URL(req.url, 'http://localhost');
+        const token = url.searchParams.get('token') || '';
+        const user  = await verifySupabaseToken(token);
+        if (!user?.id) {
+          return done(false, 401, 'Unauthorized: Please log in to use the interactive terminal.');
+        }
+        // Attach user to the request so the connection handler can read it
+        req._wsUser = user;
+        done(true);
+      } catch {
+        done(false, 500, 'Internal error during authentication');
+      }
+    },
+  });
 
   wss.on('connection', (ws, req) => {
     // ── Per-IP rate limiting ────────────────────────────────────────────────────
@@ -337,15 +357,16 @@ function attachWebSocketServer(httpServer) {
         return;
       }
 
-      // ── run: compile then execute ────────────────────────────────────────────────
+      // ── run: compile then execute ───────────────────────────────────────────────────────────────
       if (msg.type !== 'run') return;
 
-      const { code, token } = msg;
+      const { code } = msg;
       cols = Math.max(10, msg.cols || 80);
       rows = Math.max(4,  msg.rows || 24);
 
-      // ── JWT verification — reject unauthenticated users before touching Docker ──
-      const wsUser = await verifySupabaseToken(token);
+      // User was already verified by verifyClient during the upgrade handshake.
+      // We read the pre-verified user from the request object.
+      const wsUser = req._wsUser;
       if (!wsUser?.id) {
         send({ type: 'error', data: 'Unauthorized: Please log in to compile and run code.' });
         cleanup();

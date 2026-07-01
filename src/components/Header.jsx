@@ -13,11 +13,6 @@ import styles from './Header.module.css';
  *   onBugTrackerToggle — called when the Bug Tracker button is clicked
  *   bugTrackerErrorCount — number to show in the red badge (0 = hide badge)
  */
-const ADMIN_EMAILS = [
-  'gampashashank30@gmail.com',
-  'maadiotsolutions@gmail.com',
-  'ceo@greenguardai-fw.biz'
-];
 
 export default function Header({
   onBugTrackerToggle,
@@ -30,6 +25,7 @@ export default function Header({
   aiTutorOpen = false,
   onAdminToggle,
   adminDashboardOpen = false,
+  isAdmin = false,        // ← resolved server-side via /api/admin/is-admin
   user = null,
   onSignIn,
   onSignOut
@@ -99,8 +95,8 @@ export default function Header({
       {/* ── RIGHT: AI Tutor + Analytics + History + Bug Tracker buttons ──── */}
       <div className={styles.rightSection}>
 
-        {/* Admin Dashboard button — only visible to admin */}
-        {ADMIN_EMAILS.includes(user?.email) && (
+        {/* Admin Dashboard button — only visible to admin (resolved server-side) */}
+        {isAdmin && (
           <button
             id="admin-dashboard-btn"
             className={`${styles.aiTutorBtn} ${adminDashboardOpen ? styles.aiTutorBtnActive : ''}`}

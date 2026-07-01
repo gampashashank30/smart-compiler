@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient.js';
 import styles from './AdminDashboard.module.css';
 
-const ADMIN_EMAILS = [
-  'gampashashank30@gmail.com',
-  'maadiotsolutions@gmail.com',
-  'ceo@greenguardai-fw.biz'
-];
+// Admin access is enforced server-side in /api/admin/analytics.
+// No admin email list is kept here — that would expose identities in the JS bundle.
 
 // Donut chart using SVG — no external lib needed
 function DonutChart({ data }) {

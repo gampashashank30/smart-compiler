@@ -18,13 +18,18 @@ import { readUploadedFile } from './fileUploader.js';
 import { useAuth } from './useAuth.js';
 import { analyticsStore } from './analytics.js';
 import { sanitizeAiCode } from './aiCodeUtils.js';
+import { supabase } from './supabaseClient.js';
 import styles from './App.module.css';
 
-// WebSocket URL — Vite proxies /ws → ws://localhost:3001 in dev
-const WS_URL = (() => {
+// Build the WebSocket URL with the current Supabase JWT as a ?token= query param.
+// This is called right before connecting so the token is always fresh.
+async function buildWsUrl() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token || '';
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${proto}//${window.location.host}/ws/run`;
-})();
+  const base  = `${proto}//${window.location.host}/ws/run`;
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
+}
 
 // Minimum confidence (0-100) required before we show the popup
 const DETECT_CONFIDENCE_THRESHOLD = 28;
@@ -101,6 +106,22 @@ export default function App() {
   const handleAdminToggle = useCallback(() => {
     setAdminDashboardOpen(prev => !prev);
   }, []);
+
+  // ── Is-admin check (server-side, no emails in frontend bundle) ──────────
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const token = session?.access_token;
+      if (!token) return;
+      fetch('/api/admin/is-admin', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+        .then(r => r.ok ? r.json() : { isAdmin: false })
+        .then(data => setIsAdmin(!!data.isAdmin))
+        .catch(() => setIsAdmin(false));
+    });
+  }, [user]);
 
   // Listen for bugtracker:record events dispatched by TerminalPane
   useEffect(() => {
@@ -313,7 +334,7 @@ export default function App() {
     // Skip if user already dismissed for this exact code ("Keep as C")
     if (dismissedCodeRef.current === code) {
       setActiveTab('terminal');
-      terminalRef.current?.connect(WS_URL, code);
+      buildWsUrl().then(wsUrl => terminalRef.current?.connect(wsUrl, code));
       analyticsStore.recordRun();
       return;
     }
@@ -333,8 +354,10 @@ export default function App() {
     // Switch to terminal tab
     setActiveTab('terminal');
 
-    // Connect terminal to WebSocket
-    terminalRef.current?.connect(WS_URL, code);
+    // Build WS URL with JWT token, then connect
+    buildWsUrl().then(wsUrl => {
+      terminalRef.current?.connect(wsUrl, code);
+    });
     analyticsStore.recordRun();
   }, [code, runStatus]);
 
@@ -413,6 +436,7 @@ export default function App() {
         aiTutorOpen={aiTutorOpen}
         onAdminToggle={handleAdminToggle}
         adminDashboardOpen={adminDashboardOpen}
+        isAdmin={isAdmin}
         user={user}
         onSignIn={signInWithGoogle}
         onSignOut={signOut}
