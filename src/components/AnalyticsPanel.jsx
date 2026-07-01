@@ -864,7 +864,11 @@ function CloudProfile({ stats }) {
     <div className={styles.cloudCard}>
       <div className={styles.cloudHeader}>
         <div className={styles.cloudUser}>
-          <span className={styles.cloudUserIcon}>☁️</span>
+          <span className={styles.cloudUserIcon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+            </svg>
+          </span>
           <div className={styles.cloudUserInfo}>
             <div className={styles.cloudEmail}>{stats.email}</div>
             <div className={styles.cloudSyncStatus}>Connected &amp; Synced ✓</div>
