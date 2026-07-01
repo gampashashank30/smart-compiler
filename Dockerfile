@@ -4,7 +4,7 @@
 # ─────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS builder
 
-# Install build tools needed for native addons (node-pty)
+# Install build tools needed for native addons
 RUN apt-get update && apt-get install -y \
     build-essential \
     python3 \
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /build
 
-# Accept Supabase config as Docker build args
+# Accept Supabase config as Docker build args (set in Render → Docker Build Arguments)
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
@@ -21,11 +21,12 @@ ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 # Copy root package files first (better layer caching)
 COPY package*.json ./
 
-# Install root deps (Vite, React, etc.)
-RUN npm ci --omit=dev || npm install
+# Install ALL deps including devDependencies — Vite + plugins are devDeps
+# and are needed to run `npm run build`
+RUN npm install
 
-# Copy only what Vite needs to build — no server code, no scratch files
-COPY index.html app.html login.html vite.config.js ./
+# Copy everything Vite needs to build the frontend
+COPY index.html app.html login.html vite.config.js eslint.config.js ./
 COPY public/ ./public/
 COPY src/ ./src/
 
@@ -34,8 +35,8 @@ RUN npm run build
 
 # ─────────────────────────────────────────────────────────────────
 # Stage 2: RUNTIME — lean production image
-# Contains ONLY: built dist/, server/, and server node_modules.
-# Source code, configs, test files, .git, scratch — NONE of it.
+# Contains ONLY: built dist/ + server/ + server node_modules.
+# Source code, dev configs, test files, .git — NONE of it.
 # ─────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS runtime
 
@@ -47,13 +48,14 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy only the compiled frontend from the builder stage
+# Copy only the compiled frontend from the builder stage (not source!)
 COPY --from=builder /build/dist ./dist
 
-# Copy only the server source (no root configs, no src/, no scratch/)
+# Copy server package files and install server dependencies
 COPY server/package*.json ./server/
-RUN cd server && npm ci --omit=dev || npm install
+RUN cd server && npm install
 
+# Copy server source code
 COPY server/ ./server/
 
 # Expose port — Render sets PORT env variable automatically
