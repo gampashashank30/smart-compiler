@@ -100,7 +100,7 @@ async function runWithDocker(code, stdin) {
       tmpDir,
       [
         'sh', '-c',
-        'gcc /sandbox/main.c -Wall -Wextra -o /sandbox/prog 2>&1; echo "::EXIT::$?"'
+        'gcc /sandbox/main.c -Wall -Wextra -O3 -o /sandbox/prog 2>&1; echo "::EXIT::$?"'
       ],
       '',              // no stdin for compilation
       COMPILE_TIMEOUT
@@ -250,7 +250,7 @@ async function runWithWandbox(code, stdin) {
     compiler: WANDBOX_COMPILER,
     code,
     stdin:   stdin || '',
-    options: '-Wall -Wextra',
+    options: 'warning,optimize',
   };
 
   let data;
@@ -358,7 +358,7 @@ async function runWithLocalGcc(code, stdin) {
     let compileExitCode = 0;
     try {
       const cleanEnv = getCleanEnv();
-      const { stdout, stderr } = await execFileAsync('gcc', [srcFile, '-Wall', '-Wextra', '-o', exeFile], { timeout: COMPILE_TIMEOUT, env: cleanEnv });
+      const { stdout, stderr } = await execFileAsync('gcc', [srcFile, '-Wall', '-Wextra', '-O3', '-o', exeFile], { timeout: COMPILE_TIMEOUT, env: cleanEnv });
       compileOut = (stdout || '') + (stderr || '');
     } catch (err) {
       compileExitCode = err.code || 1;

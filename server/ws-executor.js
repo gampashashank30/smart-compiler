@@ -385,7 +385,7 @@ function attachWebSocketServer(httpServer) {
 
           await new Promise((resolve) => {
             const cleanEnv = getCleanEnv();
-            compileProc = spawn('gcc', [srcFile, '-Wall', '-Wextra', '-D__USE_MINGW_ANSI_STDIO', '-o', exeFile], { stdio: ['ignore', 'pipe', 'pipe'], env: cleanEnv });
+            compileProc = spawn('gcc', [srcFile, '-Wall', '-Wextra', '-O3', '-D__USE_MINGW_ANSI_STDIO', '-o', exeFile], { stdio: ['ignore', 'pipe', 'pipe'], env: cleanEnv });
             compileProc.stdout.on('data', d => { compileOut += d.toString(); });
             compileProc.stderr.on('data', d => { compileOut += d.toString(); });
             const t = setTimeout(() => { if (compileProc) compileProc.kill(); compileTimeout = true; resolve(); }, COMPILE_TIMEOUT);
@@ -513,7 +513,7 @@ function attachWebSocketServer(httpServer) {
         DOCKER_IMAGE,
         'sh', '-c',
         // Compile, capture all output (stdout + stderr merged), print exit code
-        'gcc /sandbox/main.c -Wall -Wextra -D__USE_MINGW_ANSI_STDIO -o /sandbox/prog 2>&1; echo "::CEXIT::$?"',
+        'gcc /sandbox/main.c -Wall -Wextra -O3 -D__USE_MINGW_ANSI_STDIO -o /sandbox/prog 2>&1; echo "::CEXIT::$?"',
       ];
 
       let compileOut     = '';
@@ -655,7 +655,7 @@ async function runWithWandbox(code, send) {
     compiler: WANDBOX_COMPILER,
     code,        // send original code — Wandbox doesn't need our setvbuf wrapper
     stdin:   '',
-    options: '-Wall -Wextra',
+    options: 'warning,optimize',
   });
 
   return new Promise((resolve) => {
