@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────
+# .dockerignore — Exclude files from Docker build context
+#
+# This is CRITICAL for security: prevents source code, secrets,
+# test files, and dev configs from being copied into the image.
+# ─────────────────────────────────────────────────────────────────
+
+# Git history — never needed in Docker
+.git
+.gitignore
+
+# Environment files — secrets must come from runtime env vars, not baked in
+.env
+.env.*
+!.env.example
+
+# Source code — only dist/ lands in the runtime image (multi-stage build)
+# src/ is used in the builder stage but stays in that intermediate layer
+# We DO need src/ in builder — so we only exclude it from the context if desired.
+# Since we use multi-stage, the runtime stage never sees src/ anyway.
+
+# Scratch and test files — never needed in production
+scratch/
+test_*.mjs
+test_*.js
+*.test.js
+*.spec.js
+
+# Database migration scripts — sensitive schema info
+*.sql
+
+# Dev configs — not needed in container
+eslint.config.js
+vite.config.js
+README.md
+*.md
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Node modules — reinstalled inside container
+node_modules/
+server/node_modules/
+
+# Built output at root level (if it exists locally)
+dist/
+dist-ssr/
+
+# Logs
+*.log
+logs/
+
+# Agent scratch directories
+.agents/

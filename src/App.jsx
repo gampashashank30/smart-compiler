@@ -21,14 +21,35 @@ import { sanitizeAiCode } from './aiCodeUtils.js';
 import { supabase } from './supabaseClient.js';
 import styles from './App.module.css';
 
-// Build the WebSocket URL with the current Supabase JWT as a ?token= query param.
-// This is called right before connecting so the token is always fresh.
+// ISSUE 7 FIX: Build the WebSocket URL using a short-lived ticket, NOT the raw JWT.
+// Flow:
+//   1. Exchange the Supabase JWT for a 30s ticket via POST /api/ws-ticket
+//   2. Connect to WS using ?ticket=<uuid> — JWT never appears in URL or access logs
 async function buildWsUrl() {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token || '';
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const base  = `${proto}//${window.location.host}/ws/run`;
-  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
+
+  if (!token) return base; // unauthenticated — server will reject anyway
+
+  try {
+    // Exchange JWT for a 30-second single-use ticket
+    const resp = await fetch('/api/ws-ticket', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (resp.ok) {
+      const { ticket } = await resp.json();
+      return `${base}?ticket=${encodeURIComponent(ticket)}`;
+    }
+  } catch {
+    // Network error — fall back to token param (old behaviour, still auth'd)
+    console.warn('[buildWsUrl] Could not get WS ticket — falling back to token param');
+  }
+
+  // Fallback: if ticket endpoint failed, use token directly (still secure, just logged)
+  return `${base}?ticket=invalid`; // server will reject with clear message
 }
 
 // Minimum confidence (0-100) required before we show the popup

@@ -51,27 +51,11 @@ try {
   console.warn('[ws-executor]   Run: cd server && npm install node-pty');
 }
 
+// ISSUE 7 FIX: Accept short-lived tickets from /api/ws-ticket instead of raw JWTs.
+// Shared module avoids circular dependency with index.js.
+const { WS_TICKETS } = require('./ws-tickets');
+
 const execFileAsync = promisify(execFile);
-
-// ── Supabase JWT verification ─────────────────────────────────────────────────────────────────
-const SUPABASE_URL      = process.env.VITE_SUPABASE_URL      || '';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
-
-async function verifySupabaseToken(token) {
-  if (!token) return null;
-  try {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'apikey': SUPABASE_ANON_KEY,
-      },
-    });
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
-  }
-}
 
 // ── Per-IP WebSocket rate limiting ─────────────────────────────────────────────────────────
 const WS_CONNECTIONS_PER_IP = new Map(); // ip → count
@@ -236,23 +220,41 @@ function buildRunArgs(mountPath, runId) {
   return args;
 }
 
-// ── Attach WebSocket server ──────────────────────────────────────────────────
+// ── Attach WebSocket server ────────────────────────────────────────────────────────
 function attachWebSocketServer(httpServer) {
-  // Validate the JWT during the HTTP upgrade handshake — before the WS is established.
-  // The client sends the token as ?token=<jwt> in the WS URL query string.
+  // ISSUE 7 FIX: Validate a short-lived ticket (not the raw JWT) during upgrade.
+  // Client flow:
+  //   1. POST /api/ws-ticket  (with Authorization: Bearer <jwt>)  → { ticket }
+  //   2. Connect to ws://host/ws/run?ticket=<ticket>
+  // The ticket is a random UUID, valid for 30 s and consumed on first use.
+  // The full JWT never appears in the WS URL, access logs, or browser history.
   const wss = new WebSocketServer({
     server: httpServer,
     path: '/ws/run',
     verifyClient: async ({ req }, done) => {
       try {
-        const url = new URL(req.url, 'http://localhost');
-        const token = url.searchParams.get('token') || '';
-        const user  = await verifySupabaseToken(token);
-        if (!user?.id) {
-          return done(false, 401, 'Unauthorized: Please log in to use the interactive terminal.');
+        const url    = new URL(req.url, 'http://localhost');
+        const ticket = url.searchParams.get('ticket') || '';
+
+        if (!ticket) {
+          return done(false, 401, 'Unauthorized: No ticket provided. Call POST /api/ws-ticket first.');
         }
-        // Attach user to the request so the connection handler can read it
-        req._wsUser = user;
+
+        // Look up the ticket (single-use — consumed immediately on connection)
+        const ticketData = WS_TICKETS ? WS_TICKETS.get(ticket) : null;
+        if (!ticketData) {
+          return done(false, 401, 'Unauthorized: Invalid or expired ticket. Please reconnect.');
+        }
+        if (ticketData.expiresAt < Date.now()) {
+          WS_TICKETS.delete(ticket);
+          return done(false, 401, 'Unauthorized: Ticket expired. Please reconnect.');
+        }
+
+        // Consume the ticket (single-use — prevents replay attacks)
+        WS_TICKETS.delete(ticket);
+
+        // Attach the user info (from ticket) to the request
+        req._wsUser = { id: ticketData.userId, email: ticketData.userEmail };
         done(true);
       } catch {
         done(false, 500, 'Internal error during authentication');

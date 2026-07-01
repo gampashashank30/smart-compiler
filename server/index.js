@@ -16,6 +16,7 @@
 const http           = require('http');
 const path           = require('path');
 const fs             = require('fs');
+const { randomUUID } = require('crypto');
 
 // Load root .env for local dev (no-op on Render where env vars come from the dashboard)
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
@@ -25,6 +26,8 @@ const helmet         = require('helmet');
 const rateLimit      = require('express-rate-limit');
 const { execute, isDockerReady, isLocalGccReady, resetDockerCache } = require('./executor');
 const { attachWebSocketServer } = require('./ws-executor');
+// ISSUE 7 FIX: Shared ticket store — no circular dependency
+const { WS_TICKETS } = require('./ws-tickets');
 
 // ── p-queue: ESM-only package, so we load it dynamically ────────────────────
 let queue;
@@ -44,6 +47,7 @@ const QUEUE_MAX_SIZE = 200;
 const SUPABASE_URL         = process.env.VITE_SUPABASE_URL      || '';
 const SUPABASE_ANON_KEY    = process.env.VITE_SUPABASE_ANON_KEY || '';
 // Service role key bypasses RLS — only used server-side, NEVER sent to the frontend
+// ISSUE 9 FIX: standardized to SUPABASE_SERVICE_KEY (was SUPABASE_SERVICE_KEY, .env.example had SUPABASE_SECRET_KEY)
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY   || '';
 
 // Crash fast at startup if critical env vars are missing (rather than silently using bad values)
@@ -53,11 +57,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   process.exit(1);
 }
 
-const ADMIN_EMAILS = [
-  'gampashashank30@gmail.com',
-  'maadiotsolutions@gmail.com',
-  'ceo@greenguardai-fw.biz'
-];
+// ISSUE 5 FIX: Admin emails read from environment variable, NOT hardcoded in source.
+// Set ADMIN_EMAILS=email1,email2,email3 in Render → Environment Variables.
+// Falls back to empty list (no admins) if not set — this is safe: no one gets admin access.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
 
 // Allowed origins — requests from other origins are rejected
 const ALLOWED_ORIGINS = [
@@ -94,14 +100,62 @@ const app = express();
 app.set('trust proxy', 1);
 
 // ── Security headers via Helmet ───────────────────────────────────────────────
-// Sets: X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy, etc.
+// ISSUE 4 FIX: Proper CSP — no longer disabled.
+// ISSUE 8 FIX: Added Permissions-Policy and other headers.
 app.use(helmet({
-  // CSP is kept permissive here because xterm.js needs inline styles;
-  // tighten this when you have a complete nonce-based CSP.
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:     ["'self'"],
+      scriptSrc:      ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
+      styleSrc:       ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
+      fontSrc:        ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
+      imgSrc:         ["'self'", "data:", "blob:", "https:"],
+      connectSrc:     [
+        "'self'",
+        // Supabase — auth, DB, storage
+        SUPABASE_URL || 'https://*.supabase.co',
+        // Groq / Z.AI — AI completions (server-side proxied, but keep for fetch)
+        "https://api.groq.com",
+        "https://api.z.ai",
+        // WebSocket — interactive terminal
+        "ws://localhost:3001",
+        "wss://smartcompiler.maadiotsolutions.co.in",
+      ],
+      frameSrc:       ["'none'"],
+      objectSrc:      ["'none'"],
+      baseUri:        ["'self'"],
+      formAction:     ["'self'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  // HSTS — 1 year, include subdomains
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  // Prevent clickjacking
+  frameguard: { action: 'deny' },
+  // Prevent MIME-type sniffing
+  noSniff: true,
+  // Referrer policy
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  // Cross-origin policies
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginResourcePolicy: { policy: 'same-origin' },
 }));
+
 // Remove server fingerprint
 app.disable('x-powered-by');
+
+// ISSUE 8 FIX: Permissions-Policy — disable browser features the app never uses
+app.use((req, res, next) => {
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()'
+  );
+  next();
+});
 
 app.use(express.json({ limit: '150kb' }));
 
@@ -408,10 +462,28 @@ app.get('/api/admin/analytics', adminLimiter, async (req, res) => {
 });
 
 // ── Health endpoint ───────────────────────────────────────────────────────────
+// ISSUE 6 FIX: Public callers only get { ok: true }.
+// Full diagnostics (engine, queue, uptime) are only returned to verified admins.
 app.get('/api/health', async (req, res) => {
-  const docker = await isDockerReady();
+  // Check if the caller is a verified admin
+  const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+  let isAdmin = false;
+  if (token) {
+    const u = await verifySupabaseToken(token);
+    if (u?.email && ADMIN_EMAILS.includes(u.email.toLowerCase())) {
+      isAdmin = true;
+    }
+  }
+
+  if (!isAdmin) {
+    // Minimal public response — no internal architecture info
+    return res.json({ ok: true });
+  }
+
+  // Full diagnostics for admins only
+  const docker   = await isDockerReady();
   const localGcc = await isLocalGccReady();
-  res.json({
+  return res.json({
     ok:     true,
     docker,
     localGcc,
@@ -420,6 +492,26 @@ app.get('/api/health', async (req, res) => {
     uptime: Math.round(process.uptime()),
   });
 });
+
+// ── WebSocket ticket endpoint (ISSUE 7 FIX) ────────────────────────────────────
+// Exchange a valid Supabase JWT for a short-lived (30s) single-use WS ticket.
+// The client uses the ticket ID in the WS URL instead of the full JWT,
+// so the JWT never appears in server access logs or browser history.
+app.post('/api/ws-ticket', apiLimiter, async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  const user = await verifySupabaseToken(token);
+  if (!user?.id) return res.status(401).json({ error: 'Invalid or expired session' });
+
+  const ticketId  = randomUUID();
+  const expiresAt = Date.now() + 30_000; // 30 seconds
+  WS_TICKETS.set(ticketId, { userId: user.id, userEmail: user.email, expiresAt });
+
+  return res.json({ ticket: ticketId, expiresIn: 30 });
+});
+
 
 // ── POST /api/compile  (legacy batch mode) ────────────────────────────────────
 // 🔒 PROTECTED: Requires a valid Supabase JWT — unauthenticated users cannot run code.
