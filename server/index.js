@@ -217,8 +217,13 @@ app.post('/api/ai', async (req, res) => {
       if (isZai) {
         payload.thinking = { type: 'disabled' };
       } else {
-        // Enforce JSON mode for Groq models when systemPrompt contains "JSON"
-        if (systemPrompt.toLowerCase().includes('json')) {
+        // Enforce JSON mode for Groq models when systemPrompt contains "JSON".
+        // IMPORTANT: json_object mode requires the top-level response to be an object {}.
+        // If the prompt asks for a JSON array [...], do NOT enable json_object mode —
+        // Groq will wrap the array in an object or fail, causing a blank/broken response.
+        const promptLower = systemPrompt.toLowerCase();
+        const wantsJsonObject = promptLower.includes('json') && !promptLower.includes('json array');
+        if (wantsJsonObject) {
           payload.response_format = { type: 'json_object' };
         }
       }

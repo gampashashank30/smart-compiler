@@ -257,7 +257,21 @@ export default function AIExplanationTab({ code, onApplyFix }) {
       // Prepend line numbers so the AI sees exact line positions
       const numberedCode = code.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n');
       const raw    = await callClaude(ANALYSIS_SYSTEM_PROMPT, 'Code:\n' + numberedCode);
-      const parsed = parseJSON(raw);
+      let parsed = parseJSON(raw);
+      // Defensive: the AI should return an array. If it returned a wrapped object
+      // (e.g. { issues: [...] }) due to json_object mode, auto-unwrap it.
+      if (parsed && !Array.isArray(parsed)) {
+        const keys = Object.keys(parsed);
+        const firstArray = keys.find(k => Array.isArray(parsed[k]));
+        if (firstArray) {
+          parsed = parsed[firstArray];
+        } else {
+          throw new Error('AI returned an unexpected format. Please try again.');
+        }
+      }
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error('AI returned an empty or invalid response. Please try again.');
+      }
       setIssues(parsed);
     } catch (err) {
       console.error('Analysis error:', err);
