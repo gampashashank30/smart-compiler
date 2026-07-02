@@ -43,47 +43,88 @@ export const analyticsStore = {
     }
 
     try {
-      // Check if user has an analytics row
+      // Check if user has an analytics row and join the user_stats table
       let { data, error } = await supabase
         .from('user_analytics')
-        .select('*')
+        .select('*, user_stats(*)')
         .eq('id', currentUserId)
         .maybeSingle();
 
       if (error) throw error;
 
+      let statsData = null;
+
       if (!data) {
-        // If row doesn't exist (e.g. trigger failed or delay), create it manually
-        const newRow = {
+        // If row doesn't exist in user_analytics, create both manually
+        const newAnalyticsRow = {
           id: currentUserId,
           email: user.email,
+          last_activity_date: null
+        };
+        
+        const { data: insertedAnalytics, error: insertAnalyticsError } = await supabase
+          .from('user_analytics')
+          .insert(newAnalyticsRow)
+          .select()
+          .single();
+
+        if (insertAnalyticsError) throw insertAnalyticsError;
+        data = insertedAnalytics;
+
+        const newStatsRow = {
+          id: currentUserId,
           total_runs: 0,
           ai_tokens_used: 0,
           time_spent: 0,
           error_counts: 0,
-          current_streak: 0,
-          last_activity_date: null
+          token_limit: 15000,
+          current_streak: 0
         };
-        
-        const { data: inserted, error: insertError } = await supabase
-          .from('user_analytics')
-          .insert(newRow)
+
+        const { data: insertedStats, error: insertStatsError } = await supabase
+          .from('user_stats')
+          .insert(newStatsRow)
           .select()
           .single();
 
-        if (insertError) throw insertError;
-        data = inserted;
+        if (insertStatsError) throw insertStatsError;
+        statsData = insertedStats;
+      } else {
+        // user_analytics row exists, check if user_stats row exists (migration fallback)
+        const rawStats = Array.isArray(data.user_stats) ? data.user_stats[0] : data.user_stats;
+        if (!rawStats) {
+          const newStatsRow = {
+            id: currentUserId,
+            total_runs: 0,
+            ai_tokens_used: 0,
+            time_spent: 0,
+            error_counts: 0,
+            token_limit: 15000,
+            current_streak: 0
+          };
+
+          const { data: insertedStats, error: insertStatsError } = await supabase
+            .from('user_stats')
+            .insert(newStatsRow)
+            .select()
+            .single();
+
+          if (insertStatsError) throw insertStatsError;
+          statsData = insertedStats;
+        } else {
+          statsData = rawStats;
+        }
       }
 
-      // Sync local state with database record
+      // Sync local state with database records
       localStats = {
-        total_runs: data.total_runs ?? 0,
-        ai_tokens_used: data.ai_tokens_used ?? 0,
-        time_spent: data.time_spent ?? 0,
-        error_counts: data.error_counts ?? 0,
+        total_runs: statsData.total_runs ?? 0,
+        ai_tokens_used: statsData.ai_tokens_used ?? 0,
+        time_spent: statsData.time_spent ?? 0,
+        error_counts: statsData.error_counts ?? 0,
         email: data.email ?? user.email,
-        token_limit: data.token_limit ?? 15000,
-        current_streak: data.current_streak ?? 0,
+        token_limit: statsData.token_limit ?? 15000,
+        current_streak: statsData.current_streak ?? 0,
         last_activity_date: data.last_activity_date ?? null
       };
       
@@ -95,10 +136,18 @@ export const analyticsStore = {
       if (changed) {
         localStats.current_streak = newStreak;
         localStats.last_activity_date = newDate;
-        // Persist the updated streak to DB (fire-and-forget)
+        
+        // Persist updated last_activity_date and streak (fire-and-forget)
         supabase
           .from('user_analytics')
-          .update({ current_streak: newStreak, last_activity_date: newDate })
+          .update({ last_activity_date: newDate })
+          .eq('id', currentUserId)
+          .then(() => {})
+          .catch(err => console.error('[Analytics] Failed to persist login activity date:', err.message));
+
+        supabase
+          .from('user_stats')
+          .update({ current_streak: newStreak })
           .eq('id', currentUserId)
           .then(() => {})
           .catch(err => console.error('[Analytics] Failed to persist login streak:', err.message));
@@ -171,14 +220,21 @@ export const analyticsStore = {
 
     if (!supabase || !currentUserId) return;
     try {
-      await supabase
-        .from('user_analytics')
-        .update({
-          total_runs: localStats.total_runs,
-          current_streak: newStreak,
-          last_activity_date: newDate,
-        })
-        .eq('id', currentUserId);
+      await Promise.all([
+        supabase
+          .from('user_analytics')
+          .update({
+            last_activity_date: newDate,
+          })
+          .eq('id', currentUserId),
+        supabase
+          .from('user_stats')
+          .update({
+            total_runs: localStats.total_runs,
+            current_streak: newStreak,
+          })
+          .eq('id', currentUserId)
+      ]);
     } catch (err) {
       console.error('[Analytics] Failed to save run count and streak:', err.message);
     }
@@ -193,7 +249,7 @@ export const analyticsStore = {
     if (!supabase || !currentUserId) return;
     try {
       await supabase
-        .from('user_analytics')
+        .from('user_stats')
         .update({ error_counts: count })
         .eq('id', currentUserId);
     } catch (err) {
@@ -220,7 +276,7 @@ export const analyticsStore = {
 
     try {
       await supabase
-        .from('user_analytics')
+        .from('user_stats')
         .update({ time_spent: localStats.time_spent })
         .eq('id', currentUserId);
     } catch (err) {

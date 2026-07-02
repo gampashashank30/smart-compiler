@@ -260,8 +260,9 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
   let currentTokens = 0;
   let tokenLimit = 15000;
   try {
+    // Read stats from the new user_stats table
     const analyticsRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/user_analytics?id=eq.${supabaseUser.id}&select=ai_tokens_used,token_limit`,
+      `${SUPABASE_URL}/rest/v1/user_stats?id=eq.${supabaseUser.id}&select=ai_tokens_used,token_limit`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -356,9 +357,9 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
       const tokensUsed = data.usage?.total_tokens ?? 0;
       const newTotal = currentTokens + tokensUsed;
 
-      // Fire-and-forget Supabase update — don't delay the response
+      // Fire-and-forget Supabase update to user_stats table — don't delay the response
       fetch(
-        `${SUPABASE_URL}/rest/v1/user_analytics?id=eq.${supabaseUser.id}`,
+        `${SUPABASE_URL}/rest/v1/user_stats?id=eq.${supabaseUser.id}`,
         {
           method: 'PATCH',
           headers: {
@@ -436,8 +437,9 @@ app.get('/api/admin/analytics', adminLimiter, async (req, res) => {
   const apiKey = useServiceKey ? SUPABASE_SERVICE_KEY : SUPABASE_ANON_KEY;
 
   try {
+    // Query user_analytics and join user_stats
     const apiRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/user_analytics?select=*&order=total_runs.desc`,
+      `${SUPABASE_URL}/rest/v1/user_analytics?select=*,user_stats(*)`,
       {
         headers: {
           'Authorization': `Bearer ${bearerToken}`,
@@ -453,7 +455,20 @@ app.get('/api/admin/analytics', adminLimiter, async (req, res) => {
       return res.status(502).json({ error: 'DB fetch failed', detail: errText });
     }
 
-    const rows = await apiRes.json();
+    const rawRows = await apiRes.json();
+    // Flatten rows so the frontend AdminDashboard component receives the expected flat structure
+    const rows = rawRows.map(r => {
+      const stats = Array.isArray(r.user_stats) ? r.user_stats[0] : r.user_stats;
+      const { user_stats, ...userRest } = r;
+      return {
+        ...userRest,
+        ...(stats || {})
+      };
+    });
+
+    // Sort flattened rows by total_runs descending
+    rows.sort((a, b) => (b.total_runs || 0) - (a.total_runs || 0));
+
     return res.json({ rows });
   } catch (err) {
     console.error('[/api/admin/analytics] Error:', err.message);
