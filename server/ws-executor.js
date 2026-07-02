@@ -59,7 +59,7 @@ const execFileAsync = promisify(execFile);
 
 // ── Per-IP WebSocket rate limiting ─────────────────────────────────────────────────────────
 const WS_CONNECTIONS_PER_IP = new Map(); // ip → count
-const MAX_WS_PER_IP = 5; // max simultaneous WebSocket connections per IP
+const MAX_WS_PER_IP = 64; // max simultaneous WebSocket connections per IP
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const DOCKER_IMAGE    = 'gcc-runner:latest';
