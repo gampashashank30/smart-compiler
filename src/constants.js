@@ -50,6 +50,7 @@ Rules:
 - Translate faithfully, preserving logic and structure.
 - "c_code" must be a complete, runnable C program with all necessary #include directives and standard functions (no markdown fences).
 - Restructure OOP to procedural C with structs.
+- IMPORTANT: c_code is a JSON string value. Any backslash in C string literals (e.g. \\n in printf) must be written as \\\\n so it is valid JSON. For example: printf("Hello\\\\n") NOT printf("Hello\\n").
 - "notes" must have 2 to 4 concise, student-friendly explanation entries.
 Return ONLY this JSON (no markdown, no extra explanation):
 {
@@ -66,6 +67,7 @@ Return ONLY this JSON (no markdown fences, no text outside the JSON):
 }
 Rules:
 - corrected_code must be the full program. Do not include markdown code fences in corrected_code.
+- IMPORTANT: corrected_code is a JSON string value. Any backslash inside a C string literal (e.g. \\n in printf) must be written as \\\\n (double backslash) so it is valid JSON. For example: printf("Hello\\\\n") NOT printf("Hello\\n").
 - learning_notes must have 1 to 3 concise, one-sentence tips.`;
 
 // System prompt for AI Tutor Step 3 (Logic/Approach verification)
@@ -110,6 +112,7 @@ Rules:
 - "c_code" must be a complete, runnable C program with #includes and main() (no markdown fences, plain text only).
 - Preserves correct parts of the student's code.
 - Add brief inline comments (// ...) in the C code.
+- IMPORTANT: c_code is a JSON string value. Any backslash in C string literals (e.g. \\n in printf) must be written as \\\\n so it is valid JSON. For example: printf("Hello\\\\n") NOT printf("Hello\\n").
 - "steps" should be 2-4 short bullet points walking through the logic.
 Return ONLY this JSON (no markdown, no text outside JSON):
 {
