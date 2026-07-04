@@ -149,7 +149,7 @@ function extractCodeFromText(text, docType = 'document') {
       
       // const, let, var (JS/TS)
       if (/^\s*(const|let|var)\b/.test(trimmed)) {
-        if (/^\s*(const|let|var)\s+(?:\*+\s*)*[a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)*\s*(?:=|\s*;?)(?:\s*(?:\/\/|#).*|$)$/.test(trimmed)) return true;
+        if (/^\s*(const|let|var)\s+(?:\*+\s*)?[a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)*\s*(?:=|\s*;?)(?:\s*(?:\/\/|#).*|$)$/.test(trimmed)) return true;
       }
       
       // function (JS/TS)
@@ -214,7 +214,7 @@ function extractCodeFromText(text, docType = 'document') {
       
       // C type declarations
       if (/^\s*(void|int|float|double|char|struct|typedef|long|short|unsigned|signed|enum)\b/.test(trimmed)) {
-        if (/^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+(?:\*+\s*)*(?!means\b|is\b|stands\b|refers\b|speaking\b|monitors\b)[a-zA-Z_]\w*\s*(?:[=;(),]|$)/.test(trimmed)) return true;
+        if (/^\s*(int|void|char|float|double|long|short|unsigned|signed|struct|enum|typedef)\s+(?:\*+\s*)?(?!means\b|is\b|stands\b|refers\b|speaking\b|monitors\b)[a-zA-Z_]\w*\s*(?:[=;(),]|$)/.test(trimmed)) return true;
       }
       
       // Java public/private/protected/static modifiers

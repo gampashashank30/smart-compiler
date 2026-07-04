@@ -168,6 +168,10 @@ app.use((req, res, next) => {
                  || RENDER_ORIGIN_RE.test(origin);
 
   if (isAllowed) {
+    // SECURITY NOTE: CodeQL flags Allow-Credentials with reflected origin.
+    // This is safe here because the origin is validated against an explicit
+    // allowlist (ALLOWED_ORIGINS + Render subdomain regex) above — we never
+    // reflect an arbitrary origin. This is the recommended CORS pattern.
     res.setHeader('Access-Control-Allow-Origin',  origin); // reflect exact origin (not *)
     res.setHeader('Vary', 'Origin');                        // tells CDNs to cache per-origin
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
@@ -583,7 +587,7 @@ if (fs.existsSync(distDir)) {
 
   // /app route serves the React editor — requires a valid Supabase JWT cookie/header.
   // This is a defence-in-depth guard; the React app also redirects to /login.html.
-  app.get('/app', async (req, res) => {
+  app.get('/app', apiLimiter, async (req, res) => {
     // Accept token from Authorization header OR from ?token= query param
     const authHeader = req.headers.authorization || '';
     const token = authHeader.startsWith('Bearer ')
@@ -599,7 +603,7 @@ if (fs.existsSync(distDir)) {
   });
 
   // Root and any other non-API route serves the landing page
-  app.get('*', (req, res) => {
+  app.get('*', apiLimiter, (req, res) => {
     // Prevent 404 error message from reflecting the raw request path
     res.sendFile(path.join(distDir, 'index.html'));
   });
