@@ -24,6 +24,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const express        = require('express');
 const helmet         = require('helmet');
 const rateLimit      = require('express-rate-limit');
+const cors           = require('cors');
 const { execute, isDockerReady, isLocalGccReady, resetDockerCache } = require('./executor');
 const { attachWebSocketServer } = require('./ws-executor');
 // ISSUE 7 FIX: Shared ticket store — no circular dependency
@@ -160,28 +161,25 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '150kb' }));
 
 // CORS — only allow requests from explicitly listed trusted origins
-// Requests from any other origin get no CORS headers → browser blocks them.
 const RENDER_ORIGIN_RE = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
-app.use((req, res, next) => {
-  const origin = req.headers.origin || '';
-  const isAllowed = ALLOWED_ORIGINS.some(o => origin === o)
-                 || RENDER_ORIGIN_RE.test(origin);
-
-  if (isAllowed) {
-    // SECURITY NOTE: CodeQL flags Allow-Credentials with reflected origin.
-    // This is safe here because the origin is validated against an explicit
-    // allowlist (ALLOWED_ORIGINS + Render subdomain regex) above — we never
-    // reflect an arbitrary origin. This is the recommended CORS pattern.
-    res.setHeader('Access-Control-Allow-Origin',  origin); // reflect exact origin (not *)
-    res.setHeader('Vary', 'Origin');                        // tells CDNs to cache per-origin
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-  }
-
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-});
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+    const isAllowed = ALLOWED_ORIGINS.some(o => origin === o)
+                   || RENDER_ORIGIN_RE.test(origin);
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // ── Rate limiters ─────────────────────────────────────────────────────────────
 // General API limiter — applied to all /api/* routes
@@ -483,7 +481,7 @@ app.get('/api/admin/analytics', adminLimiter, async (req, res) => {
 // ── Health endpoint ───────────────────────────────────────────────────────────
 // ISSUE 6 FIX: Public callers only get { ok: true }.
 // Full diagnostics (engine, queue, uptime) are only returned to verified admins.
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', apiLimiter, async (req, res) => {
   // Check if the caller is a verified admin
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
   let isAdmin = false;
