@@ -46,6 +46,10 @@ RUN apt-get update && apt-get install -y \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a non-root user to run the application
+RUN groupadd --gid 1001 appuser && \
+    useradd --uid 1001 --gid appuser --shell /bin/bash --create-home appuser
+
 WORKDIR /app
 
 # Copy only the compiled frontend from the builder stage (not source!)
@@ -60,6 +64,13 @@ COPY server/ ./server/
 
 # Expose port — Render sets PORT env variable automatically
 EXPOSE 10000
+
+# Switch to non-root user before starting the server
+USER appuser
+
+# Health check — verifies the server is responsive every 30s
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 10000) + '/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 # Start the Express server (serves API + WebSocket + built React frontend)
 CMD ["node", "server/index.js"]

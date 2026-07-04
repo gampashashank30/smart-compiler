@@ -14,5 +14,9 @@ WORKDIR /sandbox
 # Switch to non-root user
 USER runner
 
+# Health check — verifies gcc is functional (this container is used as an executor, not an HTTP server)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD gcc --version > /dev/null 2>&1 || exit 1
+
 # Default command (overridden by docker run args)
 CMD ["/bin/sh"]
