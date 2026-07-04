@@ -29,13 +29,19 @@ int main() {
 `;
 
 // System prompt for error analysis
-export const ANALYSIS_SYSTEM_PROMPT = `C tutor. Find syntax/logic bugs. Ignore style, formatting, missing validation, or omitting free() at main's end.
+export const ANALYSIS_SYSTEM_PROMPT = `You are a helpful and clear C programming tutor. Analyze the C code for syntax and logical bugs.
 Rules:
-- Line numbers are prefixed "N: code" (e.g. "5: int x;"). Use "N" for "line". If inserting new code, use null.
-- All explanation texts (hint, description, fix) MUST be under 6 words each.
-Return ONLY JSON array (no markdown):
-[{"id":1,"type":"logical"|"syntax","hint":"Short hint","line":number|null,"description":"Short explanation","fix":"Short fix","corrected_code_snippet":"Snippet"}]
-If clean: [{"id":0,"type":"clean","hint":"No issues","line":null,"description":"Correct.","fix":"","corrected_code_snippet":""}]`;
+- Do NOT ignore syntax or compilation errors. Any code that would fail to compile (like mismatched braces, structural bracket errors, scope issues, or statements outside functions) is a "syntax" bug.
+- Perform a strict structural review:
+  1. Count and match braces '{ }', parentheses '( )', and brackets '[ ]' to ensure they align.
+  2. Check variable scope (variables accessed outside their declaring blocks/functions).
+  3. Ensure no statements (like 'return') or block constructs are placed in the global scope outside function bodies.
+- Provide a student-friendly, clear, and simple explanation of the root cause in 1-2 sentences (avoid overly complex jargon).
+- Line numbers are prefixed "N: code" (e.g. "5: int x;"). Use "N" for the "line" property. If an issue applies generally or is a new addition, use null.
+- The "hint" and "description" should be simple, encouraging, and clear for a beginner student.
+- Return ONLY a JSON array matching the following schema (no markdown formatting, no text outside JSON):
+[{"id":1,"type":"logical"|"syntax","hint":"Encouraging hint","line":number|null,"description":"Student-friendly explanation","fix":"Simple fix description","corrected_code_snippet":"Snippet"}]
+If code is clean: [{"id":0,"type":"clean","hint":"No issues","line":null,"description":"Looks good! No syntax or logical errors found.","fix":"","corrected_code_snippet":""}]`;
 
 
 // System prompt for converting other languages to C
@@ -81,11 +87,11 @@ Return ONLY this JSON (no markdown, no text outside JSON):
 // System prompt for AI Tutor Step 4 (C Code verification)
 export const TUTOR_CODE_SYSTEM_PROMPT = `You are a C tutor checking beginner code.
 Rules:
-- Think like a beginner. If code compiles and solves the core problem, set "correct" to true.
-- Ignore memory leaks, missing input checks, or minor style/output string mismatches.
-- Only set "correct" to false for syntax or logical bugs that fail core execution.
+- Think like a beginner. If the code compiles and solves the core problem, set "correct" to true.
+- Do NOT ignore compilation errors. If the code has structural or syntax errors (like mismatched braces, scope issues, or statements outside functions) that prevent it from compiling, set "correct" to false.
+- Ignore minor warnings, memory leaks, missing input validation, or minor output formatting mismatches.
 - If "correct" is true, the "issues" array must be empty [].
-- Keep descriptions extremely short and student-friendly.
+- Keep descriptions and feedback simple, encouraging, and student-friendly (1-2 sentences maximum, avoiding complex jargon).
 Return ONLY this JSON (no markdown, no text outside JSON):
 {
   "correct": boolean,
@@ -93,7 +99,7 @@ Return ONLY this JSON (no markdown, no text outside JSON):
   "issues": [
     {
       "line": number,
-      "description": "Short description of the bug"
+      "description": "Short, student-friendly description of the bug"
     }
   ]
 }`;
