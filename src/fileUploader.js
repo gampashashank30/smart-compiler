@@ -3,7 +3,6 @@
 // For .docx files, strips non-code content surrounding the actual program.
 
 import mammoth from 'mammoth';
-import Tesseract from 'tesseract.js';
 
 // File extensions we consider "plain text" and can read directly
 const PLAIN_TEXT_EXTENSIONS = new Set([
@@ -22,10 +21,7 @@ const PLAIN_TEXT_EXTENSIONS = new Set([
 // Word document extension
 const DOCX_EXTENSION = 'docx';
 
-// Image extensions for OCR code extraction
-const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg']);
-
-// Max file size: 5 MB (allows screenshot and document uploads)
+// Max file size: 5 MB (allows document uploads)
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 /**
@@ -42,7 +38,7 @@ function getExtension(filename) {
  */
 export function isSupportedFile(filename) {
   const ext = getExtension(filename);
-  return PLAIN_TEXT_EXTENSIONS.has(ext) || ext === DOCX_EXTENSION || IMAGE_EXTENSIONS.has(ext);
+  return PLAIN_TEXT_EXTENSIONS.has(ext) || ext === DOCX_EXTENSION;
 }
 
 /**
@@ -52,9 +48,6 @@ export function isSupportedFile(filename) {
 export function getAcceptString() {
   const exts = [...PLAIN_TEXT_EXTENSIONS].map(e => `.${e}`);
   exts.push(`.${DOCX_EXTENSION}`);
-  for (const imgExt of IMAGE_EXTENSIONS) {
-    exts.push(`.${imgExt}`);
-  }
   return exts.join(',');
 }
 
@@ -346,21 +339,6 @@ async function readDocxFile(file) {
   return extractCodeFromText(rawText, 'Word document');
 }
 
-/**
- * Perform OCR on an image file and extract isolated code block.
- * @param {File} file
- * @returns {Promise<string>}
- */
-async function readImageFile(file) {
-  const result = await Tesseract.recognize(file, 'eng');
-  const rawText = result?.data?.text || '';
-
-  if (!rawText.trim()) {
-    throw new Error('No text could be extracted from the image.');
-  }
-
-  return extractCodeFromText(rawText, 'image');
-}
 
 /**
  * Read a plain text file using FileReader.
@@ -394,9 +372,9 @@ export async function readUploadedFile(file) {
   const ext = getExtension(file.name);
 
   // Unsupported extension
-  if (!PLAIN_TEXT_EXTENSIONS.has(ext) && ext !== DOCX_EXTENSION && !IMAGE_EXTENSIONS.has(ext)) {
+  if (!PLAIN_TEXT_EXTENSIONS.has(ext) && ext !== DOCX_EXTENSION) {
     throw new Error(
-      `Unsupported file type: .${ext}\n\nSupported: programming files, Word documents (.docx), and images (.png, .jpg, .jpeg).`
+      `Unsupported file type: .${ext}\n\nSupported: programming files and Word documents (.docx).`
     );
   }
 
@@ -404,8 +382,6 @@ export async function readUploadedFile(file) {
 
   if (ext === DOCX_EXTENSION) {
     content = await readDocxFile(file);
-  } else if (IMAGE_EXTENSIONS.has(ext)) {
-    content = await readImageFile(file);
   } else {
     content = await readTextFile(file);
     const textExtensions = new Set(['md', 'markdown']);
