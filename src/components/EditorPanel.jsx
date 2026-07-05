@@ -553,6 +553,12 @@ export default function EditorPanel({
 
         {/* Code overlay: pre (highlight layer) + textarea (input layer) */}
         <div className={styles.codeWrapper}>
+          {/*
+            SECURITY: `highlighted` is the output of highlightC() (src/highlight.js).
+            highlightC() HTML-escapes ALL user input via esc() (&, <, >, ", ', /)
+            before wrapping tokens in <span> tags with hard-coded class names.
+            No raw user or AI-generated content is ever injected as HTML.
+          */}
           <pre
             ref={preRef}
             className={styles.highlight}

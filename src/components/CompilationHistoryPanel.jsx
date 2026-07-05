@@ -500,6 +500,12 @@ function HistoryCard({ entry, onLoadInEditor, onDelete }) {
           <div className={styles.codeScrollArea}>
             <table className={styles.codeTable}>
               <tbody>
+                {/*
+                  SECURITY: highlightC() (src/highlight.js) HTML-escapes ALL user
+                  input via esc() (&, <, >, ", ', /) before wrapping tokens in
+                  <span> tags with hard-coded class names.  No raw user-supplied
+                  content is ever injected as HTML — dangerouslySetInnerHTML is safe.
+                */}
                 {entry.code.split('\n').map((line, i) => (
                   <tr key={i} className={styles.codeLine}>
                     <td className={styles.codeLineNum}>{i + 1}</td>

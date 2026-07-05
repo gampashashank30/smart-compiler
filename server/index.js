@@ -94,6 +94,11 @@ async function verifySupabaseToken(token) {
 }
 
 // ── Express app ──────────────────────────────────────────────────────────────
+// SECURITY NOTE — CSRF: This server uses stateless JWT Bearer-token authentication
+// (Authorization: Bearer <token>), not cookies.  CSRF attacks require the browser
+// to automatically attach credentials (i.e. cookies or Basic auth).  Because all
+// protected endpoints require an Authorization header that a cross-origin page
+// cannot set on behalf of a victim, no CSRF middleware (e.g. csurf) is needed.
 const app = express();
 
 // Trust exactly one proxy hop (Render's load balancer) so rate-limiting
@@ -613,15 +618,21 @@ if (fs.existsSync(distDir)) {
 }
 
 // ── Create HTTP server and attach WebSocket ───────────────────────────────────
+// SECURITY NOTE — HTTP vs HTTPS: The server intentionally listens on plain HTTP.
+// TLS is terminated by Render's edge load-balancer before traffic reaches this
+// process.  All external traffic is therefore served over HTTPS; the HTTP
+// listener is only reachable inside Render's private network.
 const server = http.createServer(app);
 attachWebSocketServer(server);
 
 server.listen(PORT, () => {
+  // NOTE: The URLs below are LOCAL DEVELOPMENT addresses only.
+  // In production, all traffic goes through Render's HTTPS/WSS edge (TLS terminated).
   console.log(`\n  ╔══════════════════════════════════════════════╗`);
   console.log(`  ║   smart-compiler API + WebSocket server      ║`);
   console.log(`  ║   http://localhost:${PORT}                      ║`);
   console.log(`  ╚══════════════════════════════════════════════╝\n`);
   console.log(`  Health:        http://localhost:${PORT}/api/health`);
   console.log(`  Batch compile: POST http://localhost:${PORT}/api/compile`);
-  console.log(`  Interactive:   ws://localhost:${PORT}/ws/run\n`);
+  console.log(`  Interactive:   ws://localhost:${PORT}/ws/run  (wss:// in production)\n`);
 });

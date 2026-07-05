@@ -1,4 +1,9 @@
 // src/highlight.js — Pure JS C syntax highlighter (no dependencies)
+//
+// SECURITY: Every character of user-supplied code is passed through esc() before
+// being placed in an HTML string.  esc() HTML-encodes &, <, >, ", ', and /,
+// which is sufficient to prevent XSS.  Callers may safely use the returned
+// string with dangerouslySetInnerHTML — no additional sanitization is required.
 
 const C_KEYWORDS = new Set([
   'auto', 'break', 'case', 'char', 'const', 'continue', 'default', 'do',
@@ -17,6 +22,7 @@ function esc(s) {
     .replace(/\//g, '&#x2F;');
 }
 
+// span() always calls esc() on the content — class names are hard-coded literals.
 function span(cls, s) {
   return `<span class="hl-${cls}">${esc(s)}</span>`;
 }
