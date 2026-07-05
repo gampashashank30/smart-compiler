@@ -263,32 +263,46 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Input too large' });
   }
 
-  // Fetch current token usage directly from Supabase using the user's own JWT.
+  // ── 4. Server-side token quota check ─────────────────────────────────────
+  // SECURITY: We use the SERVICE ROLE KEY (not the user's JWT) so that:
+  //   a) RLS policies cannot hide or falsify the user's token count.
+  //   b) A user cannot manipulate their own row to bypass the quota.
+  // If the service key is not configured we fall back to the anon key and
+  // log a warning — quota enforcement will then depend on correct RLS.
   let currentTokens = 0;
   let tokenLimit = 15000;
+  const quotaKey    = SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
+  const quotaBearer = SUPABASE_SERVICE_KEY || token;
+  if (!SUPABASE_SERVICE_KEY) {
+    console.warn('[/api/ai] SUPABASE_SERVICE_KEY is not set — token quota check is using anon key. ' +
+      'Set SUPABASE_SERVICE_KEY in Render → Environment Variables for reliable enforcement.');
+  }
   try {
-    // Read stats from the new user_stats table
     const analyticsRes = await fetch(
       `${SUPABASE_URL}/rest/v1/user_stats?id=eq.${supabaseUser.id}&select=ai_tokens_used,token_limit`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${quotaBearer}`,
+          'apikey':        quotaKey,
         },
       }
     );
     if (analyticsRes.ok) {
       const rows = await analyticsRes.json();
       currentTokens = rows[0]?.ai_tokens_used ?? 0;
-      tokenLimit = rows[0]?.token_limit ?? 15000;
+      tokenLimit    = rows[0]?.token_limit    ?? 15000;
+    } else {
+      const errText = await analyticsRes.text();
+      console.error('[/api/ai] Token quota fetch returned non-OK:', analyticsRes.status, errText);
+      // Fail open — don't block the user if the quota DB is temporarily unavailable
     }
   } catch (err) {
     console.error('[/api/ai] Failed to fetch token count:', err.message);
-    // Fail open on DB errors — don't block the user if analytics DB is down
+    // Fail open on network errors
   }
 
   if (currentTokens >= tokenLimit) {
-    console.warn(`[/api/ai] User ${supabaseUser.id} hit token limit (${currentTokens}/${tokenLimit})`);
+    console.warn(`[/api/ai] QUOTA EXCEEDED — user=${supabaseUser.id} used=${currentTokens} limit=${tokenLimit}`);
     return res.status(429).json({
       error: 'Token limit reached',
       message: `You have used all ${tokenLimit.toLocaleString()} free AI tokens. Upgrade to continue.`,
@@ -364,16 +378,18 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
       const tokensUsed = data.usage?.total_tokens ?? 0;
       const newTotal = currentTokens + tokensUsed;
 
-      // Fire-and-forget Supabase update to user_stats table — don't delay the response
+      // Fire-and-forget Supabase update to user_stats table — don't delay the response.
+      // SECURITY: Uses the SERVICE ROLE KEY so the write cannot be blocked by a user-owned
+      // RLS policy. Falls back to the anon key only when the service key is not configured.
       fetch(
         `${SUPABASE_URL}/rest/v1/user_stats?id=eq.${supabaseUser.id}`,
         {
           method: 'PATCH',
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'apikey': SUPABASE_ANON_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal',
+            'Authorization': `Bearer ${quotaBearer}`,
+            'apikey':        quotaKey,
+            'Content-Type':  'application/json',
+            'Prefer':        'return=minimal',
           },
           body: JSON.stringify({ ai_tokens_used: newTotal }),
         }
