@@ -99,5 +99,112 @@ export function sanitizeAiCode(rawCode) {
     code = unescapeStructuralNewlines(code);
   }
 
+  // 3. LAST-RESORT FALLBACK: If the entire program arrived as a single line
+  //    (no real newlines at all), inject newlines around C structural tokens.
+  //    This handles the case where the AI ignores formatting instructions and
+  //    collapses everything onto one line separated only by spaces.
+  if (!code.includes('\n') && code.length > 40) {
+    code = reconstructNewlinesFromFlatCode(code);
+  }
+
   return code;
+}
+
+/**
+ * reconstructNewlinesFromFlatCode
+ *
+ * Last-resort formatter for single-line C code output from AI.
+ * Injects newlines around structural C tokens: { } ; preprocessor directives.
+ * Preserves content inside string literals so printf("a; b") stays intact.
+ *
+ * @param {string} code - Flat single-line C code
+ * @returns {string}    - Code with newlines restored
+ */
+function reconstructNewlinesFromFlatCode(code) {
+  let result = '';
+  let inStr  = false;   // inside a double-quoted C string literal
+  let i      = 0;
+
+  while (i < code.length) {
+    const ch   = code[i];
+    const next = code[i + 1] ?? '';
+
+    // ── Inside a string literal — copy verbatim ────────────────────────────
+    if (inStr) {
+      if (ch === '\\') {
+        // Escape sequence — copy both chars as-is
+        result += ch + next;
+        i += 2;
+        continue;
+      }
+      if (ch === '"') {
+        inStr = false; // closing quote
+      }
+      result += ch;
+      i++;
+      continue;
+    }
+
+    // ── Outside a string literal ───────────────────────────────────────────
+    if (ch === '"') {
+      inStr = true;
+      result += ch;
+      i++;
+      continue;
+    }
+
+    // Opening brace → newline before {, newline after {
+    if (ch === '{') {
+      // Trim trailing spaces before {
+      result = result.trimEnd();
+      result += '\n{\n';
+      i++;
+      continue;
+    }
+
+    // Closing brace → newline before }, newline after }
+    if (ch === '}') {
+      result = result.trimEnd();
+      result += '\n}';
+      // Add newline after } unless next non-space char is ; (struct/array end)
+      if (next !== ';') {
+        result += '\n';
+      }
+      i++;
+      continue;
+    }
+
+    // Semicolon → newline after ;
+    if (ch === ';') {
+      result += ';\n';
+      // Skip following spaces — the newline replaces them
+      i++;
+      while (i < code.length && code[i] === ' ') i++;
+      continue;
+    }
+
+    // Preprocessor directive (#include, #define, etc.) → newline after
+    if (ch === '#') {
+      // Collect the whole directive until a space that precedes another #
+      let directive = '';
+      while (i < code.length && code[i] !== '\n') {
+        // Stop before the next preprocessor directive
+        if (code[i] === ' ' && code[i + 1] === '#') break;
+        directive += code[i];
+        i++;
+      }
+      result += directive.trimEnd() + '\n';
+      // Skip spaces between directives
+      while (i < code.length && code[i] === ' ') i++;
+      continue;
+    }
+
+    result += ch;
+    i++;
+  }
+
+  // Clean up: collapse 3+ blank lines into 1, trim
+  return result
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }

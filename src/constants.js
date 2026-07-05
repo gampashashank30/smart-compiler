@@ -66,7 +66,10 @@ Return ONLY this JSON (no markdown fences, no text outside the JSON):
   "learning_notes": ["brief tip 1", "brief tip 2", "brief tip 3"]
 }
 Rules:
-- corrected_code must be the full program. Do not include markdown code fences in corrected_code.
+- corrected_code must be the FULL program with PROPER INDENTATION and LINE BREAKS.
+- CRITICAL FORMATTING: Each statement, brace, and declaration MUST be on its own separate line. NEVER collapse multiple statements onto a single line. NEVER output the entire program as one long line.
+- Put a \\n (newline) after EVERY: opening brace {, closing brace }, semicolon ;, #include line, and function signature.
+- Do not include markdown code fences inside corrected_code.
 - IMPORTANT: corrected_code is a JSON string value. Any backslash inside a C string literal (e.g. \\n in printf) must be written as \\\\n (double backslash) so it is valid JSON. For example: printf("Hello\\\\n") NOT printf("Hello\\n").
 - learning_notes must have 1 to 3 concise, one-sentence tips.`;
 
