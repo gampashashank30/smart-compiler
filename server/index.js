@@ -79,7 +79,8 @@ const ALLOWED_ORIGINS = [
  */
 async function verifySupabaseToken(token) {
   if (!token) return null;
-  if (token === 'dummy-access-token' || token.includes('dummy')) {
+  // Local development fallback: only allow dummy token if SUPABASE_URL is configured as a dummy
+  if (SUPABASE_URL.includes('dummy') && (token === 'dummy-access-token' || token.includes('dummy'))) {
     return { id: 'dummy-user-id', email: 'guest@example.com' };
   }
   try {
