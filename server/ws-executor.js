@@ -398,6 +398,11 @@ function attachWebSocketServer(httpServer) {
         return;
       }
 
+      if (Buffer.byteLength(code, 'utf8') > 100_000) {
+        send({ type: 'error', data: 'Code is too large (max 100 KB).' });
+        return;
+      }
+
       cleaned = false;
       if (!hasIncrementedGlobalRuns) {
         activeWsRuns++;
