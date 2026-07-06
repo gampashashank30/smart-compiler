@@ -31,3 +31,6 @@ dist-ssr
 
 # Temp/Agent scratch directories
 scratch/
+
+# Local node binary distributions
+node-dist/

@@ -217,7 +217,7 @@ export default function LoginPage() {
         </button>
 
         {/* Demo Bypass / Fallback Mode Details */}
-        {!supabase && (
+        {(!supabase || supabase.isDummy) && (
           <div className={styles.demoNotice}>
             <p>Supabase parameters are not configured in `.env` yet.</p>
             <button onClick={handleGuestBypass} className={styles.guestLink}>
