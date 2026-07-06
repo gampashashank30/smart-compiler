@@ -61,6 +61,10 @@ const execFileAsync = promisify(execFile);
 const WS_CONNECTIONS_PER_IP = new Map(); // ip → count
 const MAX_WS_PER_IP = 64; // max simultaneous WebSocket connections per IP
 
+// Active WebSocket compile/run processes count
+let activeWsRuns = 0;
+const MAX_GLOBAL_WS_RUNS = 50;
+
 // ── Constants ────────────────────────────────────────────────────────────────
 const DOCKER_IMAGE    = 'gcc-runner:latest';
 const COMPILE_TIMEOUT = 12_000;   // 12 s compile timeout
@@ -216,7 +220,7 @@ function buildRunArgs(mountPath, runId) {
   if (runId) {
     args.push('--name', `sc-run-${runId}`);
   }
-  args.push(DOCKER_IMAGE, '/sandbox/prog');
+  args.push(DOCKER_IMAGE, 'sh', '-c', 'ulimit -f 20480 && exec /sandbox/prog');
   return args;
 }
 
@@ -298,6 +302,7 @@ function attachWebSocketServer(httpServer) {
     let startTime   = 0;
     let cols        = 80;
     let rows        = 24;
+    let hasIncrementedGlobalRuns = false;
 
     // ── Helpers ───────────────────────────────────────────────────────────
     function send(obj) {
@@ -307,6 +312,10 @@ function attachWebSocketServer(httpServer) {
     function cleanup() {
       if (cleaned) return;
       cleaned = true;
+      if (hasIncrementedGlobalRuns) {
+        activeWsRuns = Math.max(0, activeWsRuns - 1);
+        hasIncrementedGlobalRuns = false;
+      }
       if (killTimer) clearTimeout(killTimer);
       if (ptyProc)   { try { ptyProc.kill('SIGKILL');   } catch {} ptyProc   = null; }
       if (plainProc && !plainProc.killed) {
@@ -366,6 +375,15 @@ function attachWebSocketServer(httpServer) {
       cols = Math.max(10, msg.cols || 80);
       rows = Math.max(4,  msg.rows || 24);
 
+      // Clean up previous runs on this connection first to prevent orphaned processes
+      cleanup();
+
+      // Check global concurrent limit AFTER cleanup (in case this clean released a slot)
+      if (activeWsRuns >= MAX_GLOBAL_WS_RUNS) {
+        send({ type: 'error', data: 'Server is busy: too many concurrent compilation or run processes. Please try again.' });
+        return;
+      }
+
       // User was already verified by verifyClient during the upgrade handshake.
       // We read the pre-verified user from the request object.
       const wsUser = req._wsUser;
@@ -381,6 +399,10 @@ function attachWebSocketServer(httpServer) {
       }
 
       cleaned = false;
+      if (!hasIncrementedGlobalRuns) {
+        activeWsRuns++;
+        hasIncrementedGlobalRuns = true;
+      }
       runId = uuidv4();
       tmpDir = path.join(os.tmpdir(), `sc-ws-${runId}`);
       fs.mkdirSync(tmpDir, { recursive: true });
@@ -536,7 +558,7 @@ function attachWebSocketServer(httpServer) {
         DOCKER_IMAGE,
         'sh', '-c',
         // Compile, capture all output (stdout + stderr merged), print exit code
-        'gcc /sandbox/main.c -Wall -Wextra -O3 -D__USE_MINGW_ANSI_STDIO -o /sandbox/prog 2>&1; echo "::CEXIT::$?"',
+        'ulimit -f 20480; gcc /sandbox/main.c -Wall -Wextra -O3 -D__USE_MINGW_ANSI_STDIO -o /sandbox/prog 2>&1; echo "::CEXIT::$?"',
       ];
 
       let compileOut     = '';

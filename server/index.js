@@ -73,6 +73,14 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3001',
 ];
 
+// Add specific Render external URL if configured (avoid wildcard subdomains for CORS safety)
+if (process.env.RENDER_EXTERNAL_URL) {
+  const renderUrl = process.env.RENDER_EXTERNAL_URL.trim().replace(/\/$/, '');
+  if (renderUrl && !ALLOWED_ORIGINS.includes(renderUrl)) {
+    ALLOWED_ORIGINS.push(renderUrl);
+  }
+}
+
 /**
  * Verify a Supabase access token by calling Supabase's /auth/v1/user endpoint.
  * Returns the user object if valid, or null if invalid/expired.
@@ -80,7 +88,7 @@ const ALLOWED_ORIGINS = [
 async function verifySupabaseToken(token) {
   if (!token) return null;
   // Local development fallback: only allow dummy token if SUPABASE_URL is configured as a dummy
-  if (SUPABASE_URL.includes('dummy') && (token === 'dummy-access-token' || token.includes('dummy'))) {
+  if (SUPABASE_URL.includes('dummy') && token === 'dummy-access-token') {
     return { id: 'dummy-user-id', email: 'guest@example.com' };
   }
   try {
@@ -170,15 +178,13 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '150kb' }));
 
 // CORS — only allow requests from explicitly listed trusted origins
-const RENDER_ORIGIN_RE = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, curl, or server-to-server requests)
     if (!origin) {
       return callback(null, true);
     }
-    const isAllowed = ALLOWED_ORIGINS.some(o => origin === o)
-                   || RENDER_ORIGIN_RE.test(origin);
+    const isAllowed = ALLOWED_ORIGINS.some(o => origin === o);
     if (isAllowed) {
       callback(null, true);
     } else {
@@ -237,10 +243,8 @@ app.use('/api/', apiLimiter);
 app.post('/api/ai', aiLimiter, async (req, res) => {
   // ── 1. Origin check ──────────────────────────────────────────────────────
   const origin = req.headers.origin || '';
-  const RENDER_ORIGIN_RE = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
   const isAllowedOrigin = !origin 
-    || ALLOWED_ORIGINS.some(o => origin === o)
-    || RENDER_ORIGIN_RE.test(origin);
+    || ALLOWED_ORIGINS.some(o => origin === o);
   if (!isAllowedOrigin) {
     console.warn(`[/api/ai] Blocked request from disallowed origin: ${origin}`);
     return res.status(403).json({ error: 'Forbidden: Origin not allowed' });
@@ -438,10 +442,8 @@ app.get('/api/admin/is-admin', adminLimiter, async (req, res) => {
 app.get('/api/admin/analytics', adminLimiter, async (req, res) => {
   // 1. Origin check
   const origin = req.headers.origin || '';
-  const RENDER_ORIGIN_RE = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
   const isAllowedOrigin = !origin 
-    || ALLOWED_ORIGINS.some(o => origin === o)
-    || RENDER_ORIGIN_RE.test(origin);
+    || ALLOWED_ORIGINS.some(o => origin === o);
   if (!isAllowedOrigin) {
     return res.status(403).json({ error: 'Forbidden' });
   }
@@ -611,11 +613,9 @@ if (fs.existsSync(distDir)) {
   // /app route serves the React editor — requires a valid Supabase JWT cookie/header.
   // This is a defence-in-depth guard; the React app also redirects to /login.html.
   app.get('/app', apiLimiter, async (req, res) => {
-    // Accept token from Authorization header OR from ?token= query param
+    // Accept token only from Authorization header (prevent query parameter leakage)
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ')
-      ? authHeader.slice(7).trim()
-      : (req.query.token || '');
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
 
     const appUser = token ? await verifySupabaseToken(token) : null;
     if (!appUser?.id) {

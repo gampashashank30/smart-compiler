@@ -100,7 +100,7 @@ async function runWithDocker(code, stdin) {
       tmpDir,
       [
         'sh', '-c',
-        'gcc /sandbox/main.c -Wall -Wextra -O3 -o /sandbox/prog 2>&1; echo "::EXIT::$?"'
+        'ulimit -f 20480; gcc /sandbox/main.c -Wall -Wextra -O3 -o /sandbox/prog 2>&1; echo "::EXIT::$?"'
       ],
       '',              // no stdin for compilation
       COMPILE_TIMEOUT
@@ -131,7 +131,7 @@ async function runWithDocker(code, stdin) {
     // ── Step 2: Run ──────────────────────────────────────────────────────
     const runResult = await runDockerCommand(
       tmpDir,
-      ['sh', '-c', '/sandbox/prog 2>/sandbox/stderr.txt; echo "::EXIT::$?"'],
+      ['sh', '-c', 'ulimit -f 20480; /sandbox/prog 2>/sandbox/stderr.txt; echo "::EXIT::$?"'],
       stdin,
       EXEC_TIMEOUT_MS
     );
@@ -335,9 +335,11 @@ async function isLocalGccReady() {
 
   // Disable on Render (RENDER=true is auto-set), production, staging, or explicit flag.
   // Local GCC runs code directly on the host machine with NO sandbox — never allow in cloud.
+  // Whitelist: strictly allow ONLY in development node environment.
   const isCloud = process.env.RENDER === 'true' || process.env.RAILWAY_ENVIRONMENT || process.env.FLY_APP_NAME;
   const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
-  if (isCloud || isProdOrStaging || process.env.DISABLE_LOCAL_GCC === 'true') {
+  const isDev = process.env.NODE_ENV === 'development';
+  if (!isDev || isCloud || isProdOrStaging || process.env.DISABLE_LOCAL_GCC === 'true') {
     console.warn('[executor] Local GCC fallback DISABLED — cloud/production environment detected.');
     console.warn('[executor]   Code will fall back to Wandbox API instead.');
     _localGccReady = false;
