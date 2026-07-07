@@ -473,6 +473,55 @@ async function runWithLocalGcc(code, stdin) {
   }
 }
 
+// ── Dangerous code scanner ────────────────────────────────────────────────────
+/**
+ * Patterns for system-level calls that are not allowed in the sandbox.
+ * These calls attempt to interact with the host OS shell, file system,
+ * or spawn child processes — all of which are blocked for security.
+ */
+const DANGEROUS_PATTERNS = [
+  { re: /\bsystem\s*\(/, label: 'system()' },
+  { re: /\bpopen\s*\(/,  label: 'popen()' },
+  { re: /\bexecv[ep]?\s*\(/, label: 'execv/execvp/execve()' },
+  { re: /\bexecl[ep]?\s*\(/, label: 'execl/execlp/execle()' },
+  { re: /\bexecve\s*\(/, label: 'execve()' },
+  { re: /\bfork\s*\(/,   label: 'fork()' },
+  { re: /\bvfork\s*\(/,  label: 'vfork()' },
+  { re: /\bshellcode\b/, label: 'shellcode' },
+];
+
+/**
+ * Checks whether the submitted code contains dangerous system-level calls.
+ * Returns a blocked result object if dangerous, or null if safe to run.
+ * Ignores content inside single-line (//) and multi-line (/* *\/) comments.
+ */
+function checkDangerousCode(code) {
+  // Strip single-line comments
+  let stripped = code.replace(/\/\/.*/g, '');
+  // Strip multi-line comments
+  stripped = stripped.replace(/\/\*[\s\S]*?\*\//g, '');
+  // Strip string literals to avoid false positives like printf("system(\"ls\")")
+  stripped = stripped.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+  stripped = stripped.replace(/'(?:[^'\\]|\\.)*'/g, "''");
+
+  for (const { re, label } of DANGEROUS_PATTERNS) {
+    if (re.test(stripped)) {
+      return {
+        success:      false,
+        stdout:       '',
+        stderr:       `This environment does not support \`${label}\`. System-level calls that spawn shell commands or processes are not allowed in this sandbox.\n\nNote: This is an intentional security restriction — not a bug in your code.`,
+        exitCode:     1,
+        signal:       null,
+        killed:       false,
+        compileError: false,
+        timeMs:       0,
+        engine:       'blocked',
+      };
+    }
+  }
+  return null;
+}
+
 // ── Public API ───────────────────────────────────────────────────────────────
 /**
  * Execute C code. Automatically chooses Docker, Local GCC, or Piston/Wandbox.
@@ -481,6 +530,10 @@ async function runWithLocalGcc(code, stdin) {
  * @returns {Promise<ExecutionResult>}
  */
 async function execute(code, stdin = '') {
+  // Block dangerous system-level calls before they reach any engine
+  const blocked = checkDangerousCode(code);
+  if (blocked) return blocked;
+
   const dockerAvailable = await isDockerReady();
   if (dockerAvailable) {
     return runWithDocker(code, stdin);
@@ -547,5 +600,5 @@ function httpsPost(url, body, timeoutMs = 20_000) {
   });
 }
 
-module.exports = { execute, isDockerReady, isLocalGccReady, resetDockerCache };
+module.exports = { execute, isDockerReady, isLocalGccReady, resetDockerCache, checkDangerousCode };
 

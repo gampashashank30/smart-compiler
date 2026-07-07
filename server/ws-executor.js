@@ -57,6 +57,10 @@ const { WS_TICKETS } = require('./ws-tickets');
 
 const execFileAsync = promisify(execFile);
 
+// Import the dangerous-code scanner so we block system/popen/exec/fork
+// in both the REST API path (executor.js) and the WebSocket path (here).
+const { checkDangerousCode } = require('./executor');
+
 // ── Per-IP WebSocket rate limiting ─────────────────────────────────────────────────────────
 const WS_CONNECTIONS_PER_IP = new Map(); // ip → count
 const MAX_WS_PER_IP = 64; // max simultaneous WebSocket connections per IP
@@ -400,6 +404,18 @@ function attachWebSocketServer(httpServer) {
 
       if (Buffer.byteLength(code, 'utf8') > 100_000) {
         send({ type: 'error', data: 'Code is too large (max 100 KB).' });
+        return;
+      }
+
+      // Block dangerous system-level calls (system, popen, exec*, fork, etc.)
+      const blocked = checkDangerousCode(code);
+      if (blocked) {
+        send({
+          type: 'compile-error',
+          data: blocked.stderr,
+        });
+        send({ type: 'done', exitCode: 1, timeMs: 0, killed: false, signal: null });
+        cleanup();
         return;
       }
 
