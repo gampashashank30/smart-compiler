@@ -15,8 +15,10 @@ jobs:
       contents: read          # needed by actions/checkout to clone the repo
       security-events: write  # needed by gitleaks-action to upload SARIF to GitHub Security tab
     steps:
-      - uses: actions/checkout@v4
+      # Pinned to exact commit SHA to prevent supply-chain attacks (semgrep: github-actions-mutable-action-tag)
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
-      - uses: gitleaks/gitleaks-action@v2
+      # Pinned to exact commit SHA — see https://github.com/gitleaks/gitleaks-action/releases/tag/v2.3.9
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
