@@ -26,7 +26,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy everything Vite needs to build the frontend
-COPY index.html app.html login.html vite.config.js eslint.config.js ./
+COPY index.html app.html login.html about.html vite.config.js eslint.config.js ./
 COPY public/ ./public/
 COPY src/ ./src/
 
