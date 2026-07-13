@@ -12,6 +12,9 @@
  *   and keep the rest of the module unchanged.
  */
 
+import { supabase } from './supabaseClient.js';
+import { analyticsStore } from './analytics.js';
+
 // ─── Error type definitions ──────────────────────────────────────────────────
 export const ERROR_TYPES = {
   // ── Compile-time errors ────────────────────────────────────────────────────
@@ -204,6 +207,51 @@ function _persist(sessions) {
 export const bugTrackerStore = {
   sessions: _hydrate(),
   listeners: [],
+  userId: null,
+
+  async init(user) {
+    if (!user) {
+      this.userId = null;
+      this.sessions = [];
+      this._notify();
+      return;
+    }
+    this.userId = user.id;
+
+    if (supabase && !supabase.isDummy) {
+      try {
+        const { data, error } = await supabase
+          .from('bug_events')
+          .select('*')
+          .eq('user_id', this.userId)
+          .order('timestamp', { ascending: true })
+          .limit(MAX_SESSIONS);
+
+        if (!error && data) {
+          this.sessions = data.map(d => ({
+            id:        Number(d.event_id),
+            type:      d.type,
+            subtype:   d.subtype,
+            timestamp: Number(d.timestamp),
+            timeMs:    d.time_ms,
+            exitCode:  d.exit_code,
+            lineHint:  d.line_hint,
+            stderr:    d.stderr ?? ''
+          }));
+          this._notify();
+          return;
+        } else if (error) {
+          console.error('[BugTracker] DB error loading sessions:', error.message);
+        }
+      } catch (err) {
+        console.error('[BugTracker] Failed to load sessions from Supabase:', err.message);
+      }
+    }
+
+    // Fallback to sessionStorage if not logged in or DB call failed
+    this.sessions = _hydrate();
+    this._notify();
+  },
 
   /**
    * Record a new analytics event.
@@ -211,7 +259,7 @@ export const bugTrackerStore = {
    *            timeMs: number|null, exitCode: number|null, lineHint: number|null,
    *            stderr: string }} event
    */
-  record(event) {
+  async record(event) {
     const entry = {
       id:        Date.now() + Math.random(),
       type:      event.type,        // 'compile-error' | 'runtime'
@@ -222,11 +270,66 @@ export const bugTrackerStore = {
       lineHint:  event.lineHint ?? null,
       stderr:    event.stderr   ?? '',
     };
+
     // Keep only the most-recent MAX_SESSIONS entries.
-    // Older entries will move to the PostgreSQL database once integrated.
     this.sessions = [...this.sessions, entry].slice(-MAX_SESSIONS);
     _persist(this.sessions);
     this._notify();
+
+    if (supabase && !supabase.isDummy && this.userId) {
+      try {
+        // 1. Insert to bug_events table
+        const { error: insertError } = await supabase
+          .from('bug_events')
+          .insert({
+            user_id:   this.userId,
+            event_id:  entry.id,
+            type:      entry.type,
+            subtype:   entry.subtype,
+            timestamp: entry.timestamp,
+            time_ms:   entry.timeMs,
+            exit_code: entry.exitCode,
+            line_hint: entry.lineHint,
+            stderr:    entry.stderr
+          });
+        if (insertError) throw insertError;
+
+        // 2. Update user_stats error tracking (only if not a successful run)
+        if (entry.subtype !== 'Successful Run') {
+          const { data: statsData, error: statsFetchError } = await supabase
+            .from('user_stats')
+            .select('error_breakdown, error_counts')
+            .eq('id', this.userId)
+            .maybeSingle();
+
+          if (!statsFetchError && statsData) {
+            const breakdown = statsData.error_breakdown && typeof statsData.error_breakdown === 'object'
+              ? { ...statsData.error_breakdown }
+              : {};
+            
+            breakdown[entry.subtype] = (breakdown[entry.subtype] || 0) + 1;
+            const newCount = (statsData.error_counts || 0) + 1;
+
+            const { error: updateError } = await supabase
+              .from('user_stats')
+              .update({
+                error_counts:    newCount,
+                error_breakdown: breakdown
+              })
+              .eq('id', this.userId);
+
+            if (updateError) throw updateError;
+
+            // Sync with local analyticsStore
+            if (analyticsStore && typeof analyticsStore.syncLocalErrors === 'function') {
+              analyticsStore.syncLocalErrors(newCount, breakdown);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[BugTracker] Failed to persist bug to DB:', err.message);
+      }
+    }
   },
 
   subscribe(fn) {
@@ -237,10 +340,39 @@ export const bugTrackerStore = {
     };
   },
 
-  reset() {
+  async reset() {
     this.sessions = [];
     _persist([]);
     this._notify();
+
+    if (supabase && !supabase.isDummy && this.userId) {
+      try {
+        // Delete all bug events for this user
+        const { error: deleteError } = await supabase
+          .from('bug_events')
+          .delete()
+          .eq('user_id', this.userId);
+
+        if (deleteError) throw deleteError;
+
+        // Reset user stats count and breakdown
+        const { error: updateError } = await supabase
+          .from('user_stats')
+          .update({
+            error_counts:    0,
+            error_breakdown: {}
+          })
+          .eq('id', this.userId);
+
+        if (updateError) throw updateError;
+
+        if (analyticsStore && typeof analyticsStore.syncLocalErrors === 'function') {
+          analyticsStore.syncLocalErrors(0, {});
+        }
+      } catch (err) {
+        console.error('[BugTracker] Failed to reset database analytics:', err.message);
+      }
+    }
   },
 
   _notify() {

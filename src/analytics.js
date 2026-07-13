@@ -6,6 +6,7 @@ let localStats = {
   ai_tokens_used: 0,
   time_spent: 0,
   error_counts: 0,
+  error_breakdown: {},
   email: '',
   token_limit: 15000,
   current_streak: 0,
@@ -25,6 +26,7 @@ export const analyticsStore = {
         ai_tokens_used: 0,
         time_spent: 0,
         error_counts: 0,
+        error_breakdown: {},
         email: '',
         token_limit: 15000,
         current_streak: 0,
@@ -122,6 +124,7 @@ export const analyticsStore = {
         ai_tokens_used: statsData.ai_tokens_used ?? 0,
         time_spent: statsData.time_spent ?? 0,
         error_counts: statsData.error_counts ?? 0,
+        error_breakdown: statsData.error_breakdown ?? {},
         email: data.email ?? user.email,
         token_limit: statsData.token_limit ?? 15000,
         current_streak: statsData.current_streak ?? 0,
@@ -255,6 +258,12 @@ export const analyticsStore = {
     } catch (err) {
       console.error('[Analytics] Failed to save error count:', err.message);
     }
+  },
+
+  syncLocalErrors(count, breakdown) {
+    localStats.error_counts = count;
+    localStats.error_breakdown = breakdown ?? {};
+    this.notify();
   },
 
   // Buffer and periodically save time spent

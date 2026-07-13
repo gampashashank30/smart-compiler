@@ -70,6 +70,7 @@ export default function App() {
   // Initialize analytics store with the logged-in user
   useEffect(() => {
     analyticsStore.init(user);
+    bugTrackerStore.init(user);
   }, [user]);
 
   // Track time spent on the website when user is logged in (5-second heartbeats)
@@ -158,7 +159,6 @@ export default function App() {
   useEffect(() => {
     const unsub = bugTrackerStore.subscribe((stats) => {
       setBugErrorCount(stats.errors);
-      analyticsStore.recordErrors(stats.errors);
     });
     return unsub;
   }, []);
