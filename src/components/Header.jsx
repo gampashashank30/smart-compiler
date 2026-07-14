@@ -45,38 +45,17 @@ export default function Header({
           <svg
             width="40"
             height="40"
-            viewBox="0 0 40 40"
+            viewBox="0 0 512 512"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             role="img"
             aria-hidden="true"
             focusable="false"
           >
-            {/* Background rounded-square */}
-            <rect width="40" height="40" rx="11" fill="url(#sc-grad)" />
-
-            {/* 
-              Lightning bolt — classic "flash" shape.
-              Top point → left-middle → jog-right → bottom point → right-middle → jog-left.
-              Scaled to fit 40×40 with comfortable inset (8px each side).
-            */}
-            <polygon
-              points="24,8  13,23  20,23  16,33  27,18  20,18"
-              fill="white"
-              fillRule="evenodd"
-            />
-
-            <defs>
-              <linearGradient
-                id="sc-grad"
-                x1="0" y1="0"
-                x2="40" y2="40"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop offset="0%"   stopColor="#10b981" />
-                <stop offset="100%" stopColor="#0ea5e9" />
-              </linearGradient>
-            </defs>
+            <rect width="512" height="512" rx="112" fill="#0B192C" />
+            <path d="M225 116 L100 256 L225 396" stroke="white" strokeWidth="56" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M287 116 L412 256 L287 396" stroke="white" strokeWidth="56" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M256 160 Q276 236 320 256 Q276 276 256 352 Q236 276 192 256 Q236 236 256 160 Z" fill="#FF7A00" />
           </svg>
         </div>
 
