@@ -81,6 +81,14 @@ if (process.env.RENDER_EXTERNAL_URL) {
   }
 }
 
+// Support generic external URL for Google Cloud Run or other hosting environments
+if (process.env.EXTERNAL_URL) {
+  const extUrl = process.env.EXTERNAL_URL.trim().replace(/\/$/, '');
+  if (extUrl && !ALLOWED_ORIGINS.includes(extUrl)) {
+    ALLOWED_ORIGINS.push(extUrl);
+  }
+}
+
 /**
  * Verify a Supabase access token by calling Supabase's /auth/v1/user endpoint.
  * Returns the user object if valid, or null if invalid/expired.
