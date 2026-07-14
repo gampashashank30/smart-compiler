@@ -1,5 +1,5 @@
 /**
- * SmartCompiler — Cookie Consent Manager + Google AdSense Integration
+ * SmartCompiler - Cookie Consent Manager + Google AdSense Integration
  * ==========================================================================
  * 
  * This module handles:
@@ -402,7 +402,7 @@
     const existingConsent = getConsent();
 
     if (existingConsent === null) {
-      // No consent decision yet — initialize Consent Mode as denied by default (GDPR)
+      // No consent decision yet - initialize Consent Mode as denied by default (GDPR)
       initConsentMode(false);
       // Show banner when DOM is ready
       if (document.readyState === 'loading') {
@@ -412,7 +412,7 @@
         setTimeout(showBanner, 1200);
       }
     } else {
-      // Consent already given — initialize accordingly
+      // Consent already given - initialize accordingly
       initConsentMode(existingConsent.granted);
       showSettingsButton();
       if (existingConsent.granted) {
@@ -421,7 +421,7 @@
     }
   }
 
-  // Run immediately (before DOM is ready — Consent Mode must fire early)
+  // Run immediately (before DOM is ready - Consent Mode must fire early)
   init();
 
   // ── Public API ────────────────────────────────────────────────────────────────
