@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy | SmartCompiler</title>
+  <meta name="description" content="SmartCompiler's Privacy Policy — learn how we collect, use, and protect your data, including our use of Google AdSense advertising." />
+  <link rel="canonical" href="https://smartcompiler.maadiotsolutions.co.in/privacy-policy.html" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand-green: #0fa57c;
+      --brand-sky: #14b8a6;
+      --text-primary: #1e293b;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --border: #e2e8f0;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--surface);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .nav a { text-decoration: none; color: var(--text-primary); font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+    .nav a span.logo-text { background: linear-gradient(90deg, #0fa57c, #14b8a6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .nav a:hover { opacity: 0.8; }
+    .back-link { margin-left: auto; font-size: 0.875rem; color: var(--text-muted); font-weight: 500; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .back-link:hover { color: var(--brand-green); }
+
+    /* ── Hero ── */
+    .page-hero {
+      background: linear-gradient(135deg, #0fa57c08 0%, #14b8a605 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 64px 24px 48px;
+      text-align: center;
+    }
+    .page-hero .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #0fa57c15; color: #0fa57c;
+      border: 1px solid #0fa57c30;
+      border-radius: 9999px; padding: 4px 14px;
+      font-size: 0.8rem; font-weight: 600;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .page-hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; color: var(--text-primary); margin-bottom: 12px; }
+    .page-hero p { color: var(--text-muted); font-size: 1rem; max-width: 560px; margin: 0 auto; }
+    .page-hero .last-updated { margin-top: 16px; font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── Layout ── */
+    .page-container {
+      max-width: 860px; margin: 0 auto; padding: 48px 24px 96px;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 28px; margin-bottom: 48px;
+    }
+    .toc h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; letter-spacing: 0.03em; text-transform: uppercase; }
+    .toc ol { list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+    .toc ol li a { color: var(--brand-green); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+    .toc ol li a:hover { text-decoration: underline; }
+
+    /* ── Sections ── */
+    .policy-section { margin-bottom: 52px; scroll-margin-top: 80px; }
+    .policy-section h2 {
+      font-size: 1.35rem; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .policy-section h2 .num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, #0fa57c, #14b8a6);
+      color: white; font-size: 0.75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .policy-section h3 { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 20px 0 8px; }
+    .policy-section p { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 12px; }
+    .policy-section ul, .policy-section ol { padding-left: 20px; color: var(--text-secondary); font-size: 0.95rem; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .policy-section li { line-height: 1.6; }
+
+    /* ── Highlight boxes ── */
+    .highlight-box {
+      background: #0fa57c08; border: 1px solid #0fa57c25; border-left: 4px solid #0fa57c;
+      border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 16px 0;
+    }
+    .highlight-box p { color: var(--text-secondary); font-size: 0.9rem; margin: 0; }
+    .highlight-box strong { color: var(--text-primary); }
+
+    .warning-box {
+      background: #f59e0b08; border: 1px solid #f59e0b25; border-left: 4px solid #f59e0b;
+      border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 16px 0;
+    }
+    .warning-box p { color: var(--text-secondary); font-size: 0.9rem; margin: 0; }
+
+    /* ── Links ── */
+    a { color: var(--brand-green); }
+    a:hover { text-decoration: underline; }
+
+    /* ── Table ── */
+    .data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.88rem; }
+    .data-table th { background: var(--surface-2); color: var(--text-primary); font-weight: 600; padding: 10px 14px; text-align: left; border: 1px solid var(--border); }
+    .data-table td { padding: 10px 14px; border: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+    .data-table tr:hover td { background: var(--surface-2); }
+
+    /* ── Footer ── */
+    .page-footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px; text-align: center;
+      color: var(--text-muted); font-size: 0.85rem;
+    }
+    .page-footer a { color: var(--brand-green); text-decoration: none; }
+
+    @media (max-width: 640px) {
+      .page-hero { padding: 40px 16px 32px; }
+      .page-container { padding: 32px 16px 64px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <a href="/" aria-label="SmartCompiler home">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="url(#lg1)"/>
+        <defs><linearGradient id="lg1" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#0fa57c"/><stop offset="1" stop-color="#14b8a6"/>
+        </linearGradient></defs>
+        <path d="M9 12l4 4-4 4M15 20h8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-text">SmartCompiler</span>
+    </a>
+    <a href="/" class="back-link" aria-label="Back to homepage">← Back to Home</a>
+  </nav>
+
+  <!-- Hero -->
+  <header class="page-hero" role="banner">
+    <div class="badge">📋 Legal</div>
+    <h1>Privacy Policy</h1>
+    <p>We believe in full transparency about how your data is handled. This policy explains everything clearly — no legal jargon.</p>
+    <p class="last-updated">Last Updated: <strong>July 14, 2026</strong> &nbsp;|&nbsp; Effective: July 14, 2026</p>
+  </header>
+
+  <main class="page-container" role="main">
+
+    <!-- Table of Contents -->
+    <nav class="toc" aria-label="Table of Contents">
+      <h3>📖 Table of Contents</h3>
+      <ol>
+        <li><a href="#sec1">Information We Collect</a></li>
+        <li><a href="#sec2">How We Use Your Information</a></li>
+        <li><a href="#sec3">Google AdSense &amp; Third-Party Advertising</a></li>
+        <li><a href="#sec4">Cookies &amp; Tracking Technologies</a></li>
+        <li><a href="#sec5">GDPR — Rights for EU/EEA Users</a></li>
+        <li><a href="#sec6">CCPA — Rights for California Users</a></li>
+        <li><a href="#sec7">Data Retention</a></li>
+        <li><a href="#sec8">Third-Party Services</a></li>
+        <li><a href="#sec9">Children's Privacy</a></li>
+        <li><a href="#sec10">Security</a></li>
+        <li><a href="#sec11">Changes to This Policy</a></li>
+        <li><a href="#sec12">Contact Us</a></li>
+      </ol>
+    </nav>
+
+    <!-- Section 1: Information We Collect -->
+    <section class="policy-section" id="sec1" aria-labelledby="sec1-heading">
+      <h2 id="sec1-heading"><span class="num">1</span> Information We Collect</h2>
+      <p>SmartCompiler collects information in the following ways:</p>
+
+      <h3>A. Information You Provide Directly</h3>
+      <ul>
+        <li><strong>Account Information:</strong> When you sign up or log in (via Google OAuth), we receive your name, email address, and profile picture from Google.</li>
+        <li><strong>Code Submissions:</strong> C code you type or upload for compilation and AI analysis.</li>
+        <li><strong>Communications:</strong> If you contact us via email or our feedback form.</li>
+      </ul>
+
+      <h3>B. Information Collected Automatically</h3>
+      <table class="data-table" aria-label="Automatically collected data">
+        <thead>
+          <tr><th>Data Type</th><th>What It Includes</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Usage Data</td>
+            <td>Pages visited, features used, time on site, compilation events</td>
+            <td>Product improvement, analytics</td>
+          </tr>
+          <tr>
+            <td>Device &amp; Browser</td>
+            <td>Browser type, OS, screen resolution, language</td>
+            <td>Compatibility, debugging</td>
+          </tr>
+          <tr>
+            <td>IP Address</td>
+            <td>Approximate geographic location (country/city level)</td>
+            <td>Security, ad targeting geography</td>
+          </tr>
+          <tr>
+            <td>Cookies</td>
+            <td>Session tokens, consent preferences, ad data</td>
+            <td>Authentication, ad serving, preferences</td>
+          </tr>
+          <tr>
+            <td>Log Data</td>
+            <td>Server access logs, error logs, timestamps</td>
+            <td>Security, debugging</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>C. Information from Third Parties</h3>
+      <p>We receive profile data from <strong>Google OAuth</strong> when you sign in. This is limited to what you authorize Google to share (typically name, email, and profile photo).</p>
+    </section>
+
+    <!-- Section 2: How We Use Your Information -->
+    <section class="policy-section" id="sec2" aria-labelledby="sec2-heading">
+      <h2 id="sec2-heading"><span class="num">2</span> How We Use Your Information</h2>
+      <p>We use the information we collect to:</p>
+      <ul>
+        <li>Provide, operate, and improve the SmartCompiler platform</li>
+        <li>Authenticate your account and maintain your session</li>
+        <li>Process your C code through our compilation and AI analysis systems</li>
+        <li>Track your learning progress, bug history, and compilation statistics</li>
+        <li>Serve relevant advertisements through Google AdSense (with your consent where required)</li>
+        <li>Send you important service updates (no marketing spam)</li>
+        <li>Monitor for security threats and abuse</li>
+        <li>Comply with legal obligations</li>
+      </ul>
+      <div class="highlight-box">
+        <p><strong>We do not sell your personal data to third parties.</strong> We do not share your code submissions with anyone outside of our AI processing pipeline (Anthropic Claude API for analysis).</p>
+      </div>
+    </section>
+
+    <!-- Section 3: Google AdSense -->
+    <section class="policy-section" id="sec3" aria-labelledby="sec3-heading">
+      <h2 id="sec3-heading"><span class="num">3</span> Google AdSense &amp; Third-Party Advertising</h2>
+
+      <p>SmartCompiler uses <strong>Google AdSense</strong>, a third-party advertising service provided by Google LLC, to display advertisements on this website. This is a primary means by which we sustain the platform and keep it free for students.</p>
+
+      <h3>How Google AdSense Works</h3>
+      <p>Google AdSense uses <strong>cookies and web beacons</strong> to collect information about your browsing behavior across websites. Google uses this data to show you advertisements that are relevant to your interests — this is called <em>interest-based</em> or <em>personalized advertising</em>.</p>
+
+      <div class="highlight-box">
+        <p><strong>Required Disclosure:</strong> Google, as a third-party vendor, uses cookies to serve ads on SmartCompiler based on your prior visits to this website or other websites. Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to our site and/or other sites on the Internet.</p>
+      </div>
+
+      <h3>What Google Collects Through Our Site</h3>
+      <ul>
+        <li>Cookie data (DoubleClick cookie, Google Analytics cookies)</li>
+        <li>Your IP address (used to infer geographic location for ad targeting)</li>
+        <li>Browser and device information</li>
+        <li>Pages you visit on our site</li>
+        <li>Your interaction with advertisements (impressions, clicks)</li>
+      </ul>
+
+      <h3>How to Opt Out of Personalized Ads</h3>
+      <p>You have several options to control personalized advertising:</p>
+      <ul>
+        <li><strong>Google Ad Settings:</strong> Visit <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">myadcenter.google.com</a> to manage how Google uses your data for personalized ads.</li>
+        <li><strong>Digital Advertising Alliance:</strong> Visit <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer">www.aboutads.info</a> to opt out from participating companies.</li>
+        <li><strong>Network Advertising Initiative:</strong> Visit <a href="https://www.networkadvertising.org/managing/opt_out.asp" target="_blank" rel="noopener noreferrer">networkadvertising.org</a> for additional opt-out options.</li>
+        <li><strong>Our Cookie Banner:</strong> You can withdraw consent at any time via the cookie settings button on our site.</li>
+      </ul>
+
+      <h3>Google's Privacy Policy</h3>
+      <p>For more information on how Google uses data from sites using Google AdSense, please visit: <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">policies.google.com/technologies/partner-sites</a></p>
+      <p>Google's full Privacy Policy is available at: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a></p>
+    </section>
+
+    <!-- Section 4: Cookies -->
+    <section class="policy-section" id="sec4" aria-labelledby="sec4-heading">
+      <h2 id="sec4-heading"><span class="num">4</span> Cookies &amp; Tracking Technologies</h2>
+      <p>Cookies are small text files stored on your device by your browser. We use the following types of cookies:</p>
+
+      <table class="data-table" aria-label="Cookie types">
+        <thead>
+          <tr><th>Cookie Type</th><th>Purpose</th><th>Duration</th><th>Can Opt Out?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Strictly Necessary</strong></td>
+            <td>Authentication, security, session management (Supabase auth tokens)</td>
+            <td>Session / 7 days</td>
+            <td>No — required for the site to function</td>
+          </tr>
+          <tr>
+            <td><strong>Analytics / Performance</strong></td>
+            <td>Usage tracking, feature analytics (anonymous aggregated data)</td>
+            <td>Up to 12 months</td>
+            <td>Yes — via cookie consent banner</td>
+          </tr>
+          <tr>
+            <td><strong>Advertising</strong></td>
+            <td>Google AdSense — interest-based ad targeting and measurement</td>
+            <td>Up to 13 months</td>
+            <td>Yes — opt out via cookie banner or Google Ad Settings</td>
+          </tr>
+          <tr>
+            <td><strong>Preference</strong></td>
+            <td>Your consent choice, UI preferences (theme, etc.)</td>
+            <td>12 months</td>
+            <td>Yes</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Browser-Level Cookie Control</h3>
+      <p>You can control cookies directly through your browser settings:</p>
+      <ul>
+        <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer">Google Chrome</a></li>
+        <li><a href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer" target="_blank" rel="noopener noreferrer">Mozilla Firefox</a></li>
+        <li><a href="https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac" target="_blank" rel="noopener noreferrer">Apple Safari</a></li>
+        <li><a href="https://support.microsoft.com/en-us/windows/delete-and-manage-cookies-168dab11-0753-043d-7c16-ede5947fc64d" target="_blank" rel="noopener noreferrer">Microsoft Edge</a></li>
+      </ul>
+      <div class="warning-box">
+        <p>⚠️ Note: Disabling all cookies may prevent some features of SmartCompiler from working correctly, including authentication.</p>
+      </div>
+    </section>
+
+    <!-- Section 5: GDPR -->
+    <section class="policy-section" id="sec5" aria-labelledby="sec5-heading">
+      <h2 id="sec5-heading"><span class="num">5</span> GDPR — Rights for EU/EEA Users</h2>
+      <p>If you are located in the European Union, European Economic Area, or the United Kingdom, you have the following rights under the <strong>General Data Protection Regulation (GDPR)</strong>:</p>
+      <ul>
+        <li><strong>Right of Access:</strong> Request a copy of the personal data we hold about you.</li>
+        <li><strong>Right to Rectification:</strong> Correct inaccurate or incomplete data.</li>
+        <li><strong>Right to Erasure ("Right to be Forgotten"):</strong> Request deletion of your personal data.</li>
+        <li><strong>Right to Restrict Processing:</strong> Ask us to limit how we use your data.</li>
+        <li><strong>Right to Data Portability:</strong> Receive your data in a machine-readable format.</li>
+        <li><strong>Right to Object:</strong> Object to our processing of your data for direct marketing or profiling.</li>
+        <li><strong>Right to Withdraw Consent:</strong> Withdraw any consent you've given at any time — including for advertising cookies — via our cookie settings button.</li>
+      </ul>
+
+      <h3>Legal Basis for Processing</h3>
+      <p>We process your data under the following legal bases:</p>
+      <ul>
+        <li><strong>Contract Performance:</strong> To provide you the SmartCompiler service you've signed up for.</li>
+        <li><strong>Legitimate Interests:</strong> For analytics, security, and site improvement.</li>
+        <li><strong>Consent:</strong> For advertising cookies and marketing communications.</li>
+        <li><strong>Legal Obligation:</strong> Where required by law.</li>
+      </ul>
+
+      <div class="highlight-box">
+        <p>To exercise any of these rights, email us at: <a href="mailto:privacy@maadiotsolutions.co.in"><strong>privacy@maadiotsolutions.co.in</strong></a>. We will respond within 30 days as required by GDPR.</p>
+      </div>
+    </section>
+
+    <!-- Section 6: CCPA -->
+    <section class="policy-section" id="sec6" aria-labelledby="sec6-heading">
+      <h2 id="sec6-heading"><span class="num">6</span> CCPA — Rights for California Users</h2>
+      <p>If you are a California resident, the <strong>California Consumer Privacy Act (CCPA)</strong> / <strong>CPRA</strong> grants you additional rights:</p>
+      <ul>
+        <li><strong>Right to Know:</strong> What categories and specific pieces of personal information we collect, use, disclose, or sell.</li>
+        <li><strong>Right to Delete:</strong> Request deletion of your personal information.</li>
+        <li><strong>Right to Opt-Out:</strong> Opt out of the "sale" or "sharing" of your personal information (as defined by CCPA, this includes sharing data with ad networks for cross-context behavioral advertising).</li>
+        <li><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for exercising your rights.</li>
+      </ul>
+
+      <h3>Do Not Sell or Share My Personal Information</h3>
+      <p>We participate in interest-based advertising which may constitute a "sale" or "sharing" of data under CCPA. To opt out, you can:</p>
+      <ul>
+        <li>Click the <strong>"Cookie Settings"</strong> button at the bottom of our site</li>
+        <li>Visit Google's <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">Ad Center</a> to opt out of personalized ads</li>
+        <li>Enable <strong>Restricted Data Processing</strong> by contacting us at <a href="mailto:privacy@maadiotsolutions.co.in">privacy@maadiotsolutions.co.in</a></li>
+      </ul>
+    </section>
+
+    <!-- Section 7: Data Retention -->
+    <section class="policy-section" id="sec7" aria-labelledby="sec7-heading">
+      <h2 id="sec7-heading"><span class="num">7</span> Data Retention</h2>
+      <p>We retain your data only as long as necessary:</p>
+      <ul>
+        <li><strong>Account Data:</strong> Retained while your account is active. Deleted within 30 days of account deletion request.</li>
+        <li><strong>Compilation History:</strong> Stored indefinitely unless you delete it or your account. You can clear your history within the app.</li>
+        <li><strong>Analytics Data:</strong> Aggregated and retained for up to 24 months.</li>
+        <li><strong>Server Logs:</strong> Retained for 90 days for security and debugging.</li>
+        <li><strong>Ad-related data:</strong> Governed by Google's retention policies. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
+      </ul>
+    </section>
+
+    <!-- Section 8: Third-Party Services -->
+    <section class="policy-section" id="sec8" aria-labelledby="sec8-heading">
+      <h2 id="sec8-heading"><span class="num">8</span> Third-Party Services</h2>
+      <p>SmartCompiler integrates with the following third-party services, each with their own privacy policies:</p>
+      <table class="data-table" aria-label="Third-party services">
+        <thead>
+          <tr><th>Service</th><th>Purpose</th><th>Privacy Policy</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Google AdSense</strong></td>
+            <td>Advertisement serving &amp; revenue</td>
+            <td><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td><strong>Google OAuth / Sign-In</strong></td>
+            <td>User authentication</td>
+            <td><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td><strong>Supabase</strong></td>
+            <td>Database &amp; authentication backend</td>
+            <td><a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">supabase.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td><strong>Anthropic Claude</strong></td>
+            <td>AI code analysis &amp; bug detection</td>
+            <td><a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer">anthropic.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td><strong>Google Fonts</strong></td>
+            <td>Typography (Inter, JetBrains Mono)</td>
+            <td><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td><strong>GSAP (GreenSock)</strong></td>
+            <td>Animations (loaded from CDN)</td>
+            <td><a href="https://gsap.com/community/privacy-policy/" target="_blank" rel="noopener noreferrer">gsap.com/privacy</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Section 9: Children's Privacy -->
+    <section class="policy-section" id="sec9" aria-labelledby="sec9-heading">
+      <h2 id="sec9-heading"><span class="num">9</span> Children's Privacy</h2>
+      <p>SmartCompiler is designed for users aged <strong>13 and older</strong>. We do not knowingly collect personal information from children under the age of 13 (or under 16 in the EEA/UK).</p>
+      <p>If we discover we have inadvertently collected data from a child under 13, we will delete that information immediately. Parents or guardians who believe their child has provided us with personal information should contact us at <a href="mailto:privacy@maadiotsolutions.co.in">privacy@maadiotsolutions.co.in</a>.</p>
+      <div class="warning-box">
+        <p>⚠️ Google AdSense does not serve personalized ads to users under 13. Our site is intended for CS students, typically aged 16+.</p>
+      </div>
+    </section>
+
+    <!-- Section 10: Security -->
+    <section class="policy-section" id="sec10" aria-labelledby="sec10-heading">
+      <h2 id="sec10-heading"><span class="num">10</span> Security</h2>
+      <p>We implement industry-standard security measures to protect your data:</p>
+      <ul>
+        <li>All data transmitted over HTTPS/TLS encryption</li>
+        <li>Supabase Row-Level Security (RLS) ensures users can only access their own data</li>
+        <li>WebSocket connections secured with short-lived authentication tickets</li>
+        <li>No passwords stored — we use Google OAuth only</li>
+        <li>Server logs reviewed for anomalous access patterns</li>
+      </ul>
+      <p>Despite these measures, no method of transmission or storage is 100% secure. We cannot guarantee absolute security of your data.</p>
+    </section>
+
+    <!-- Section 11: Changes -->
+    <section class="policy-section" id="sec11" aria-labelledby="sec11-heading">
+      <h2 id="sec11-heading"><span class="num">11</span> Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. When we make significant changes:</p>
+      <ul>
+        <li>We will update the "Last Updated" date at the top of this page</li>
+        <li>We will display a notice on our website</li>
+        <li>For material changes, we may notify you via email if you have an account</li>
+      </ul>
+      <p>Continued use of SmartCompiler after changes are posted constitutes your acceptance of the updated policy.</p>
+    </section>
+
+    <!-- Section 12: Contact -->
+    <section class="policy-section" id="sec12" aria-labelledby="sec12-heading">
+      <h2 id="sec12-heading"><span class="num">12</span> Contact Us</h2>
+      <p>For any privacy-related questions, data requests, or concerns, please contact us:</p>
+      <div class="highlight-box">
+        <p>
+          <strong>SmartCompiler Privacy Team</strong><br/>
+          📧 Email: <a href="mailto:privacy@maadiotsolutions.co.in">privacy@maadiotsolutions.co.in</a><br/>
+          🌐 Website: <a href="/">smartcompiler.maadiotsolutions.co.in</a><br/>
+          📝 Contact Form: <a href="/contact.html">smartcompiler.maadiotsolutions.co.in/contact</a>
+        </p>
+      </div>
+      <p>We aim to respond to all privacy inquiries within <strong>5 business days</strong> and all GDPR-related requests within <strong>30 days</strong> as legally required.</p>
+    </section>
+
+  </main>
+
+  <footer class="page-footer" role="contentinfo">
+    <p>
+      &copy; 2026 SmartCompiler. All rights reserved. &nbsp;|&nbsp;
+      <a href="/privacy-policy.html">Privacy Policy</a> &nbsp;|&nbsp;
+      <a href="/terms.html">Terms of Service</a> &nbsp;|&nbsp;
+      <a href="/about.html">About</a> &nbsp;|&nbsp;
+      <a href="/contact.html">Contact</a>
+    </p>
+  </footer>
+
+</body>
+</html>

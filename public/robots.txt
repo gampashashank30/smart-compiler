@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Allow Google AdSense crawler specifically
+User-agent: Mediapartners-Google
+Allow: /
+
+# Disallow internal app routes and API
+Disallow: /api/
+Disallow: /ws/
+Disallow: /app.html
+Disallow: /login.html
+
+# Sitemap location
+Sitemap: https://smartcompiler.maadiotsolutions.co.in/sitemap.xml
