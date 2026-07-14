@@ -52,10 +52,10 @@ export default function Header({
             aria-hidden="true"
             focusable="false"
           >
-            <rect width="512" height="512" rx="112" fill="#0B192C" />
-            <path d="M225 116 L100 256 L225 396" stroke="white" strokeWidth="56" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M287 116 L412 256 L287 396" stroke="white" strokeWidth="56" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M256 160 Q276 236 320 256 Q276 276 256 352 Q236 276 192 256 Q236 236 256 160 Z" fill="#FF7A00" />
+            <rect x="6" y="6" width="500" height="500" rx="108" fill="#0B192C" stroke="#1E293B" strokeWidth="12" />
+            <path d="M200 140 L110 256 L200 372" stroke="white" strokeWidth="44" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M312 140 L402 256 L312 372" stroke="white" strokeWidth="44" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M256 166 Q256 256 316 256 Q256 256 256 346 Q256 256 196 256 Q256 256 256 166 Z" fill="#FF7A00" />
           </svg>
         </div>
 
