@@ -142,8 +142,8 @@
   <header class="hero" role="banner">
     <div class="hero-content">
       <div class="hero-badge">🏢 About Us</div>
-      <h1>Built for Students<br/>Who Think in Code</h1>
-      <p>SmartCompiler was created by developers who remember the frustration of spending hours on a bug GCC never warned about. We built the tool we wished existed.</p>
+      <h1>Simple &amp; Smarter<br/>C Programming</h1>
+      <p>SmartCompiler is a browser-based coding environment designed to make learning C programming simpler, clearer, and more accessible.</p>
     </div>
   </header>
 
@@ -152,63 +152,57 @@
     <!-- Mission -->
     <div class="mission-card">
       <h2>🎯 Our Mission</h2>
-      <p>To lower the barrier to learning C programming by giving every student access to an AI mentor that catches logical bugs, explains errors in plain English, and guides them from <code>Hello, World!</code> to data structures — all without installing a single tool.</p>
+      <p>To help students learn C programming by providing clear, understandable feedback on compilation errors and logic bugs directly in the browser, with no setup required.</p>
     </div>
 
     <!-- Story -->
     <section class="section" aria-labelledby="story-heading">
-      <h2 id="story-heading">📖 Our Story</h2>
-      <p>SmartCompiler started from a simple observation: <strong>CS students fail C assignments not because they don't understand the concepts</strong>, but because they stare at cryptic GCC error messages like <code>segmentation fault (core dumped)</code> with no idea where to look.</p>
-      <p>Standard compilers are incredibly powerful but were built for professional engineers, not beginners learning their first systems language. They catch syntax errors reliably — but logical bugs, off-by-one errors, uninitialized pointers, and memory leaks? Those slip right through.</p>
-      <p>We combined a real C compilation backend (GCC via WebAssembly and containerized execution) with <strong>Claude AI</strong> to create a second layer of analysis that thinks like a teaching assistant — pointing out not just <em>what</em> broke, but <em>why</em>, and how to think about fixing it.</p>
-      <p>Today, SmartCompiler serves thousands of CS students globally, completely free, directly in the browser.</p>
+      <h2 id="story-heading">📖 Why SmartCompiler?</h2>
+      <p>Learning C is a foundational step in computer science, but standard compiler error messages can be difficult for beginners to interpret. Simple issues like mismatched syntax or memory leaks often result in confusing messages that make troubleshooting frustrating.</p>
+      <p>SmartCompiler solves this by running a standard C compiler (GCC) alongside an AI-assisted analysis layer. When code fails to compile or run correctly, the platform translates technical errors into plain English explanations, helping you understand both what went wrong and how to fix it.</p>
     </section>
 
     <!-- Problem / Solution -->
     <div class="two-col" role="region" aria-label="Problem and Solution">
       <div class="card problem">
-        <div class="card-icon">😤</div>
-        <h3>The Problem with Learning C</h3>
+        <div class="card-icon">🧐</div>
+        <h3>Common Obstacles</h3>
         <ul>
-          <li data-icon="❌">GCC only reports syntax errors, not logic bugs</li>
-          <li data-icon="❌">Error messages are cryptic and intimidating</li>
-          <li data-icon="❌">Setting up a C environment takes hours</li>
-          <li data-icon="❌">No real-time feedback while writing code</li>
-          <li data-icon="❌">Stack Overflow answers assume expert context</li>
-          <li data-icon="❌">Office hours are limited; students get stuck at 2am</li>
+          <li data-icon="❌">Cryptic, hard-to-read compiler messages</li>
+          <li data-icon="❌">Logical bugs that compile but fail at runtime</li>
+          <li data-icon="❌">Complex environment setup for system tools</li>
+          <li data-icon="❌">Lack of guided practice for system programming concepts</li>
         </ul>
       </div>
       <div class="card solution">
-        <div class="card-icon">✅</div>
-        <h3>What SmartCompiler Solves</h3>
+        <div class="card-icon">💡</div>
+        <h3>The SmartCompiler Solution</h3>
         <ul>
-          <li data-icon="✅">AI catches logical bugs GCC misses</li>
-          <li data-icon="✅">Errors explained in plain, student-friendly English</li>
-          <li data-icon="✅">Zero installation — runs in any browser</li>
-          <li data-icon="✅">Real-time AI analysis on every compile</li>
-          <li data-icon="✅">Integrated AI tutor with 500+ C exercises</li>
-          <li data-icon="✅">Available 24/7, completely free</li>
+          <li data-icon="✅">Clear, plain-English error explanations</li>
+          <li data-icon="✅">Assistance in spotting memory leaks and logic bugs</li>
+          <li data-icon="✅">Zero setup — run C code in any modern browser</li>
+          <li data-icon="✅">Integrated coding exercises and progress tracking</li>
         </ul>
       </div>
     </div>
 
     <!-- Stats -->
-    <div class="stats-strip" role="region" aria-label="Platform statistics">
+    <div class="stats-strip" role="region" aria-label="Key Features">
       <div class="stat-item">
-        <div class="num">10K+</div>
-        <div class="label">Student Users</div>
+        <div class="num">GCC</div>
+        <div class="label">Native C Compiler</div>
       </div>
       <div class="stat-item">
-        <div class="num">500+</div>
-        <div class="label">AI Tutor Exercises</div>
+        <div class="num">AI</div>
+        <div class="label">Smart Explanations</div>
       </div>
       <div class="stat-item">
-        <div class="num">24/7</div>
-        <div class="label">Always Available</div>
+        <div class="num">0</div>
+        <div class="label">Setup Required</div>
       </div>
       <div class="stat-item">
         <div class="num">Free</div>
-        <div class="label">Always &amp; Forever</div>
+        <div class="label">Educational Tool</div>
       </div>
     </div>
 
@@ -268,10 +262,9 @@
       </div>
     </section>
 
-    <!-- CTA -->
     <section class="cta-section" aria-labelledby="cta-heading">
       <h2 id="cta-heading">Ready to Write Better C?</h2>
-      <p>Join thousands of students who debug smarter, not harder.</p>
+      <p>Start compilation and analysis with real-time feedback.</p>
       <a href="/app.html" class="btn-primary" id="about-try-btn" aria-label="Launch SmartCompiler">🚀 Launch SmartCompiler</a>
       <a href="/contact.html" class="btn-secondary" id="about-contact-btn" aria-label="Contact us">✉️ Contact Us</a>
     </section>
