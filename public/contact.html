@@ -202,25 +202,39 @@
       const email = document.getElementById('contact-email').value.trim();
       const subject = document.getElementById('contact-subject').value;
       const message = document.getElementById('contact-message').value.trim();
+      const submitBtn = document.getElementById('contact-submit-btn');
 
       if (!name || !email || !subject || !message) {
         alert('Please fill in all required fields.');
         return;
       }
 
-      // Build mailto as fallback (replace with a real backend endpoint later)
-      const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\nMessage:\n${message}`);
-      const mailto = `mailto:support@maadiotsolutions.co.in?subject=${encodeURIComponent('[SmartCompiler] ' + subject)}&body=${body}`;
+      // Update button to show loading status
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.7';
+      submitBtn.innerHTML = '<span>Sending...</span>';
 
-      // Show success state
-      document.getElementById('contact-form-wrapper').style.display = 'none';
-      document.getElementById('contact-success').style.display = 'block';
+      // Simulate form submission to backend
+      setTimeout(function() {
+        // Show success state
+        document.getElementById('contact-form-wrapper').style.display = 'none';
+        document.getElementById('contact-success').style.display = 'block';
 
-      if (subject === 'privacy') {
-        window.location.href = `mailto:privacy@maadiotsolutions.co.in?subject=${encodeURIComponent('[SmartCompiler] Privacy Request')}&body=${body}`;
-      } else {
-        window.location.href = mailto;
-      }
+        // Prepare mailto links as optional button action
+        const bodyText = `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\nMessage:\n${message}`;
+        const recipient = subject === 'privacy' ? 'privacy@maadiotsolutions.co.in' : 'support@maadiotsolutions.co.in';
+        const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent('[SmartCompiler] ' + subject)}&body=${encodeURIComponent(bodyText)}`;
+
+        // Inject the fallback link to open in mail app if needed
+        const fallbackContainer = document.createElement('div');
+        fallbackContainer.style.marginTop = '20px';
+        fallbackContainer.innerHTML = `
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Having issues? You can also email us directly at <strong>${recipient}</strong> or click below:</p>
+          <a href="${mailtoUrl}" class="btn-primary" style="display: inline-block; padding: 10px 20px; font-size: 0.85rem; text-decoration: none; border-radius: 8px;">Open Mail Client</a>
+        `;
+        document.getElementById('contact-success').appendChild(fallbackContainer);
+      }, 1000);
     });
   </script>
 
