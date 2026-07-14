@@ -1,13 +1,13 @@
 /**
- * bugTracker.js — Session-scoped analytics store for SmartCompiler
+ * bugTracker.js - Permanent analytics store for SmartCompiler
  *
  * Architecture:
- *   • Primary storage: sessionStorage (survives React re-renders, cleared on tab close)
+ *   • Primary storage: localStorage (survives React re-renders and closing the site)
  *   • Future: swap _persist / _hydrate for Supabase calls when auth is ready
  *   • Listeners pattern: any React component can subscribe for reactive updates
  *
  * Supabase readiness:
- *   The `_persist` and `_hydrate` methods are the ONLY places that touch storage.
+ *   The _persist and _hydrate methods are the ONLY places that touch storage.
  *   To enable Supabase, replace their bodies with supabase.from('bug_events').insert/select
  *   and keep the rest of the module unchanged.
  */
@@ -179,16 +179,16 @@ export const TIPS = {
 const STORAGE_KEY = 'sc_bug_tracker_v1';
 
 /**
- * Maximum events kept locally in sessionStorage.
+ * Maximum events kept locally in localStorage.
  * When PostgreSQL is integrated, events beyond this cap will be
- * stored exclusively in the database — not in sessionStorage.
+ * stored exclusively in the database - not in localStorage.
  * Exported so the Analytics panel can display the limit.
  */
 export const MAX_SESSIONS = 50;
 
 function _hydrate() {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -197,9 +197,9 @@ function _hydrate() {
 
 function _persist(sessions) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
   } catch {
-    // sessionStorage full — silently ignore
+    // localStorage full - silently ignore
   }
 }
 
@@ -248,7 +248,7 @@ export const bugTrackerStore = {
       }
     }
 
-    // Fallback to sessionStorage if not logged in or DB call failed
+    // Fallback to localStorage if not logged in or DB call failed
     this.sessions = _hydrate();
     this._notify();
   },
