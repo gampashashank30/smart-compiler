@@ -210,31 +210,50 @@
       }
 
       // Update button to show loading status
-      const originalBtnText = submitBtn.innerHTML;
       submitBtn.disabled = true;
       submitBtn.style.opacity = '0.7';
       submitBtn.innerHTML = '<span>Sending...</span>';
 
-      // Simulate form submission to backend
-      setTimeout(function() {
+      // Send form data to FormSubmit AJAX endpoint
+      fetch("https://formsubmit.co/ajax/gampashashank30@gmail.com", {
+        method: "POST",
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          Name: name,
+          Email: email,
+          Subject: subject,
+          Message: message,
+          _subject: `[SmartCompiler Contact Form] ${subject}`
+        })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Network error');
+        return response.json();
+      })
+      .then(data => {
         // Show success state
         document.getElementById('contact-form-wrapper').style.display = 'none';
         document.getElementById('contact-success').style.display = 'block';
 
-        // Prepare mailto links as optional button action
-        const bodyText = `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\nMessage:\n${message}`;
-        const recipient = 'gampashashank30@gmail.com';
-        const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent('[SmartCompiler] ' + subject)}&body=${encodeURIComponent(bodyText)}`;
-
-        // Inject the fallback link to open in mail app if needed
-        const fallbackContainer = document.createElement('div');
-        fallbackContainer.style.marginTop = '20px';
-        fallbackContainer.innerHTML = `
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Having issues? You can also email us directly at <strong>${recipient}</strong> or click below:</p>
-          <a href="${mailtoUrl}" class="btn-primary" style="display: inline-block; padding: 10px 20px; font-size: 0.85rem; text-decoration: none; border-radius: 8px;">Open Mail Client</a>
+        // Add instructions for first-time confirmation (FormSubmit requirement)
+        const instructionContainer = document.createElement('div');
+        instructionContainer.style.marginTop = '20px';
+        instructionContainer.innerHTML = `
+          <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+            Your message has been sent. If this is the first time you are using the contact form, please check your inbox at <strong>gampashashank30@gmail.com</strong> for a confirmation email from FormSubmit and click the activation link.
+          </p>
         `;
-        document.getElementById('contact-success').appendChild(fallbackContainer);
-      }, 1000);
+        document.getElementById('contact-success').appendChild(instructionContainer);
+      })
+      .catch(error => {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.innerHTML = '<span>Send Message</span>';
+        alert('We were unable to send your message. Please email us directly at gampashashank30@gmail.com');
+      });
     });
   </script>
 
