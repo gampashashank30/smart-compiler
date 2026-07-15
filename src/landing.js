@@ -452,3 +452,39 @@ if (applyBtn) {
     });
   });
 }
+
+/* ── FAQ Accordion Toggles ── */
+function initFaqAccordion() {
+  const faqQuestions = document.querySelectorAll('.faq-question');
+  faqQuestions.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.parentElement;
+      const answer = btn.nextElementSibling;
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+
+      // Toggle aria-expanded
+      btn.setAttribute('aria-expanded', !isExpanded);
+
+      // Close other open FAQ items for a clean single-open accordion feel
+      document.querySelectorAll('.faq-item').forEach(otherItem => {
+        if (otherItem !== item && otherItem.classList.contains('active')) {
+          otherItem.classList.remove('active');
+          const otherBtn = otherItem.querySelector('.faq-question');
+          if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+          const otherAnswer = otherItem.querySelector('.faq-answer');
+          if (otherAnswer) otherAnswer.style.maxHeight = '0';
+        }
+      });
+
+      // Toggle active class and slide animation
+      if (!isExpanded) {
+        item.classList.add('active');
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+      } else {
+        item.classList.remove('active');
+        answer.style.maxHeight = '0';
+      }
+    });
+  });
+}
+initFaqAccordion();
