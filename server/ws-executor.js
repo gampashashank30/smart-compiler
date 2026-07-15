@@ -445,7 +445,7 @@ function attachWebSocketServer(httpServer) {
         DOCKER_IMAGE,
         'sh', '-c',
         // Compile, capture all output (stdout + stderr merged), print exit code
-        'ulimit -f 20480 -v 65536; gcc /sandbox/main.c -Wall -Wextra -O3 -D__USE_MINGW_ANSI_STDIO -o /sandbox/prog 2>&1; echo "::CEXIT::$?"',
+        'ulimit -f 20480 -v 65536; gcc /sandbox/main.c -Wall -Wextra -O3 -D__USE_MINGW_ANSI_STDIO -o /sandbox/prog -lm 2>&1; echo "::CEXIT::$?"',
       ];
 
       let compileOut     = '';

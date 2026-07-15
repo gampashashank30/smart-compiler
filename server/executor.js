@@ -100,7 +100,7 @@ async function runWithDocker(code, stdin) {
       tmpDir,
       [
         'sh', '-c',
-        'ulimit -f 20480 -v 65536; gcc /sandbox/main.c -Wall -Wextra -O3 -o /sandbox/prog 2>&1; echo "::EXIT::$?"'
+        'ulimit -f 20480 -v 65536; gcc /sandbox/main.c -Wall -Wextra -O3 -o /sandbox/prog -lm 2>&1; echo "::EXIT::$?"'
       ],
       '',              // no stdin for compilation
       COMPILE_TIMEOUT
