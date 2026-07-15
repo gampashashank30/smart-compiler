@@ -610,25 +610,37 @@ async function runWithWandbox(code, send) {
         try {
           const data    = JSON.parse(raw);
           const ec      = parseInt(data.status ?? '0', 10);
-          const killed  = data.signal === 'Killed';
-          const isCompileError = ec !== 0 && !data.program_output;
-          const cMsg = (data.compiler_error || data.compiler_output || '').trim();
+          const killed  = data.signal === 'Killed' || data.signal === 'TLE';
+          const cErr    = (data.compiler_error  || '').trim();
+          const cOut    = (data.compiler_output || '').trim();
+          const cMsg    = cErr || cOut;   // combined compiler messages
 
-          if (!isCompileError) {
-            send({ type: 'status', data: 'running' });
+          // A real compile error: non-zero exit AND the compiler emitted error text
+          // (not just warnings) AND the program produced no output.
+          const isCompileError = ec !== 0 && !!cErr && !data.program_output;
+
+          if (isCompileError) {
+            send({ type: 'compile-error', data: cMsg });
+            // Always send done so the UI exits the 'compiling' state
+            send({ type: 'done', exitCode: ec, timeMs: Date.now() - startTime, killed: false, signal: null });
+            resolve();
+            return;
           }
 
+          // Compile succeeded (possibly with warnings) — tell the client we are now running
+          send({ type: 'status', data: 'running' });
+
+          // Emit compiler warnings (yellow) if any
           if (cMsg) {
-            if (isCompileError) {
-              send({ type: 'compile-error', data: cMsg });
-            } else {
-              send({ type: 'output', data: `\x1b[33m${cMsg}\x1b[0m\r\n` });
-            }
+            send({ type: 'output', data: `\x1b[33m${cMsg}\x1b[0m\r\n` });
           }
+
+          // Emit program output
           if (data.program_output) {
             // Normalize line endings for xterm.js
             send({ type: 'output', data: data.program_output.replace(/\r?\n/g, '\r\n') });
           }
+
           send({ type: 'done', exitCode: ec, timeMs: Date.now() - startTime, killed, signal: data.signal || null });
         } catch {
           send({ type: 'error', data: 'Wandbox returned invalid response.' });
@@ -639,11 +651,11 @@ async function runWithWandbox(code, send) {
 
     const t = setTimeout(() => {
       req.destroy();
-      send({ type: 'error', data: 'Wandbox timed out.' });
+      send({ type: 'error', data: 'Wandbox timed out (20 s). Please try again.' });
       resolve();
     }, 20_000);
 
-    req.on('error', e => { clearTimeout(t); send({ type: 'error', data: e.message }); resolve(); });
+    req.on('error', e => { clearTimeout(t); send({ type: 'error', data: `Wandbox connection failed: ${e.message}` }); resolve(); });
     req.on('close', () => clearTimeout(t));
     req.write(body);
     req.end();

@@ -288,7 +288,8 @@ async function runWithWandbox(code, stdin) {
   const compilerMessage = (data.compiler_error || data.compiler_output || '').trim();
   const exitCode        = parseInt(data.status ?? '0', 10);
   const killed          = data.signal === 'Killed' || data.signal === 'TLE';
-  const compileError    = exitCode !== 0 && !data.program_output && !!compilerMessage;
+  // Compile error = non-zero exit AND compiler produced error text AND no program output
+  const compileError    = exitCode !== 0 && !!(data.compiler_error || '').trim() && !data.program_output;
 
   return {
     success:      exitCode === 0 && !killed,

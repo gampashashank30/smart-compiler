@@ -69,6 +69,8 @@ const TerminalPane = forwardRef(function TerminalPane(
   const outputBufRef = useRef('');
   // Track whether we're past the compile banner so we don't capture compile noise
   const capturingRef = useRef(false);
+  // Track whether a compile-error was already handled (to suppress the 'done' footer)
+  const hadCompileErrorRef = useRef(false);
 
   // ── Initialise xterm.js once ─────────────────────────────────────────────
   useEffect(() => {
@@ -186,6 +188,7 @@ const TerminalPane = forwardRef(function TerminalPane(
     localEchoRef.current = '';
     outputBufRef.current = '';
     capturingRef.current = false;
+    hadCompileErrorRef.current = false;
 
     // Reset terminal and show compile banner
     term.write('\x1bc');
@@ -279,6 +282,7 @@ const TerminalPane = forwardRef(function TerminalPane(
           localEchoRef.current = '';
           runningRef.current = false;
           capturingRef.current = false;
+          hadCompileErrorRef.current = true;  // suppress done footer
           onStatusChange?.('idle');
           onDone?.({ success: false, compileError: true });
           // ── Bug tracker ──
@@ -310,6 +314,13 @@ const TerminalPane = forwardRef(function TerminalPane(
 
         // ── Program finished ──────────────────────────────────────────
         case 'done': {
+          // If a compile-error was already handled, the server sends an extra 'done'
+          // as a state-machine reset. Skip the display to avoid a confusing footer.
+          if (hadCompileErrorRef.current) {
+            hadCompileErrorRef.current = false;
+            break;
+          }
+
           const capturedStdout = outputBufRef.current;
           localEchoRef.current = '';
           runningRef.current = false;
