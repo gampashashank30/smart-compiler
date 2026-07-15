@@ -588,6 +588,7 @@ async function runWithWandbox(code, send) {
     code,        // send original code — Wandbox doesn't need our setvbuf wrapper
     stdin:   '',
     options: 'warning,optimize',
+    'compiler-option-raw': '-lm',   // link math library (sin, cos, sqrt, etc.)
   });
 
   return new Promise((resolve) => {

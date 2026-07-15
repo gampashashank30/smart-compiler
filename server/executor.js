@@ -266,6 +266,7 @@ async function runWithWandbox(code, stdin) {
     code,
     stdin:   stdin || '',
     options: 'warning,optimize',
+    'compiler-option-raw': '-lm',   // link math library (sin, cos, sqrt, etc.)
   };
 
   let data;
