@@ -25,7 +25,7 @@ const express        = require('express');
 const helmet         = require('helmet');
 const rateLimit      = require('express-rate-limit');
 const cors           = require('cors');
-const { execute, isDockerReady, isLocalGccReady, resetDockerCache } = require('./executor');
+const { execute, isDockerReady, resetDockerCache } = require('./executor');
 const { attachWebSocketServer } = require('./ws-executor');
 // ISSUE 7 FIX: Shared ticket store — no circular dependency
 const { WS_TICKETS } = require('./ws-tickets');
@@ -111,6 +111,38 @@ async function verifySupabaseToken(token) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Record a user code run server-side via Supabase RPC.
+ * Calls the `record_user_run` PostgreSQL function which atomically:
+ *   - Increments total_runs in user_stats
+ *   - Updates streak in user_stats
+ *   - Updates last_activity_date in user_analytics
+ * Uses the service role key (bypasses RLS) so the user cannot manipulate results.
+ * Fire-and-forget — does not delay the compile response.
+ */
+function recordUserRun(userId, userEmail) {
+  if (!SUPABASE_URL || !userId) return;
+  const bearerKey = SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
+  // Get today's date in YYYY-MM-DD format (UTC — consistent with server location)
+  const today = new Date().toISOString().slice(0, 10);
+  fetch(
+    `${SUPABASE_URL}/rest/v1/rpc/record_user_run`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${bearerKey}`,
+        'apikey':        bearerKey,
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({
+        p_user_id:    userId,
+        p_user_email: userEmail || '',
+        p_local_date: today,
+      }),
+    }
+  ).catch(err => console.error('[recordUserRun] Failed to record run:', err.message));
 }
 
 // ── Express app ──────────────────────────────────────────────────────────────
@@ -533,15 +565,14 @@ app.get('/api/health', apiLimiter, async (req, res) => {
   }
 
   // Full diagnostics for admins only
-  const docker   = await isDockerReady();
-  const localGcc = await isLocalGccReady();
+  const docker = await isDockerReady();
   return res.json({
-    ok:     true,
+    ok:       true,
     docker,
-    localGcc,
-    engine: docker ? 'docker' : (localGcc ? 'local-gcc' : 'wandbox'),
-    queue:  queue ? { size: queue.size, pending: queue.pending } : null,
-    uptime: Math.round(process.uptime()),
+    localGcc: false, // permanently disabled — unsandboxed execution not permitted
+    engine:   docker ? 'docker' : 'wandbox',
+    queue:    queue ? { size: queue.size, pending: queue.pending } : null,
+    uptime:   Math.round(process.uptime()),
   });
 });
 
@@ -606,6 +637,9 @@ app.post('/api/compile', compileLimiter, async (req, res) => {
       ? queue.add(() => execute(code, stdin))
       : execute(code, stdin)
     );
+    // Record the run server-side (increments total_runs and updates streak via RPC).
+    // Fire-and-forget — does not block or delay the response.
+    recordUserRun(compileUser.id, compileUser.email);
     return res.json(result);
   } catch (err) {
     console.error('[/api/compile] Unexpected error:', err);

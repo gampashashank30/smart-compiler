@@ -177,26 +177,10 @@ function getCleanEnv() {
   return cleanEnv;
 }
 
-let _localGccReady = null;
+// Local GCC fallback is permanently disabled for security.
+// On Render, Docker is always used. Without Docker, Wandbox API handles execution.
 async function isLocalGccReady() {
-  if (_localGccReady !== null) return _localGccReady;
-
-  const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
-  if (process.env.DISABLE_LOCAL_GCC === 'true' || isProdOrStaging) {
-    console.warn('[ws-executor] Local GCC fallback disabled for security (production/staging or DISABLE_LOCAL_GCC is set)');
-    _localGccReady = false;
-    return _localGccReady;
-  }
-
-  try {
-    await execFileAsync('gcc', ['--version'], { timeout: 3000 });
-    _localGccReady = true;
-    console.warn('[ws-executor] WARNING: Local GCC is available and will be used as a fallback.');
-    console.warn('[ws-executor]          This executes user code directly on the host machine without sandboxing!');
-  } catch {
-    _localGccReady = false;
-  }
-  return _localGccReady;
+  return false;
 }
 
 // ── Windows path → Docker mount path ─────────────────────────────────────────
@@ -433,127 +417,9 @@ function attachWebSocketServer(httpServer) {
 
       const dockerAvailable = await isDockerReady();
 
-      // ── Local GCC fallback or Wandbox ─────────────────────────────────
+      // ── No Docker: fall back to Wandbox API ───────────────────────────
+      // Local GCC is permanently disabled (unsandboxed host execution is not permitted).
       if (!dockerAvailable) {
-        const localGccAvailable = await isLocalGccReady();
-        if (localGccAvailable) {
-          send({ type: 'engine', data: 'local-gcc' });
-          send({ type: 'status', data: 'compiling' });
-
-          const isWin = os.platform() === 'win32';
-          const exeExt = isWin ? '.exe' : '';
-          const exeFile = path.join(tmpDir, `prog${exeExt}`);
-          const srcFile = path.join(tmpDir, 'main.c');
-
-          let compileOut = '';
-          let compileTimeout = false;
-          let compileExitCode = 0;
-
-          await new Promise((resolve) => {
-            const cleanEnv = getCleanEnv();
-            compileProc = spawn('gcc', [srcFile, '-Wall', '-Wextra', '-O3', '-D__USE_MINGW_ANSI_STDIO', '-o', exeFile], { stdio: ['ignore', 'pipe', 'pipe'], env: cleanEnv });
-            compileProc.stdout.on('data', d => { compileOut += d.toString(); });
-            compileProc.stderr.on('data', d => { compileOut += d.toString(); });
-            const t = setTimeout(() => { if (compileProc) compileProc.kill(); compileTimeout = true; resolve(); }, COMPILE_TIMEOUT);
-            compileProc.on('close', (code) => { compileExitCode = code; clearTimeout(t); resolve(); });
-            compileProc.on('error', err => {
-              clearTimeout(t);
-              compileTimeout = true;
-              compileOut += `\nLocal GCC error: ${err.message}`;
-              resolve();
-            });
-          });
-          compileProc = null;
-
-          const compileMsg = compileOut.replace(new RegExp(tmpDir.replace(/\\/g, '\\\\'), 'g'), '').trim();
-
-          if (compileTimeout || compileExitCode !== 0) {
-            send({ type: 'compile-error', data: compileMsg || 'Compilation failed.' });
-            cleanup();
-            return;
-          }
-
-          if (compileMsg) {
-            send({ type: 'output', data: `\x1b[33m${compileMsg}\x1b[0m\r\n` });
-          }
-
-          // ── Step 2: Run ───────────────────────────────────────────────────
-          send({ type: 'status', data: 'running' });
-          startTime = Date.now();
-
-          if (nodePty) {
-            try {
-              const cleanEnv = getCleanEnv();
-              cleanEnv.TERM = 'xterm-256color';
-              ptyProc = nodePty.spawn(exeFile, [], {
-                name:  'xterm-256color',
-                cols,
-                rows,
-                cwd:   tmpDir,
-                env:   cleanEnv,
-              });
-            } catch (err) {
-              send({ type: 'error', data: `Failed to start local program: ${err.message}` });
-              cleanup();
-              return;
-            }
-
-            ptyProc.onData(data => {
-              if (!cleaned) {
-                const out = stripPtyNoise(data);
-                if (out) send({ type: 'output', data: out });
-              }
-            });
-
-            ptyProc.onExit(({ exitCode: ec, signal: sig }) => {
-              if (cleaned) return;
-              const timeMs = Date.now() - startTime;
-              const killed = ec === 137 || sig === 9;
-              send({
-                type:     'done',
-                exitCode: ec ?? 1,
-                timeMs,
-                killed,
-                signal:   sig ?? null,
-              });
-              cleanup();
-            });
-
-          } else {
-            const cleanEnv = getCleanEnv();
-            plainProc = spawn(exeFile, [], { cwd: tmpDir, stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv });
-
-            const normalize = d => d.toString().replace(/\r?\n/g, '\r\n');
-
-            plainProc.stdout.on('data', d => { if (!cleaned) send({ type: 'output', data: normalize(d) }); });
-            plainProc.stderr.on('data', d => { if (!cleaned) send({ type: 'output', data: normalize(d) }); });
-
-            plainProc.on('close', (code, sig) => {
-              if (cleaned) return;
-              const timeMs = Date.now() - startTime;
-              const killed = code === 137 || sig === 'SIGKILL';
-              send({ type: 'done', exitCode: code ?? 1, timeMs, killed, signal: sig ?? null });
-              cleanup();
-            });
-
-            plainProc.on('error', err => {
-              if (!cleaned) send({ type: 'error', data: `Runtime error: ${err.message}` });
-              cleanup();
-            });
-          }
-
-          killTimer = setTimeout(() => {
-            if (!cleaned) {
-              console.warn(`[ws-executor] Local TLE — killing after ${EXEC_TIMEOUT_MS}ms`);
-              if (ptyProc)   { try { ptyProc.kill('SIGKILL');  } catch {} }
-              if (plainProc) { try { plainProc.kill('SIGKILL'); } catch {} }
-            }
-          }, EXEC_TIMEOUT_MS);
-
-          return;
-        }
-
-        // Wandbox fallback
         send({ type: 'engine', data: 'wandbox' });
         send({ type: 'status', data: 'compiling' });
         await runWithWandbox(code, send);

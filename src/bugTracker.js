@@ -278,7 +278,9 @@ export const bugTrackerStore = {
 
     if (supabase && !supabase.isDummy && this.userId) {
       try {
-        // 1. Insert to bug_events table
+        // Insert to bug_events table.
+        // The database trigger `trg_update_user_stats_on_bug_insert` automatically
+        // updates error_counts and error_breakdown in user_stats — no client update needed.
         const { error: insertError } = await supabase
           .from('bug_events')
           .insert({
@@ -294,37 +296,13 @@ export const bugTrackerStore = {
           });
         if (insertError) throw insertError;
 
-        // 2. Update user_stats error tracking (only if not a successful run)
-        if (entry.subtype !== 'Successful Run') {
-          const { data: statsData, error: statsFetchError } = await supabase
-            .from('user_stats')
-            .select('error_breakdown, error_counts')
-            .eq('id', this.userId)
-            .maybeSingle();
-
-          if (!statsFetchError && statsData) {
-            const breakdown = statsData.error_breakdown && typeof statsData.error_breakdown === 'object'
-              ? { ...statsData.error_breakdown }
-              : {};
-            
-            breakdown[entry.subtype] = (breakdown[entry.subtype] || 0) + 1;
-            const newCount = (statsData.error_counts || 0) + 1;
-
-            const { error: updateError } = await supabase
-              .from('user_stats')
-              .update({
-                error_counts:    newCount,
-                error_breakdown: breakdown
-              })
-              .eq('id', this.userId);
-
-            if (updateError) throw updateError;
-
-            // Sync with local analyticsStore
-            if (analyticsStore && typeof analyticsStore.syncLocalErrors === 'function') {
-              analyticsStore.syncLocalErrors(newCount, breakdown);
-            }
-          }
+        // Sync local analyticsStore for immediate UI feedback
+        if (entry.subtype !== 'Successful Run' && analyticsStore && typeof analyticsStore.syncLocalErrors === 'function') {
+          const currentStats = analyticsStore.getStats();
+          const breakdown = { ...(currentStats.error_breakdown || {}) };
+          breakdown[entry.subtype] = (breakdown[entry.subtype] || 0) + 1;
+          const newCount = (currentStats.error_counts || 0) + 1;
+          analyticsStore.syncLocalErrors(newCount, breakdown);
         }
       } catch (err) {
         console.error('[BugTracker] Failed to persist bug to DB:', err.message);
@@ -347,7 +325,9 @@ export const bugTrackerStore = {
 
     if (supabase && !supabase.isDummy && this.userId) {
       try {
-        // Delete all bug events for this user
+        // Delete all bug events for this user.
+        // The database trigger `trg_reset_user_stats_on_bug_delete` automatically
+        // resets error_counts and error_breakdown in user_stats — no client update needed.
         const { error: deleteError } = await supabase
           .from('bug_events')
           .delete()
@@ -355,17 +335,7 @@ export const bugTrackerStore = {
 
         if (deleteError) throw deleteError;
 
-        // Reset user stats count and breakdown
-        const { error: updateError } = await supabase
-          .from('user_stats')
-          .update({
-            error_counts:    0,
-            error_breakdown: {}
-          })
-          .eq('id', this.userId);
-
-        if (updateError) throw updateError;
-
+        // Sync local state for immediate UI feedback
         if (analyticsStore && typeof analyticsStore.syncLocalErrors === 'function') {
           analyticsStore.syncLocalErrors(0, {});
         }

@@ -211,7 +211,7 @@ export const analyticsStore = {
   async recordRun() {
     localStats.total_runs += 1;
 
-    // Update streak based on today's date
+    // Update streak locally for instant UI feedback (server computes the authoritative value)
     const { newStreak, newDate } = this._computeStreak(
       localStats.current_streak,
       localStats.last_activity_date
@@ -220,27 +220,9 @@ export const analyticsStore = {
     localStats.last_activity_date = newDate;
 
     this.notify();
-
-    if (!supabase || !currentUserId) return;
-    try {
-      await Promise.all([
-        supabase
-          .from('user_analytics')
-          .update({
-            last_activity_date: newDate,
-          })
-          .eq('id', currentUserId),
-        supabase
-          .from('user_stats')
-          .update({
-            total_runs: localStats.total_runs,
-            current_streak: newStreak,
-          })
-          .eq('id', currentUserId)
-      ]);
-    } catch (err) {
-      console.error('[Analytics] Failed to save run count and streak:', err.message);
-    }
+    // NOTE: The server records total_runs and streak via the record_user_run RPC
+    // (called inside POST /api/compile and /ws/run). We do NOT write to Supabase
+    // here to prevent client-side manipulation of run counts or streaks.
   },
 
   // Record error counts from bug tracker
@@ -284,10 +266,11 @@ export const analyticsStore = {
     timeBuffer = 0; // Clear buffer first to prevent double-counting in async race
 
     try {
-      await supabase
-        .from('user_stats')
-        .update({ time_spent: localStats.time_spent })
-        .eq('id', currentUserId);
+      // Use the secure RPC to prevent the client from writing arbitrary stats columns.
+      // update_user_time_spent only allows updating time_spent for the authenticated user.
+      const { error } = await supabase
+        .rpc('update_user_time_spent', { p_time_spent: localStats.time_spent });
+      if (error) throw error;
     } catch (err) {
       timeBuffer += toSync; // restore buffer on failure
       console.error('[Analytics] Failed to sync time spent:', err.message);

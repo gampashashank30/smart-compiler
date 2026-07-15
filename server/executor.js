@@ -303,174 +303,9 @@ async function runWithWandbox(code, stdin) {
 }
 
 
-// ── Local GCC fallback execution ──────────────────────────────────────────────
-let _localGccReady = null;
-
-function getCleanEnv() {
-  const cleanEnv = {};
-  const safeKeys = [
-    'PATH',
-    'TERM',
-    'TMPDIR',
-    'TEMP',
-    'TMP',
-    'SystemRoot',
-    'windir',
-    'USER',
-    'USERNAME',
-    'HOME',
-    'HOMEPATH',
-    'HOMEDRIVE'
-  ];
-  for (const key of safeKeys) {
-    if (process.env[key] !== undefined) {
-      cleanEnv[key] = process.env[key];
-    }
-  }
-  return cleanEnv;
-}
-
+// ── Local GCC fallback execution (Stubbed to false for security/pentesting) ──
 async function isLocalGccReady() {
-  if (_localGccReady !== null) return _localGccReady;
-
-  // Disable on Render (RENDER=true is auto-set), production, staging, or explicit flag.
-  // Local GCC runs code directly on the host machine with NO sandbox — never allow in cloud.
-  // Whitelist: strictly allow ONLY in development node environment.
-  const isCloud = process.env.RENDER === 'true' || process.env.RAILWAY_ENVIRONMENT || process.env.FLY_APP_NAME;
-  const isProdOrStaging = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
-  const isDev = process.env.NODE_ENV === 'development';
-  if (!isDev || isCloud || isProdOrStaging || process.env.DISABLE_LOCAL_GCC === 'true') {
-    console.warn('[executor] Local GCC fallback DISABLED — cloud/production environment detected.');
-    console.warn('[executor]   Code will fall back to Wandbox API instead.');
-    _localGccReady = false;
-    return _localGccReady;
-  }
-
-  try {
-    await execFileAsync('gcc', ['--version'], { timeout: 3000 });
-    _localGccReady = true;
-    console.warn('[executor] WARNING: Local GCC is available and will be used as a fallback.');
-    console.warn('[executor]          This executes user code directly on the host machine without sandboxing!');
-  } catch {
-    _localGccReady = false;
-  }
-  return _localGccReady;
-}
-
-async function runWithLocalGcc(code, stdin) {
-  const startTime = Date.now();
-  const runId     = uuidv4();
-  const tmpDir    = path.join(os.tmpdir(), `sc-local-${runId}`);
-  const isWin     = os.platform() === 'win32';
-  const exeExt    = isWin ? '.exe' : '';
-  const srcFile   = path.join(tmpDir, 'main.c');
-  const exeFile   = path.join(tmpDir, `prog${exeExt}`);
-
-  try {
-    fs.mkdirSync(tmpDir, { recursive: true });
-    fs.writeFileSync(srcFile, code, 'utf8');
-
-    // Compile
-    let compileOut = '';
-    let compileExitCode = 0;
-    try {
-      const cleanEnv = getCleanEnv();
-      const { stdout, stderr } = await execFileAsync('gcc', [srcFile, '-Wall', '-Wextra', '-O3', '-o', exeFile], { timeout: COMPILE_TIMEOUT, env: cleanEnv });
-      compileOut = (stdout || '') + (stderr || '');
-    } catch (err) {
-      compileExitCode = err.code || 1;
-      compileOut = err.message + '\n' + (err.stdout || '') + (err.stderr || '');
-    }
-
-    if (compileExitCode !== 0) {
-      const compileStderr = compileOut.replace(new RegExp(tmpDir.replace(/\\/g, '\\\\'), 'g'), '').trim();
-      return {
-        success:      false,
-        stdout:       '',
-        stderr:       compileStderr || 'Compilation failed',
-        exitCode:     compileExitCode,
-        signal:       null,
-        killed:       false,
-        compileError: true,
-        timeMs:       Date.now() - startTime,
-        engine:       'local-gcc',
-      };
-    }
-
-    // Run
-    return new Promise((resolve) => {
-      const cleanEnv = getCleanEnv();
-      const proc = spawn(exeFile, [], { stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv });
-      let stdout = '';
-      let stderr = '';
-      let killed = false;
-      let signal = null;
-
-      if (stdin) {
-        proc.stdin.write(stdin);
-      }
-      proc.stdin.end();
-
-      const MAX_OUTPUT_LIMIT = 512 * 1024; // 512 KB
-      proc.stdout.on('data', (d) => {
-        if (stdout.length < MAX_OUTPUT_LIMIT) {
-          stdout += d.toString();
-          if (stdout.length >= MAX_OUTPUT_LIMIT) {
-            stdout += '\n... [stdout truncated due to size limit] ...';
-          }
-        }
-      });
-      proc.stderr.on('data', (d) => {
-        if (stderr.length < MAX_OUTPUT_LIMIT) {
-          stderr += d.toString();
-          if (stderr.length >= MAX_OUTPUT_LIMIT) {
-            stderr += '\n... [stderr truncated due to size limit] ...';
-          }
-        }
-      });
-
-      const timer = setTimeout(() => {
-        killed = true;
-        signal = 'SIGKILL';
-        proc.kill('SIGKILL');
-      }, EXEC_TIMEOUT_MS);
-
-      proc.on('close', (code, sig) => {
-        clearTimeout(timer);
-        resolve({
-          success:      code === 0 && !killed,
-          stdout:       stdout.trimEnd(),
-          stderr:       stderr.trim(),
-          exitCode:     code ?? (killed ? 137 : 1),
-          signal:       sig || signal,
-          killed,
-          compileError: false,
-          timeMs:       Date.now() - startTime,
-          engine:       'local-gcc',
-        });
-      });
-
-      proc.on('error', (err) => {
-        clearTimeout(timer);
-        resolve({
-          success:      false,
-          stdout:       stdout.trimEnd(),
-          stderr:       (stderr + '\n' + err.message).trim(),
-          exitCode:     -1,
-          signal:       null,
-          killed:       false,
-          compileError: false,
-          timeMs:       Date.now() - startTime,
-          engine:       'local-gcc',
-        });
-      });
-    });
-
-  } finally {
-    try {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    } catch { /* ignore */ }
-  }
+  return false;
 }
 
 // ── Dangerous code scanner ────────────────────────────────────────────────────
@@ -524,7 +359,7 @@ function checkDangerousCode(code) {
 
 // ── Public API ───────────────────────────────────────────────────────────────
 /**
- * Execute C code. Automatically chooses Docker, Local GCC, or Piston/Wandbox.
+ * Execute C code. Automatically chooses Docker or Wandbox.
  * @param {string} code
  * @param {string} stdin
  * @returns {Promise<ExecutionResult>}
@@ -537,10 +372,6 @@ async function execute(code, stdin = '') {
   const dockerAvailable = await isDockerReady();
   if (dockerAvailable) {
     return runWithDocker(code, stdin);
-  }
-  const gccAvailable = await isLocalGccReady();
-  if (gccAvailable) {
-    return runWithLocalGcc(code, stdin);
   }
   return runWithWandbox(code, stdin);
 }
@@ -600,5 +431,5 @@ function httpsPost(url, body, timeoutMs = 20_000) {
   });
 }
 
-module.exports = { execute, isDockerReady, isLocalGccReady, resetDockerCache, checkDangerousCode };
+module.exports = { execute, isDockerReady, resetDockerCache, checkDangerousCode };
 
