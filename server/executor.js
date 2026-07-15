@@ -36,7 +36,7 @@ const PIDS_LIMIT       = '64';     // max processes inside container
 // Wandbox fallback — free, no API key, GCC head (latest), supports stdin
 // https://wandbox.org/  |  API docs: https://github.com/melpon/wandbox/blob/master/kennel2/API.rst
 const WANDBOX_URL = 'https://wandbox.org/api/compile.json';
-const WANDBOX_COMPILER = 'gcc-head'; // GCC latest stable
+const WANDBOX_COMPILER = 'gcc-head-c'; // GCC latest stable C compiler
 
 // ── Docker availability probe ────────────────────────────────────────────────
 let _dockerReady = null;  // null = not checked yet, true/false after first check

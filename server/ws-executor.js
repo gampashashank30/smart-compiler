@@ -78,7 +78,7 @@ const CPU_LIMIT       = '0.5';
 const PIDS_LIMIT      = '64';
 
 const WANDBOX_URL      = 'https://wandbox.org/api/compile.json';
-const WANDBOX_COMPILER = 'gcc-head';
+const WANDBOX_COMPILER = 'gcc-head-c';
 
 /**
  * Prepended to every user program before compilation.
