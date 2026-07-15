@@ -610,10 +610,15 @@ async function runWithWandbox(code, send) {
           const data    = JSON.parse(raw);
           const ec      = parseInt(data.status ?? '0', 10);
           const killed  = data.signal === 'Killed';
-          const cMsg    = (data.compiler_error || data.compiler_output || '').trim();
+          const isCompileError = ec !== 0 && !data.program_output;
+          const cMsg = (data.compiler_error || data.compiler_output || '').trim();
+
+          if (!isCompileError) {
+            send({ type: 'status', data: 'running' });
+          }
 
           if (cMsg) {
-            if (ec !== 0 && !data.program_output) {
+            if (isCompileError) {
               send({ type: 'compile-error', data: cMsg });
             } else {
               send({ type: 'output', data: `\x1b[33m${cMsg}\x1b[0m\r\n` });
