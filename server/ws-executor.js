@@ -632,9 +632,9 @@ async function runWithWandbox(code, stdin, send) {
 
           // Show a notice that this is batch mode (Wandbox) — input is pre-set, not interactive
           if (stdin) {
-            send({ type: 'output', data: `\x1b[38;5;240m[Batch mode: using pre-entered stdin]\x1b[0m\r\n` });
+            send({ type: 'output', data: `\x1b[38;5;240m[Running in batch mode · stdin: ${stdin.trim().split('\n').length} line(s) provided via Input tab]\x1b[0m\r\n` });
           } else {
-            send({ type: 'output', data: `\x1b[38;5;240m[Batch mode: no stdin provided — programs requiring user input may show unexpected output]\x1b[0m\r\n` });
+            send({ type: 'output', data: `\x1b[38;5;240m[Running in batch mode · if your program needs input, switch to the ⌨ Input tab and enter values before pressing Run]\x1b[0m\r\n` });
           }
 
           // Emit compiler warnings (yellow) if any
