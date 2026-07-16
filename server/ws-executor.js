@@ -359,7 +359,7 @@ function attachWebSocketServer(httpServer) {
       // ── run: compile then execute ───────────────────────────────────────────────────────────────
       if (msg.type !== 'run') return;
 
-      const { code } = msg;
+      const { code, stdin: providedStdin = '' } = msg;
       cols = Math.max(10, msg.cols || 80);
       rows = Math.max(4,  msg.rows || 24);
 
@@ -422,7 +422,7 @@ function attachWebSocketServer(httpServer) {
       if (!dockerAvailable) {
         send({ type: 'engine', data: 'wandbox' });
         send({ type: 'status', data: 'compiling' });
-        await runWithWandbox(code, send);
+        await runWithWandbox(code, providedStdin, send);
         cleanup();
         return;
       }
@@ -581,12 +581,12 @@ function attachWebSocketServer(httpServer) {
 }
 
 // ── Wandbox batch fallback (no Docker) ───────────────────────────────────────
-async function runWithWandbox(code, send) {
+async function runWithWandbox(code, stdin, send) {
   const startTime = Date.now();
   const body = JSON.stringify({
     compiler: WANDBOX_COMPILER,
     code,        // send original code — Wandbox doesn't need our setvbuf wrapper
-    stdin:   '',
+    stdin:   stdin || '',  // use provided stdin (pre-entered input)
     options: 'warning,optimize',
     'compiler-option-raw': '-lm',   // link math library (sin, cos, sqrt, etc.)
   });
@@ -629,6 +629,13 @@ async function runWithWandbox(code, send) {
 
           // Compile succeeded (possibly with warnings) — tell the client we are now running
           send({ type: 'status', data: 'running' });
+
+          // Show a notice that this is batch mode (Wandbox) — input is pre-set, not interactive
+          if (stdin) {
+            send({ type: 'output', data: `\x1b[38;5;240m[Batch mode: using pre-entered stdin]\x1b[0m\r\n` });
+          } else {
+            send({ type: 'output', data: `\x1b[38;5;240m[Batch mode: no stdin provided — programs requiring user input may show unexpected output]\x1b[0m\r\n` });
+          }
 
           // Emit compiler warnings (yellow) if any
           if (cMsg) {

@@ -114,3 +114,94 @@
   min-height: 0;
   position: relative; /* needed for absolute-positioned TerminalPane */
 }
+
+/* ── Stdin collapsible bar ───────────────────────────────── */
+.stdinBar {
+  flex-shrink: 0;
+  border-bottom: 1px solid #21262d;
+  background: #0d1117;
+}
+
+.stdinToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.12s, background 0.12s;
+}
+
+.stdinToggle:hover {
+  color: #c9d1d9;
+  background: #161b22;
+}
+
+.stdinIcon {
+  font-size: 13px;
+}
+
+.stdinBadge {
+  background: #1f6feb33;
+  color: #58a6ff;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.stdinChevron {
+  margin-left: auto;
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+.stdinPanel {
+  padding: 0 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stdinTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #161b22;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.stdinTextarea:focus {
+  border-color: #58a6ff;
+}
+
+.stdinTextarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stdinHint {
+  font-size: 10px;
+  color: #8b949e;
+  line-height: 1.5;
+  padding: 0 2px;
+}
+
+.stdinHint strong {
+  color: #c9d1d9;
+}
+

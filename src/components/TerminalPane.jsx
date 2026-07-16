@@ -47,10 +47,10 @@ function stripAnsi(str) {
  *   • Resize events are forwarded so the PTY stays in sync with xterm.js dimensions.
  *
  * Exposed ref methods:
- *   .connect(wsUrl, code)   — open WebSocket + send run command
- *   .kill()                 — force-kill the running process
- *   .clear()                — clear terminal screen
- *   .focus()                — focus the terminal
+ *   .connect(wsUrl, code, stdin)  — open WebSocket + send run command
+ *   .kill()                       — force-kill the running process
+ *   .clear()                      — clear terminal screen
+ *   .focus()                      — focus the terminal
  */
 const TerminalPane = forwardRef(function TerminalPane(
   { onStatusChange, onDone },
@@ -173,8 +173,8 @@ const TerminalPane = forwardRef(function TerminalPane(
     };
   }, []);
 
-  // ── Connect to WebSocket and run code ────────────────────────────────────
-  const connect = useCallback((wsUrl, code) => {
+  // ── Connect to WebSocket and run code ────────────────────────────────────────
+  const connect = useCallback((wsUrl, code, stdin = '') => {
     const term = termRef.current;
     if (!term) return;
 
@@ -206,6 +206,7 @@ const TerminalPane = forwardRef(function TerminalPane(
       ws.send(JSON.stringify({
         type: 'run',
         code,
+        stdin,          // pre-entered stdin for batch mode (Wandbox) or piped initial input
         cols: term.cols,
         rows: term.rows,
       }));
@@ -225,6 +226,16 @@ const TerminalPane = forwardRef(function TerminalPane(
             capturingRef.current = true; // start capturing program stdout now
             onStatusChange?.('running');
             term.focus();
+
+            // If stdin was pre-entered and we are in PTY/Docker mode,
+            // pipe it in automatically so scanf/fgets read it immediately.
+            // The program can still receive more keystrokes from the user afterward.
+            if (stdin && ws.readyState === WebSocket.OPEN) {
+              // Normalise line endings: ensure every line ends with \n
+              const normalised = stdin.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+              // Send as stdin — PTY will echo it back to the terminal
+              ws.send(JSON.stringify({ type: 'stdin', data: normalised }));
+            }
           }
           break;
 
