@@ -177,10 +177,19 @@ function getCleanEnv() {
   return cleanEnv;
 }
 
-// Local GCC fallback is permanently disabled for security.
-// On Render, Docker is always used. Without Docker, Wandbox API handles execution.
+// ── Local GCC probe ──────────────────────────────────────────────────────────
+// Tries `gcc --version`. Returns true if GCC is in PATH.
+// In production (NODE_ENV=production) this is always disabled — Render uses Docker.
 async function isLocalGccReady() {
-  return false;
+  if (process.env.NODE_ENV === 'production') return false;
+  try {
+    await execFileAsync('gcc', ['--version'], { timeout: 3000 });
+    console.log('[ws-executor] Local GCC found — PTY interactive mode active');
+    return true;
+  } catch {
+    console.warn('[ws-executor] Local GCC not found in PATH');
+    return false;
+  }
 }
 
 // ── Windows path → Docker mount path ─────────────────────────────────────────
@@ -417,14 +426,139 @@ function attachWebSocketServer(httpServer) {
 
       const dockerAvailable = await isDockerReady();
 
-      // ── No Docker: fall back to Wandbox API ───────────────────────────
-      // Local GCC is permanently disabled (unsandboxed host execution is not permitted).
+      // ── No Docker: try local GCC (interactive PTY), then Wandbox (batch) ──
       if (!dockerAvailable) {
-        send({ type: 'engine', data: 'wandbox' });
+        const localGcc = await isLocalGccReady();
+
+        if (!localGcc) {
+          // Last resort: Wandbox batch API
+          send({ type: 'engine', data: 'wandbox' });
+          send({ type: 'status', data: 'compiling' });
+          await runWithWandbox(code, providedStdin, send);
+          cleanup();
+          return;
+        }
+
+        // ── Local GCC + node-pty: fully interactive, exactly like OnlineGDB ──
+        send({ type: 'engine', data: 'local' });
         send({ type: 'status', data: 'compiling' });
-        await runWithWandbox(code, providedStdin, send);
-        cleanup();
-        return;
+
+        // Step 1: compile locally with GCC
+        const localExeName = process.platform === 'win32' ? 'prog.exe' : 'prog';
+        const localExePath = path.join(tmpDir, localExeName);
+        const srcPath      = path.join(tmpDir, 'main.c');
+
+        let localCompileOut     = '';
+        let localCompileTimeout = false;
+        let localCompileOk      = false;
+
+        await new Promise((resolve) => {
+          compileProc = spawn(
+            'gcc',
+            [srcPath, '-Wall', '-Wextra', '-O2', '-o', localExePath, '-lm'],
+            { stdio: ['ignore', 'pipe', 'pipe'] }
+          );
+          compileProc.stdout.on('data', d => { localCompileOut += d.toString(); });
+          compileProc.stderr.on('data', d => { localCompileOut += d.toString(); });
+          const t = setTimeout(() => {
+            if (compileProc) compileProc.kill();
+            localCompileTimeout = true;
+            resolve();
+          }, COMPILE_TIMEOUT);
+          compileProc.on('close', code => {
+            clearTimeout(t);
+            localCompileOk = code === 0;
+            resolve();
+          });
+          compileProc.on('error', err => {
+            clearTimeout(t);
+            localCompileOut += `\nGCC error: ${err.message}`;
+            resolve();
+          });
+        });
+        compileProc = null;
+
+        // Strip the temp directory prefix from error messages so line numbers are clean
+        const localCompileMsg = localCompileOut
+          .replace(new RegExp(tmpDir.replace(/\\/g, '\\\\'), 'g'), '')
+          .replace(/\/[^:]+main\.c/g, 'main.c')
+          .trim();
+
+        if (localCompileTimeout || !localCompileOk) {
+          send({ type: 'compile-error', data: localCompileMsg || 'Compilation failed.' });
+          cleanup();
+          return;
+        }
+
+        // Emit warnings on success
+        if (localCompileMsg) {
+          send({ type: 'output', data: `\x1b[33m${localCompileMsg}\x1b[0m\r\n` });
+        }
+
+        // Step 2: run with node-pty (interactive PTY)
+        send({ type: 'status', data: 'running' });
+        startTime = Date.now();
+
+        if (nodePty) {
+          try {
+            const ptyEnv = getCleanEnv();
+            ptyEnv.TERM = 'xterm-256color';
+            ptyProc = nodePty.spawn(localExePath, [], {
+              name: 'xterm-256color',
+              cols,
+              rows,
+              cwd: tmpDir,
+              env: ptyEnv,
+            });
+          } catch (err) {
+            send({ type: 'error', data: `Failed to start program: ${err.message}` });
+            cleanup();
+            return;
+          }
+
+          ptyProc.onData(data => {
+            if (!cleaned) {
+              const out = stripPtyNoise(data);
+              if (out) send({ type: 'output', data: out });
+            }
+          });
+
+          ptyProc.onExit(({ exitCode: ec, signal: sig }) => {
+            if (cleaned) return;
+            const timeMs = Date.now() - startTime;
+            const killed = ec === 137 || sig === 9;
+            send({ type: 'done', exitCode: ec ?? 1, timeMs, killed, signal: sig ?? null });
+            cleanup();
+          });
+
+        } else {
+          // node-pty not available: plain spawn (no interactive input, but at least runs)
+          plainProc = spawn(localExePath, [], { stdio: ['pipe', 'pipe', 'pipe'], cwd: tmpDir });
+          const normalize = d => d.toString().replace(/\r?\n/g, '\r\n');
+          plainProc.stdout.on('data', d => { if (!cleaned) send({ type: 'output', data: normalize(d) }); });
+          plainProc.stderr.on('data', d => { if (!cleaned) send({ type: 'output', data: normalize(d) }); });
+          plainProc.on('close', (code, sig) => {
+            if (cleaned) return;
+            const timeMs = Date.now() - startTime;
+            const killed = code === 137 || sig === 'SIGKILL';
+            send({ type: 'done', exitCode: code ?? 1, timeMs, killed, signal: sig ?? null });
+            cleanup();
+          });
+          plainProc.on('error', err => {
+            if (!cleaned) send({ type: 'error', data: `Runtime error: ${err.message}` });
+            cleanup();
+          });
+        }
+
+        // Hard TLE
+        killTimer = setTimeout(() => {
+          if (cleaned) return;
+          console.warn(`[ws-executor] TLE — killing local process after ${EXEC_TIMEOUT_MS}ms`);
+          if (ptyProc)   { try { ptyProc.kill('SIGKILL');   } catch {} }
+          if (plainProc) { try { plainProc.kill('SIGKILL');  } catch {} }
+        }, EXEC_TIMEOUT_MS);
+
+        return; // done — skip Docker path below
       }
 
       send({ type: 'engine', data: 'docker' });

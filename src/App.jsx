@@ -186,8 +186,6 @@ export default function App() {
   }, [setCode]);
   const [runStatus, setRunStatus] = useState('idle'); // 'idle' | 'compiling' | 'running'
   const [activeTab, setActiveTab] = useState('terminal');
-  // Pre-entered stdin — piped in automatically when the program starts (for both Docker PTY and Wandbox)
-  const [stdin, setStdin] = useState('');
 
   // Panel width: left panel percent of total workspace width
   const [leftWidth, setLeftWidth] = useState(55);
@@ -357,7 +355,7 @@ export default function App() {
     // Skip if user already dismissed for this exact code ("Keep as C")
     if (dismissedCodeRef.current === code) {
       setActiveTab('terminal');
-      buildWsUrl().then(wsUrl => terminalRef.current?.connect(wsUrl, code, stdin));
+      buildWsUrl().then(wsUrl => terminalRef.current?.connect(wsUrl, code));
       analyticsStore.recordRun();
       return;
     }
@@ -379,10 +377,10 @@ export default function App() {
 
     // Build WS URL with JWT token, then connect
     buildWsUrl().then(wsUrl => {
-      terminalRef.current?.connect(wsUrl, code, stdin);
+      terminalRef.current?.connect(wsUrl, code);
     });
     analyticsStore.recordRun();
-  }, [code, runStatus, stdin]);
+  }, [code, runStatus]);
 
   // ── Kill running program ──────────────────────────────────────────────────
   const handleKill = useCallback(() => {
@@ -506,8 +504,6 @@ export default function App() {
             isRunning={runStatus}
             onStatusChange={handleStatusChange}
             onDone={handleDone}
-            stdin={stdin}
-            onStdinChange={setStdin}
           />
         </div>
       </div>

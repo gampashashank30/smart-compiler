@@ -5,7 +5,6 @@ import styles from './RightPanel.module.css';
 
 const TABS = [
   { id: 'terminal', label: '▶ Console' },
-  { id: 'input',    label: '⌨ Input'   },
   { id: 'ai',       label: '✦ AI Explanation' },
 ];
 
@@ -17,8 +16,6 @@ const RightPanel = forwardRef(function RightPanel(
     isRunning,
     onStatusChange,
     onDone,
-    stdin,
-    onStdinChange,
   },
   terminalRef
 ) {
@@ -35,11 +32,6 @@ const RightPanel = forwardRef(function RightPanel(
             role="tab"
           >
             {tab.label}
-            {tab.id === 'input' && stdin && stdin.trim() && (
-              <span className={styles.inputBadge}>
-                {stdin.trim().split('\n').length}
-              </span>
-            )}
           </button>
         ))}
 
@@ -59,7 +51,7 @@ const RightPanel = forwardRef(function RightPanel(
       </div>
 
       <div className={styles.tabContent}>
-        {/* ── Console tab: xterm.js terminal — always mounted so it persists ── */}
+        {/* Terminal is always mounted (so it persists), just hidden when on AI tab */}
         <div style={{
           display:  activeTab === 'terminal' ? 'block' : 'none',
           position: 'absolute',
@@ -72,44 +64,6 @@ const RightPanel = forwardRef(function RightPanel(
           />
         </div>
 
-        {/* ── Input tab: stdin textarea (like OneCompiler / HackerEarth) ── */}
-        {activeTab === 'input' && (
-          <div className={styles.inputTab}>
-            <div className={styles.inputTabHeader}>
-              <span className={styles.inputTabTitle}>Program Input (stdin)</span>
-              <span className={styles.inputTabHint}>
-                Enter all input values here before pressing <strong>Run ▶</strong>
-              </span>
-            </div>
-            <textarea
-              id="stdin-input"
-              className={styles.stdinArea}
-              value={stdin}
-              onChange={e => onStdinChange(e.target.value)}
-              placeholder={
-                'Type your program\'s input here…\n\n' +
-                'Each line = one value your program reads.\n\n' +
-                'Example for a program that reads 3 numbers:\n' +
-                '10\n' +
-                '20\n' +
-                '30'
-              }
-              spellCheck={false}
-              disabled={isRunning === 'running' || isRunning === 'compiling'}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-            />
-            {stdin && stdin.trim() && (
-              <div className={styles.inputSummary}>
-                <span className={styles.inputSummaryIcon}>✓</span>
-                {stdin.trim().split('\n').length} line{stdin.trim().split('\n').length !== 1 ? 's' : ''} of input ready — press <strong>Run ▶</strong> to execute
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── AI Explanation tab ── */}
         {activeTab === 'ai' && (
           <AIExplanationTab
             code={code}
