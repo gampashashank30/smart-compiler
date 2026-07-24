@@ -1286,6 +1286,18 @@
   animation: micPulse 1.5s infinite ease-in-out;
 }
 
+.micDictateBtnDenied {
+  border-color: #f97316;
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.micDictateBtnDenied:hover {
+  background: #ffedd5;
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
 @keyframes micPulse {
   0%, 100% { box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); }
   50% { box-shadow: 0 4px 22px rgba(239, 68, 68, 0.6); }
@@ -1370,10 +1382,18 @@
   border: 1.5px solid #fed7aa;
   border-left: 4px solid #f97316;
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   font-size: 12.5px;
+  line-height: 1.5;
   color: #c2410c;
   margin-bottom: 12px;
+}
+
+.micErrorBannerDenied {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  border-left-color: #ef4444;
+  color: #b91c1c;
 }
 
 /* ================================================================

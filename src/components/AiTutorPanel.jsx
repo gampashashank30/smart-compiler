@@ -100,7 +100,9 @@ export default function AiTutorPanel({ onClose }) {
   const [isListening, setIsListening] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
   const [micError, setMicError] = useState(null);
+  const [micPermission, setMicPermission] = useState('unknown'); // 'unknown' | 'granted' | 'denied'
   const recognitionRef = useRef(null);
+  const micStreamRef = useRef(null); // holds the getUserMedia stream until recognition starts
 
   const stepBodyRef = useRef(null);
 
@@ -284,52 +286,36 @@ export default function AiTutorPanel({ onClose }) {
   }, [selectedVoiceURI, speechRate, speechPitch, availableVoices, selectedTopicId, speakSection]);
 
   // ─── Speech Recognition (Voice Dictation) Handler ─────────────
-  const toggleListening = useCallback(() => {
-    if (!speechRecSupported) {
-      alert("Speech recognition is not supported in your browser. Please use Google Chrome, Microsoft Edge, or Safari.");
-      return;
-    }
-
-    if (isListening) {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
-      }
-      setIsListening(false);
-      setInterimTranscript('');
-      return;
-    }
-
-    // Stop TTS if speaking so mic doesn't catch tutor output
-    if (voiceSupported) window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-    setIsPaused(false);
-    setActiveSpeakingSection(null);
-
-    setMicError(null);
+  // Step 1: always request getUserMedia first so the browser shows its
+  // native permission popup. Only AFTER the user grants (or we detect
+  // it was already granted) do we start SpeechRecognition.
+  const startRecognitionEngine = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
       setIsListening(true);
       setInterimTranscript('');
+      setMicError(null);
+      // Release the getUserMedia stream — recognition has its own track now
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(t => t.stop());
+        micStreamRef.current = null;
+      }
     };
 
     recognition.onresult = (event) => {
       let finalChunk = '';
       let currentInterim = '';
-
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalChunk += transcript + ' ';
-        } else {
-          currentInterim += transcript;
-        }
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalChunk += t + ' ';
+        else currentInterim += t;
       }
-
       if (finalChunk) {
         setLogicText(prev => {
           const trimmed = prev.trim();
@@ -340,11 +326,14 @@ export default function AiTutorPanel({ onClose }) {
     };
 
     recognition.onerror = (event) => {
-      console.error("Speech recognition error:", event.error);
+      console.error('Speech recognition error:', event.error);
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setMicError("Microphone permission denied. Please allow microphone access in your browser settings.");
+        setMicPermission('denied');
+        setMicError('Microphone access was blocked. Click the 🔒 icon in your browser address bar, set Microphone to Allow, then try again.');
+      } else if (event.error === 'audio-capture') {
+        setMicError('No microphone detected. Please connect a microphone and try again.');
       } else if (event.error !== 'no-speech') {
-        setMicError(`Speech input error: ${event.error}`);
+        setMicError(`Voice input error: ${event.error}. Please try again.`);
       }
       setIsListening(false);
       setInterimTranscript('');
@@ -359,10 +348,59 @@ export default function AiTutorPanel({ onClose }) {
     try {
       recognition.start();
     } catch (err) {
-      console.error("Failed to start speech recognition:", err);
+      console.error('Failed to start SpeechRecognition:', err);
       setIsListening(false);
+      setMicError('Could not start voice input. Please refresh the page and try again.');
     }
-  }, [speechRecSupported, isListening, voiceSupported]);
+  }, []);
+
+  const toggleListening = useCallback(async () => {
+    if (!speechRecSupported) {
+      setMicError('Speech recognition is not supported in your browser. Please use Google Chrome or Microsoft Edge.');
+      return;
+    }
+
+    // ── STOP path ──
+    if (isListening) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) { /* ignore */ }
+      }
+      setIsListening(false);
+      setInterimTranscript('');
+      return;
+    }
+
+    // Stop TTS so the mic doesn't capture teacher voice
+    if (voiceSupported) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setActiveSpeakingSection(null);
+    setMicError(null);
+
+    // ── START path: always call getUserMedia first ──
+    // This guarantees the browser permission popup appears.
+    // If permission was already granted, it resolves instantly.
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      // Keep the stream alive until recognition.onstart fires
+      micStreamRef.current = stream;
+      setMicPermission('granted');
+      startRecognitionEngine();
+    } catch (err) {
+      // NotAllowedError → user denied or dismissed
+      // NotFoundError   → no mic hardware
+      const isDenied = err.name === 'NotAllowedError' || err.name === 'SecurityError';
+      const isNoMic  = err.name === 'NotFoundError'  || err.name === 'DevicesNotFoundError';
+      setMicPermission(isDenied ? 'denied' : 'unknown');
+      if (isDenied) {
+        setMicError('🔒 Microphone access denied. Click the lock icon (🔒) in your browser\'s address bar → set Microphone to "Allow" → then click Speak Your Logic again.');
+      } else if (isNoMic) {
+        setMicError('No microphone found. Please connect a microphone and try again.');
+      } else {
+        setMicError(`Could not access microphone: ${err.message}`);
+      }
+    }
+  }, [speechRecSupported, isListening, voiceSupported, startRecognitionEngine]);
 
   // Clean up recognition on unmount or topic change
   useEffect(() => {
@@ -1435,14 +1473,18 @@ ${codeText}
                   <div className={styles.voiceDictationBar}>
                     <button
                       type="button"
-                      className={`${styles.micDictateBtn} ${isListening ? styles.micDictateBtnActive : ''}`}
+                      className={`${styles.micDictateBtn} ${isListening ? styles.micDictateBtnActive : ''} ${micPermission === 'denied' ? styles.micDictateBtnDenied : ''}`}
                       onClick={toggleListening}
-                      title={isListening ? "Click to stop listening" : "Click to speak your logic with microphone"}
+                      title={isListening ? 'Click to stop listening' : micPermission === 'denied' ? 'Microphone blocked — click to retry after allowing access' : 'Click to speak your logic with microphone'}
                     >
                       {isListening ? (
                         <>
                           <span className={styles.micPulseDot} />
                           ⏹ Stop Listening
+                        </>
+                      ) : micPermission === 'denied' ? (
+                        <>
+                          🔒 Mic Blocked — Click to Retry
                         </>
                       ) : (
                         <>
@@ -1451,7 +1493,7 @@ ${codeText}
                             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                             <line x1="12" y1="19" x2="12" y2="22"/>
                           </svg>
-                          Speak Your Logic (Voice Input)
+                          🎙️ Speak Your Logic
                         </>
                       )}
                     </button>
@@ -1478,11 +1520,11 @@ ${codeText}
                         </div>
                         {interimTranscript ? (
                           <div className={styles.interimLiveText}>
-                            "{interimTranscript}"
+                            &ldquo;{interimTranscript}&rdquo;
                           </div>
                         ) : (
                           <div className={styles.interimLiveText} style={{ opacity: 0.7 }}>
-                            (Say something like: "First I will initialize a variable i to zero...")
+                            (Say something like: &ldquo;First I will read the input. Then I will loop from 1 to N...&rdquo;)
                           </div>
                         )}
                       </div>
@@ -1491,8 +1533,8 @@ ${codeText}
 
                   {/* Mic Error Banner */}
                   {micError && (
-                    <div className={styles.micErrorBanner}>
-                      ⚠️ {micError}
+                    <div className={`${styles.micErrorBanner} ${micPermission === 'denied' ? styles.micErrorBannerDenied : ''}`}>
+                      {micError}
                     </div>
                   )}
 
