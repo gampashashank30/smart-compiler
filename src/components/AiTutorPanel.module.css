@@ -1249,379 +1249,131 @@
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* ── Logic Step Badge ── */
-.logicBadge {
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 800;
-  background: #e0e7ff;
-  color: #4f46e5;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* ── Mic Permission Guidance Modal ── */
-.micModalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(10px);
-  z-index: 5000;
+/* ── Voice Dictation Controls (Step 3) ── */
+.voiceDictationBar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  animation: fadeIn 250ms ease;
-}
-
-.micModalCard {
-  background: #ffffff;
-  border-radius: 24px;
-  border: 1.5px solid #e2e8f0;
-  padding: 36px 32px;
-  max-width: 460px;
-  width: 90%;
-  text-align: center;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: scaleUp 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.micModalIcon {
-  font-size: 48px;
-  margin-bottom: 14px;
-  animation: bounce 1.5s infinite;
-}
-
-.micModalTitle {
-  font-size: 20px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 8px;
-}
-
-.micModalDesc {
-  font-size: 13.5px;
-  color: #475569;
-  line-height: 1.55;
-  margin-bottom: 20px;
-}
-
-.micInstructionBox {
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 16px;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
-.micInstructionStep {
+.micDictateBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: 1.5px solid #ef4444;
+  background: #fef2f2;
+  color: #dc2626;
   font-size: 13px;
-  color: #334155;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  line-height: 1.4;
-}
-
-.micInstructionStep span {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #6366f1;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* ── Voice Dictation Studio Container ── */
-.voiceStudioBox {
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-  border-radius: 20px;
-  border: 1.5px solid rgba(99, 102, 241, 0.25);
-  padding: 24px;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.voiceStudioActive {
-  border-color: #ec4899;
-  box-shadow: 0 16px 40px rgba(236, 72, 153, 0.25), 0 0 0 1px rgba(236, 72, 153, 0.2);
-}
-
-.voiceStudioHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.voiceStudioStatus {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.statusReady {
-  font-size: 12.5px;
   font-weight: 700;
-  color: #a5b4fc;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  padding: 5px 12px;
-  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.statusRecording {
-  font-size: 12.5px;
-  font-weight: 800;
-  color: #f472b6;
-  background: rgba(236, 72, 153, 0.15);
-  border: 1px solid rgba(236, 72, 153, 0.35);
-  padding: 5px 14px;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  animation: pulseGlow 1.5s infinite;
+.micDictateBtn:hover {
+  background: #fee2e2;
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(236, 72, 153, 0); }
+.micDictateBtnActive {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #b91c1c;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+  animation: micPulse 1.5s infinite ease-in-out;
 }
 
-.recordingDot {
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); }
+  50% { box-shadow: 0 4px 22px rgba(239, 68, 68, 0.6); }
+}
+
+.micPulseDot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ec4899;
-  animation: dotFlash 0.8s infinite alternate;
-}
-
-.statusDenied {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #fb923c;
-  background: rgba(249, 115, 22, 0.15);
-  border: 1px solid rgba(249, 115, 22, 0.3);
-  padding: 5px 12px;
-  border-radius: 9999px;
-}
-
-/* Studio Equalizer Wave Visualizer */
-.studioWaveVisualizer {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 18px;
-}
-
-.studioWaveBar {
-  width: 3px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #ec4899 0%, #8b5cf6 100%);
-  animation: studioWave 0.8s ease-in-out infinite alternate;
-}
-
-.studioWaveBar:nth-child(1) { height: 6px;  animation-delay: 0.0s; }
-.studioWaveBar:nth-child(2) { height: 14px; animation-delay: 0.15s; }
-.studioWaveBar:nth-child(3) { height: 18px; animation-delay: 0.3s; }
-.studioWaveBar:nth-child(4) { height: 10px; animation-delay: 0.1s; }
-.studioWaveBar:nth-child(5) { height: 16px; animation-delay: 0.25s; }
-.studioWaveBar:nth-child(6) { height: 8px;  animation-delay: 0.05s; }
-.studioWaveBar:nth-child(7) { height: 14px; animation-delay: 0.2s; }
-.studioWaveBar:nth-child(8) { height: 6px;  animation-delay: 0.12s; }
-
-@keyframes studioWave {
-  from { transform: scaleY(0.3); }
-  to   { transform: scaleY(1.0); }
-}
-
-.voiceStudioControls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.studioUtilityBtn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.studioUtilityBtn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Dictate Hero Trigger Row */
-.dictateHeroRow {
-  margin-bottom: 20px;
-}
-
-.dictateHeroBtn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  border-radius: 16px;
-  border: 1.5px solid rgba(99, 102, 241, 0.35);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  color: #ffffff;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  text-align: left;
-}
-
-.dictateHeroBtn:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
-  border-color: #8b5cf6;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
-}
-
-.dictateHeroBtnActive {
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.2) 100%);
-  border-color: #ec4899;
-  box-shadow: 0 8px 30px rgba(236, 72, 153, 0.35);
-  animation: heroPulse 1.8s infinite ease-in-out;
-}
-
-@keyframes heroPulse {
-  0%, 100% { border-color: #ec4899; box-shadow: 0 8px 30px rgba(236, 72, 153, 0.35); }
-  50% { border-color: #f472b6; box-shadow: 0 8px 45px rgba(236, 72, 153, 0.6); }
-}
-
-.micOrb {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
-  transition: all 0.2s ease;
-}
-
-.dictateHeroBtnActive .micOrb {
-  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-  box-shadow: 0 4px 18px rgba(236, 72, 153, 0.5);
-}
-
-.micStopSquare {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
   background: #ffffff;
+  animation: dotFlash 1s infinite alternate;
 }
 
-.dictateHeroLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+@keyframes dotFlash {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
 }
 
-.dictateTitle {
-  font-size: 15px;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.01em;
-}
-
-.dictateSub {
+.clearDictationBtn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #64748b;
   font-size: 12px;
-  color: #94a3b8;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.dictateHeroBtnActive .dictateSub {
-  color: #fbcfe8;
+.clearDictationBtn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #334155;
 }
 
-/* Voice HUD Console */
-.voiceHudConsole {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(236, 72, 153, 0.3);
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
+.interimBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1.5px solid #fca5a5;
+  border-left: 4px solid #ef4444;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
   animation: slideInUp 200ms ease;
 }
 
-.voiceHudHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11px;
-  font-weight: 800;
-  color: #f472b6;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+.interimPulseRing {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  margin-top: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: ringPulse 1.2s infinite;
 }
 
-.voiceHudBadge {
-  background: rgba(236, 72, 153, 0.2);
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 10px;
+@keyframes ringPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
-.voiceHudBody {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-}
-
-.voiceHudText {
-  font-size: 13.5px;
-  color: #ffffff;
-  font-style: italic;
-  line-height: 1.45;
-  margin: 0;
-}
-
-.voiceHudPlaceholder {
+.interimStatusText {
   font-size: 12.5px;
-  color: #64748b;
-  margin: 0;
+  font-weight: 700;
+  color: #991b1b;
 }
 
-.textareaMetaInfo {
-  position: absolute;
-  bottom: 12px;
-  right: 14px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  font-family: 'JetBrains Mono', monospace;
-  background: rgba(15, 23, 42, 0.8);
-  padding: 3px 8px;
-  border-radius: 6px;
-  pointer-events: none;
+.interimLiveText {
+  font-size: 13px;
+  font-style: italic;
+  color: #7f1d1d;
+  margin-top: 4px;
+}
+
+.micErrorBanner {
+  background: #fff7ed;
+  border: 1.5px solid #fed7aa;
+  border-left: 4px solid #f97316;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #c2410c;
+  margin-bottom: 12px;
 }
 
 /* ================================================================
