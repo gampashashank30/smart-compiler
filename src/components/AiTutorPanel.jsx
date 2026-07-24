@@ -95,6 +95,13 @@ export default function AiTutorPanel({ onClose }) {
   const [showVoicePanel, setShowVoicePanel] = useState(false);
   const voicePanelRef = useRef(null);
 
+  // ─── Voice Input / Speech Recognition (STT) State ──────────────
+  const speechRecSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [micError, setMicError] = useState(null);
+  const recognitionRef = useRef(null);
+
   const stepBodyRef = useRef(null);
 
   // Auto-scroll the tutor panel body to top when step, question, or topic changes
@@ -276,6 +283,96 @@ export default function AiTutorPanel({ onClose }) {
     window.speechSynthesis.speak(utter);
   }, [selectedVoiceURI, speechRate, speechPitch, availableVoices, selectedTopicId, speakSection]);
 
+  // ─── Speech Recognition (Voice Dictation) Handler ─────────────
+  const toggleListening = useCallback(() => {
+    if (!speechRecSupported) {
+      alert("Speech recognition is not supported in your browser. Please use Google Chrome, Microsoft Edge, or Safari.");
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
+      }
+      setIsListening(false);
+      setInterimTranscript('');
+      return;
+    }
+
+    // Stop TTS if speaking so mic doesn't catch tutor output
+    if (voiceSupported) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setActiveSpeakingSection(null);
+
+    setMicError(null);
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setInterimTranscript('');
+    };
+
+    recognition.onresult = (event) => {
+      let finalChunk = '';
+      let currentInterim = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalChunk += transcript + ' ';
+        } else {
+          currentInterim += transcript;
+        }
+      }
+
+      if (finalChunk) {
+        setLogicText(prev => {
+          const trimmed = prev.trim();
+          return trimmed ? `${trimmed} ${finalChunk.trim()}` : finalChunk.trim();
+        });
+      }
+      setInterimTranscript(currentInterim);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setMicError("Microphone permission denied. Please allow microphone access in your browser settings.");
+      } else if (event.error !== 'no-speech') {
+        setMicError(`Speech input error: ${event.error}`);
+      }
+      setIsListening(false);
+      setInterimTranscript('');
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      setInterimTranscript('');
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch (err) {
+      console.error("Failed to start speech recognition:", err);
+      setIsListening(false);
+    }
+  }, [speechRecSupported, isListening, voiceSupported]);
+
+  // Clean up recognition on unmount or topic change
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
+      }
+    };
+  }, [selectedTopicId]);
+
   // Retrieve current topic details
   const currentTopic = useMemo(() => {
     return TUTOR_CURRICULUM[selectedTopicId] || TUTOR_CURRICULUM['hello-world'];
@@ -300,6 +397,13 @@ export default function AiTutorPanel({ onClose }) {
     setIsGeneratingSolution(false);
     setAiSolution(null);
     setIsGeneratingAiSolution(false);
+
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
+    }
+    setIsListening(false);
+    setInterimTranscript('');
+    setMicError(null);
 
     const topic = TUTOR_CURRICULUM[topicId] || TUTOR_CURRICULUM['hello-world'];
     if (topic.referenceSolution) {
@@ -1324,12 +1428,77 @@ ${codeText}
                   </h2>
                   <p className={styles.whatIsItText} style={{ marginBottom: '16px' }}>
                     Describe your algorithm, pseudocode, or step-by-step approach to solve the <strong>{currentTopic.title}</strong> challenge. 
-                    AI will verify if your logic checks out before you begin coding.
+                    You can type below or click <strong>🎙️ Speak Your Logic</strong> to describe it out loud!
                   </p>
                   
+                  {/* Voice Dictation Control Bar */}
+                  <div className={styles.voiceDictationBar}>
+                    <button
+                      type="button"
+                      className={`${styles.micDictateBtn} ${isListening ? styles.micDictateBtnActive : ''}`}
+                      onClick={toggleListening}
+                      title={isListening ? "Click to stop listening" : "Click to speak your logic with microphone"}
+                    >
+                      {isListening ? (
+                        <>
+                          <span className={styles.micPulseDot} />
+                          ⏹ Stop Listening
+                        </>
+                      ) : (
+                        <>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="22"/>
+                          </svg>
+                          Speak Your Logic (Voice Input)
+                        </>
+                      )}
+                    </button>
+
+                    {logicText && (
+                      <button
+                        type="button"
+                        className={styles.clearDictationBtn}
+                        onClick={() => { setLogicText(''); setInterimTranscript(''); }}
+                        title="Clear text"
+                      >
+                        Clear Text
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Live Interim Transcript Banner */}
+                  {isListening && (
+                    <div className={styles.interimBanner}>
+                      <span className={styles.interimPulseRing} />
+                      <div style={{ flex: 1 }}>
+                        <div className={styles.interimStatusText}>
+                          🎤 Listening... Speak your algorithm out loud.
+                        </div>
+                        {interimTranscript ? (
+                          <div className={styles.interimLiveText}>
+                            "{interimTranscript}"
+                          </div>
+                        ) : (
+                          <div className={styles.interimLiveText} style={{ opacity: 0.7 }}>
+                            (Say something like: "First I will initialize a variable i to zero...")
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mic Error Banner */}
+                  {micError && (
+                    <div className={styles.micErrorBanner}>
+                      ⚠️ {micError}
+                    </div>
+                  )}
+
                   <textarea
                     className={styles.tutorTextarea}
-                    placeholder="Example: First, read the input. Then, loop from 1 to n. Check if n is divisible... "
+                    placeholder="Example: First, read the input. Then, loop from 1 to n. Check if n is divisible... (Or click Speak Your Logic above to dictate using your voice!)"
                     value={logicText}
                     onChange={e => setLogicText(e.target.value)}
                   />
