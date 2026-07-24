@@ -100,6 +100,8 @@ export default function AiTutorPanel({ onClose }) {
   const [isListening, setIsListening] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
   const [micError, setMicError] = useState(null);
+  const [micPermissionState, setMicPermissionState] = useState('unknown'); // 'unknown' | 'granted' | 'denied' | 'requesting'
+  const [showMicModal, setShowMicModal] = useState(false);
   const recognitionRef = useRef(null);
 
   const stepBodyRef = useRef(null);
@@ -284,18 +286,9 @@ export default function AiTutorPanel({ onClose }) {
   }, [selectedVoiceURI, speechRate, speechPitch, availableVoices, selectedTopicId, speakSection]);
 
   // ─── Speech Recognition (Voice Dictation) Handler ─────────────
-  const toggleListening = useCallback(() => {
+  const requestMicPermissionAndStart = useCallback(async () => {
     if (!speechRecSupported) {
       alert("Speech recognition is not supported in your browser. Please use Google Chrome, Microsoft Edge, or Safari.");
-      return;
-    }
-
-    if (isListening) {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
-      }
-      setIsListening(false);
-      setInterimTranscript('');
       return;
     }
 
@@ -306,6 +299,26 @@ export default function AiTutorPanel({ onClose }) {
     setActiveSpeakingSection(null);
 
     setMicError(null);
+    setMicPermissionState('requesting');
+
+    // Explicitly request microphone access via getUserMedia API
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Stop stream immediately as SpeechRecognition will handle the audio input track
+        stream.getTracks().forEach(track => track.stop());
+        setMicPermissionState('granted');
+        setShowMicModal(false);
+      }
+    } catch (err) {
+      console.warn("Microphone getUserMedia permission warning:", err);
+      setMicPermissionState('denied');
+      setMicError("Microphone permission was denied. Please allow microphone access in your browser site settings.");
+      setShowMicModal(true);
+      return;
+    }
+
+    // Start Speech Recognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
@@ -315,6 +328,7 @@ export default function AiTutorPanel({ onClose }) {
     recognition.onstart = () => {
       setIsListening(true);
       setInterimTranscript('');
+      setMicError(null);
     };
 
     recognition.onresult = (event) => {
@@ -342,9 +356,11 @@ export default function AiTutorPanel({ onClose }) {
     recognition.onerror = (event) => {
       console.error("Speech recognition error:", event.error);
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setMicError("Microphone permission denied. Please allow microphone access in your browser settings.");
+        setMicPermissionState('denied');
+        setMicError("Microphone permission denied. Click to open permission instructions.");
+        setShowMicModal(true);
       } else if (event.error !== 'no-speech') {
-        setMicError(`Speech input error: ${event.error}`);
+        setMicError(`Voice dictation error: ${event.error}`);
       }
       setIsListening(false);
       setInterimTranscript('');
@@ -362,7 +378,35 @@ export default function AiTutorPanel({ onClose }) {
       console.error("Failed to start speech recognition:", err);
       setIsListening(false);
     }
-  }, [speechRecSupported, isListening, voiceSupported]);
+  }, [speechRecSupported, voiceSupported]);
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
+      }
+      setIsListening(false);
+      setInterimTranscript('');
+    } else {
+      requestMicPermissionAndStart();
+    }
+  }, [isListening, requestMicPermissionAndStart]);
+
+  // Helper to format spoken logic into clean numbered steps
+  const formatSpokenLogic = useCallback(() => {
+    if (!logicText.trim()) return;
+    const sentences = logicText
+      .split(/(?<=[.?!])\s+|(?<=\b(?:first|then|next|after that|finally|second|third)\b)\s+/i)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    if (sentences.length > 1) {
+      const formatted = sentences
+        .map((s, idx) => `${idx + 1}. ${s.charAt(0).toUpperCase() + s.slice(1)}`)
+        .join('\n');
+      setLogicText(formatted);
+    }
+  }, [logicText]);
 
   // Clean up recognition on unmount or topic change
   useEffect(() => {
@@ -1420,93 +1464,201 @@ ${codeText}
 
             {/* STEP 3: LOGIC VALIDATION */}
             {step === 3 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', width: '100%', margin: '0 auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '820px', width: '100%', margin: '0 auto' }}>
+                
+                {/* ── Mic Permission Guidance Modal ── */}
+                {showMicModal && (
+                  <div className={styles.micModalOverlay}>
+                    <div className={styles.micModalCard}>
+                      <div className={styles.micModalIcon}>🎙️</div>
+                      <h3 className={styles.micModalTitle}>Microphone Access Required</h3>
+                      <p className={styles.micModalDesc}>
+                        To describe your logic out loud using your voice, please allow microphone access in your browser prompt.
+                      </p>
+                      
+                      <div className={styles.micInstructionBox}>
+                        <div className={styles.micInstructionStep}>
+                          <span>1</span> Click the 🔒 lock or microphone icon in your browser address bar.
+                        </div>
+                        <div className={styles.micInstructionStep}>
+                          <span>2</span> Switch <strong>Microphone</strong> permission to <strong>Allow</strong>.
+                        </div>
+                        <div className={styles.micInstructionStep}>
+                          <span>3</span> Click <strong>Try Again</strong> below!
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '16px' }}>
+                        <button
+                          type="button"
+                          className={styles.primaryButton}
+                          onClick={() => { setShowMicModal(false); requestMicPermissionAndStart(); }}
+                        >
+                          Try Again 🎙️
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.secondaryButton}
+                          onClick={() => setShowMicModal(false)}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className={`${styles.card} ${activeSpeakingSection === 'logicHints' ? styles.cardSpeaking : ''}`}>
-                  <h2 className={styles.cardTitle}>
-                    Describe Your Logic
+                  <h2 className={styles.cardTitle} style={{ justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span>Describe Your Logic</span>
+                      <span className={styles.logicBadge}>Step 3 of 4</span>
+                    </div>
                     <SpeakerBtn sectionKey="logicHints" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
                   </h2>
-                  <p className={styles.whatIsItText} style={{ marginBottom: '16px' }}>
-                    Describe your algorithm, pseudocode, or step-by-step approach to solve the <strong>{currentTopic.title}</strong> challenge. 
-                    You can type below or click <strong>🎙️ Speak Your Logic</strong> to describe it out loud!
+                  
+                  <p className={styles.whatIsItText} style={{ marginBottom: '20px' }}>
+                    Explain your algorithm approach for <strong>{currentTopic.title}</strong>. You can speak out loud using the voice dictation studio below, or type in your logic manually.
                   </p>
                   
-                  {/* Voice Dictation Control Bar */}
-                  <div className={styles.voiceDictationBar}>
-                    <button
-                      type="button"
-                      className={`${styles.micDictateBtn} ${isListening ? styles.micDictateBtnActive : ''}`}
-                      onClick={toggleListening}
-                      title={isListening ? "Click to stop listening" : "Click to speak your logic with microphone"}
-                    >
-                      {isListening ? (
-                        <>
-                          <span className={styles.micPulseDot} />
-                          ⏹ Stop Listening
-                        </>
-                      ) : (
-                        <>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                            <line x1="12" y1="19" x2="12" y2="22"/>
-                          </svg>
-                          Speak Your Logic (Voice Input)
-                        </>
-                      )}
-                    </button>
-
-                    {logicText && (
-                      <button
-                        type="button"
-                        className={styles.clearDictationBtn}
-                        onClick={() => { setLogicText(''); setInterimTranscript(''); }}
-                        title="Clear text"
-                      >
-                        Clear Text
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Live Interim Transcript Banner */}
-                  {isListening && (
-                    <div className={styles.interimBanner}>
-                      <span className={styles.interimPulseRing} />
-                      <div style={{ flex: 1 }}>
-                        <div className={styles.interimStatusText}>
-                          🎤 Listening... Speak your algorithm out loud.
-                        </div>
-                        {interimTranscript ? (
-                          <div className={styles.interimLiveText}>
-                            "{interimTranscript}"
-                          </div>
+                  {/* ── Voice Dictation Studio Container ── */}
+                  <div className={`${styles.voiceStudioBox} ${isListening ? styles.voiceStudioActive : ''}`}>
+                    
+                    {/* Voice Studio Top Header Row */}
+                    <div className={styles.voiceStudioHeader}>
+                      <div className={styles.voiceStudioStatus}>
+                        {isListening ? (
+                          <span className={styles.statusRecording}>
+                            <span className={styles.recordingDot} />
+                            Recording Live... Speak naturally
+                          </span>
+                        ) : micPermissionState === 'denied' ? (
+                          <span className={styles.statusDenied}>
+                            🔒 Mic Permission Needed
+                          </span>
                         ) : (
-                          <div className={styles.interimLiveText} style={{ opacity: 0.7 }}>
-                            (Say something like: "First I will initialize a variable i to zero...")
-                          </div>
+                          <span className={styles.statusReady}>
+                            🎙️ Voice Input Ready
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Equalizer Audio Waves when listening */}
+                      {isListening && (
+                        <div className={styles.studioWaveVisualizer}>
+                          <span className={styles.studioWaveBar} />
+                          <span className={styles.studioWaveBar} />
+                          <span className={styles.studioWaveBar} />
+                          <span className={styles.studioWaveBar} />
+                          <span className={styles.studioWaveBar} />
+                          <span className={styles.studioWaveBar} />
+                          <span className={styles.studioWaveBar} />
+                          <span className={styles.studioWaveBar} />
+                        </div>
+                      )}
+
+                      <div className={styles.voiceStudioControls}>
+                        {logicText && (
+                          <>
+                            <button
+                              type="button"
+                              className={styles.studioUtilityBtn}
+                              onClick={formatSpokenLogic}
+                              title="Format spoken text into clean numbered steps"
+                            >
+                              ✨ Format Steps
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.studioUtilityBtn}
+                              onClick={() => { setLogicText(''); setInterimTranscript(''); }}
+                              title="Clear all text"
+                            >
+                              🗑️ Clear
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
-                  )}
 
-                  {/* Mic Error Banner */}
-                  {micError && (
-                    <div className={styles.micErrorBanner}>
-                      ⚠️ {micError}
+                    {/* Microphone Dictate Hero Trigger Bar */}
+                    <div className={styles.dictateHeroRow}>
+                      <button
+                        type="button"
+                        className={`${styles.dictateHeroBtn} ${isListening ? styles.dictateHeroBtnActive : ''}`}
+                        onClick={toggleListening}
+                      >
+                        <div className={styles.micOrb}>
+                          {isListening ? (
+                            <span className={styles.micStopSquare} />
+                          ) : (
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                              <line x1="12" y1="19" x2="12" y2="22"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div className={styles.dictateHeroLabel}>
+                          <span className={styles.dictateTitle}>
+                            {isListening ? 'Stop Listening' : 'Speak Your Logic'}
+                          </span>
+                          <span className={styles.dictateSub}>
+                            {isListening ? 'Click when finished speaking' : 'Click to dictate algorithm using your mic'}
+                          </span>
+                        </div>
+                      </button>
                     </div>
-                  )}
 
-                  <textarea
-                    className={styles.tutorTextarea}
-                    placeholder="Example: First, read the input. Then, loop from 1 to n. Check if n is divisible... (Or click Speak Your Logic above to dictate using your voice!)"
-                    value={logicText}
-                    onChange={e => setLogicText(e.target.value)}
-                  />
+                    {/* Real-time Voice Live HUD Console */}
+                    {isListening && (
+                      <div className={styles.voiceHudConsole}>
+                        <div className={styles.voiceHudHeader}>
+                          <span>🔴 Live Audio HUD</span>
+                          <span className={styles.voiceHudBadge}>Continuous Dictation</span>
+                        </div>
+                        <div className={styles.voiceHudBody}>
+                          {interimTranscript ? (
+                            <p className={styles.voiceHudText}>"{interimTranscript}"</p>
+                          ) : (
+                            <p className={styles.voiceHudPlaceholder}>
+                              Listening... Speak your algorithm steps out loud (e.g. "First I will create a loop from 1 to N...")
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-                  <div className={styles.actionRow}>
+                    {/* Mic Error Banner */}
+                    {micError && (
+                      <div className={styles.micErrorBanner} onClick={() => setShowMicModal(true)}>
+                        ⚠️ {micError} <span style={{ textDecoration: 'underline', fontWeight: 700, marginLeft: '6px' }}>Fix Permission</span>
+                      </div>
+                    )}
+
+                    {/* Textarea for logic output and typing */}
+                    <div style={{ position: 'relative' }}>
+                      <textarea
+                        className={styles.tutorTextarea}
+                        placeholder="Your spoken logic will automatically transcribe here... You can also type or edit anytime!"
+                        value={logicText}
+                        onChange={e => setLogicText(e.target.value)}
+                        style={{ minHeight: '180px' }}
+                      />
+                      {logicText && (
+                        <div className={styles.textareaMetaInfo}>
+                          {logicText.trim().split(/\s+/).length} words • {logicText.length} chars
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+
+                  <div className={styles.actionRow} style={{ marginTop: '20px' }}>
                     <button
                       className={`${styles.primaryButton} ${isValidatingLogic ? styles.buttonDisabled : ''}`}
                       onClick={handleValidateLogic}
+                      style={{ padding: '14px 28px', fontSize: '14px' }}
                     >
                       {isValidatingLogic ? (
                         <>
@@ -1514,7 +1666,7 @@ ${codeText}
                           Validating logic...
                         </>
                       ) : (
-                        'Validate Logic'
+                        'Validate Logic →'
                       )}
                     </button>
                   </div>
