@@ -7,6 +7,36 @@ import { TUTOR_LOGIC_SYSTEM_PROMPT, TUTOR_CODE_SYSTEM_PROMPT, TUTOR_AI_SOLUTION_
 import { analyticsStore } from '../analytics';
 import { highlightC } from '../highlight';
 
+// ─── SpeakerBtn ──────────────────────────────────────────────────────────────
+// Small inline speaker button with wave animation when active.
+function SpeakerBtn({ sectionKey, activeSpeakingSection, onSpeak, onStop, isSpeaking }) {
+  const isActive = isSpeaking && activeSpeakingSection === sectionKey;
+  return (
+    <button
+      className={`${styles.speakerBtn} ${isActive ? styles.speakerBtnActive : ''}`}
+      onClick={(e) => { e.stopPropagation(); isActive ? onStop() : onSpeak(sectionKey); }}
+      title={isActive ? 'Stop reading' : 'Read this section aloud'}
+      aria-label={isActive ? 'Stop reading' : 'Read this section aloud'}
+    >
+      {isActive ? (
+        <span className={styles.soundWave} aria-hidden="true">
+          <span className={styles.soundWaveBar} />
+          <span className={styles.soundWaveBar} />
+          <span className={styles.soundWaveBar} />
+          <span className={styles.soundWaveBar} />
+          <span className={styles.soundWaveBar} />
+        </span>
+      ) : (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 
 export default function AiTutorPanel({ onClose }) {
   // Curriculum selection & Navigation
@@ -53,6 +83,18 @@ export default function AiTutorPanel({ onClose }) {
   const [completedTopics, setCompletedTopics] = useState(new Set());
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
+  // ─── Voice / TTS State ───────────────────────────────────────────
+  const voiceSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [activeSpeakingSection, setActiveSpeakingSection] = useState(null);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState('');
+  const [speechRate, setSpeechRate] = useState(0.88);
+  const [speechPitch, setSpeechPitch] = useState(1.05);
+  const [showVoicePanel, setShowVoicePanel] = useState(false);
+  const voicePanelRef = useRef(null);
+
   const stepBodyRef = useRef(null);
 
   // Auto-scroll the tutor panel body to top when step, question, or topic changes
@@ -61,6 +103,178 @@ export default function AiTutorPanel({ onClose }) {
       stepBodyRef.current.scrollTop = 0;
     }
   }, [step, activeQuizIdx, selectedTopicId]);
+
+  // ─── Load available voices ────────────────────────────────────────
+  useEffect(() => {
+    if (!voiceSupported) return;
+    const loadVoices = () => {
+      const all = window.speechSynthesis.getVoices();
+      // Prefer English voices; sort to put en-US first
+      const english = all.filter(v => v.lang.startsWith('en'));
+      const sorted = [
+        ...english.filter(v => v.lang === 'en-US'),
+        ...english.filter(v => v.lang !== 'en-US'),
+      ];
+      setAvailableVoices(sorted);
+      // Auto-select best instructional voice
+      if (!selectedVoiceURI && sorted.length > 0) {
+        const preferred = sorted.find(v =>
+          v.name.includes('Zira') ||
+          v.name.includes('Jenny') ||
+          v.name.includes('Aria') ||
+          v.name.includes('Google US English') ||
+          v.name.includes('Samantha')
+        ) || sorted[0];
+        setSelectedVoiceURI(preferred.voiceURI);
+      }
+    };
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => { window.speechSynthesis.onvoiceschanged = null; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceSupported]);
+
+  // ─── Stop speech when topic or panel changes ──────────────────────
+  useEffect(() => {
+    if (voiceSupported) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setActiveSpeakingSection(null);
+  }, [selectedTopicId, voiceSupported]);
+
+  // Close voice panel on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (voicePanelRef.current && !voicePanelRef.current.contains(e.target)) {
+        setShowVoicePanel(false);
+      }
+    };
+    if (showVoicePanel) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showVoicePanel]);
+
+  // ─── Build teacher narration scripts per section ──────────────────
+  const buildScript = useCallback((sectionKey, topic) => {
+    const t = topic || TUTOR_CURRICULUM[selectedTopicId];
+    if (!t) return '';
+    switch (sectionKey) {
+      case 'whatIsIt':
+        return `Let me explain what ${t.title} is. ${t.concept?.whatIsIt || ''}`;
+      case 'howItWorks': {
+        const steps = (t.concept?.howItWorks || []).map((s, i) =>
+          `Step ${i + 1}: ${s.title}. ${s.description}`
+        ).join('. ');
+        return `Now let me walk you through how ${t.title} works, step by step. ${steps}`;
+      }
+      case 'realWorldExample':
+        return `Here is a real-world analogy to help it click. ${t.concept?.realWorldExample || ''}`;
+      case 'diagram':
+        return `Now let us look at the visual architecture for ${t.title}. This diagram shows you how all the components connect and interact with each other. Study it carefully as it will help you understand the concept visually.`;
+      case 'keyTerms': {
+        const terms = (t.concept?.keyTerms || []).slice(0, 4).map(k =>
+          `${k.term}: ${k.definition}`
+        ).join('. ');
+        return `Let us go over some key vocabulary for this topic. ${terms}.`;
+      }
+      case 'commonMistakes': {
+        const mistakes = (t.concept?.commonMistakes || []).map((m, i) =>
+          `Mistake ${i + 1}: ${m}`
+        ).join('. ');
+        return `Pay close attention to these common mistakes that students make. ${mistakes}.`;
+      }
+      case 'complexity': {
+        const tc = t.concept?.timeComplexity;
+        const tcStr = typeof tc === 'object' ? (tc?.average || 'O of n') : (tc || 'O of 1');
+        const sc = t.concept?.spaceComplexity || 'O of 1';
+        return `In terms of performance, the time complexity of ${t.title} is ${tcStr.replace(/O\(/, 'O of ').replace(/\)/, '')}, and the space complexity is ${sc.replace(/O\(/, 'O of ').replace(/\)/, '')}. Keep these in mind when optimizing your code.`;
+      }
+      case 'quizQuestion': {
+        const q = t.quiz?.[activeQuizIdx];
+        if (!q) return '';
+        const opts = q.options.map((o, i) =>
+          `Option ${String.fromCharCode(65 + i)}: ${o}`
+        ).join('. ');
+        return `Question ${activeQuizIdx + 1} of ${t.quiz.length}. ${q.question}. Your options are: ${opts}. Take your time and pick the best answer.`;
+      }
+      case 'logicHints':
+        return `Here is a hint to help you structure your logic for ${t.title}. ${t.logicHints?.approach || 'Think about the steps involved in solving this problem algorithmically before you write any code.'}. Remember, good logic leads to clean code.`;
+      case 'codeChallenge':
+        return `Your coding challenge is to implement ${t.title} in C. ${t.concept?.whatIsIt || ''}. Write your solution in the editor below, run it against sample inputs, and then click Verify Solution when you are ready. Good luck!`;
+      case 'readAll': {
+        if (step === 1) {
+          return [
+            buildScript('whatIsIt', t),
+            buildScript('howItWorks', t),
+            buildScript('realWorldExample', t),
+            buildScript('keyTerms', t),
+            buildScript('commonMistakes', t),
+            buildScript('complexity', t),
+          ].join('. Next. ');
+        }
+        if (step === 2) return buildScript('quizQuestion', t);
+        if (step === 3) return buildScript('logicHints', t);
+        if (step === 4) return buildScript('codeChallenge', t);
+        return '';
+      }
+      default:
+        return '';
+    }
+  }, [selectedTopicId, activeQuizIdx, step]);
+
+  // ─── Core speak function ──────────────────────────────────────────
+  const speakSection = useCallback((sectionKey) => {
+    if (!voiceSupported) return;
+    window.speechSynthesis.cancel();
+    const topic = TUTOR_CURRICULUM[selectedTopicId];
+    const script = buildScript(sectionKey, topic);
+    if (!script) return;
+
+    const utter = new SpeechSynthesisUtterance(script);
+    utter.rate = speechRate;
+    utter.pitch = speechPitch;
+    utter.volume = 1;
+
+    const voice = availableVoices.find(v => v.voiceURI === selectedVoiceURI);
+    if (voice) utter.voice = voice;
+
+    utter.onstart = () => { setIsSpeaking(true); setIsPaused(false); setActiveSpeakingSection(sectionKey); };
+    utter.onend   = () => { setIsSpeaking(false); setIsPaused(false); setActiveSpeakingSection(null); };
+    utter.onerror = () => { setIsSpeaking(false); setIsPaused(false); setActiveSpeakingSection(null); };
+
+    window.speechSynthesis.speak(utter);
+  }, [voiceSupported, selectedTopicId, buildScript, speechRate, speechPitch, availableVoices, selectedVoiceURI]);
+
+  const handlePauseResume = useCallback(() => {
+    if (!voiceSupported) return;
+    if (isPaused) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+    } else {
+      window.speechSynthesis.pause();
+      setIsPaused(true);
+    }
+  }, [voiceSupported, isPaused]);
+
+  const handleStopSpeech = useCallback(() => {
+    if (!voiceSupported) return;
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setActiveSpeakingSection(null);
+  }, [voiceSupported]);
+
+  const handlePreviewVoice = useCallback(() => {
+    speakSection && window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(
+      `Hello! I am your AI tutor. Let's learn ${TUTOR_CURRICULUM[selectedTopicId]?.title || 'programming'} together.`
+    );
+    utter.rate = speechRate;
+    utter.pitch = speechPitch;
+    utter.volume = 1;
+    const voice = availableVoices.find(v => v.voiceURI === selectedVoiceURI);
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
+  }, [selectedVoiceURI, speechRate, speechPitch, availableVoices, selectedTopicId, speakSection]);
 
   // Retrieve current topic details
   const currentTopic = useMemo(() => {
@@ -473,7 +687,138 @@ ${codeText}
                 {currentTopic.title}
               </h1>
             </div>
-            <button className={styles.closeButton} onClick={onClose}>✕</button>
+
+            {/* ── Voice Controls (right side of header) ── */}
+            <div className={styles.headerRight}>
+              {voiceSupported && (
+                <>
+                  {/* Playback Controls — shown only while speaking */}
+                  {isSpeaking && (
+                    <div className={styles.playbackControls}>
+                      <span className={styles.nowPlayingLabel}>
+                        <span className={styles.soundWave} aria-hidden="true">
+                          <span className={styles.soundWaveBar} />
+                          <span className={styles.soundWaveBar} />
+                          <span className={styles.soundWaveBar} />
+                          <span className={styles.soundWaveBar} />
+                          <span className={styles.soundWaveBar} />
+                        </span>
+                        Speaking
+                      </span>
+                      <button
+                        className={styles.playbackBtn}
+                        onClick={handlePauseResume}
+                        title={isPaused ? 'Resume' : 'Pause'}
+                      >
+                        {isPaused ? '▶' : '⏸'}
+                      </button>
+                      <button
+                        className={`${styles.playbackBtn} ${styles.playbackBtnStop}`}
+                        onClick={handleStopSpeech}
+                        title="Stop"
+                      >
+                        ⏹
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Read All Button */}
+                  <button
+                    className={`${styles.readAllBtn} ${isSpeaking && activeSpeakingSection === 'readAll' ? styles.readAllBtnActive : ''}`}
+                    onClick={() => isSpeaking && activeSpeakingSection === 'readAll' ? handleStopSpeech() : speakSection('readAll')}
+                    title="Read entire section aloud"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                    </svg>
+                    Read All
+                  </button>
+
+                  {/* Voice Settings gear */}
+                  <div className={styles.voicePanelWrapper} ref={voicePanelRef}>
+                    <button
+                      className={`${styles.voiceGearBtn} ${showVoicePanel ? styles.voiceGearBtnActive : ''}`}
+                      onClick={() => setShowVoicePanel(p => !p)}
+                      title="Voice settings"
+                    >
+                      ⚙️
+                    </button>
+
+                    {showVoicePanel && (
+                      <div className={styles.voicePanel}>
+                        <div className={styles.voicePanelHeader}>
+                          <span>🎙️ Voice Settings</span>
+                          <button className={styles.voicePanelClose} onClick={() => setShowVoicePanel(false)}>✕</button>
+                        </div>
+
+                        {/* Voice selector */}
+                        <div className={styles.voicePanelRow}>
+                          <label className={styles.voicePanelLabel}>Voice</label>
+                          <select
+                            className={styles.voicePanelSelect}
+                            value={selectedVoiceURI}
+                            onChange={e => setSelectedVoiceURI(e.target.value)}
+                          >
+                            {availableVoices.length === 0 && (
+                              <option value="">Loading voices...</option>
+                            )}
+                            {availableVoices.map(v => (
+                              <option key={v.voiceURI} value={v.voiceURI}>
+                                {v.name} ({v.lang})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Speed slider */}
+                        <div className={styles.voicePanelRow}>
+                          <label className={styles.voicePanelLabel}>
+                            Speed <span className={styles.voicePanelValue}>{speechRate.toFixed(2)}x</span>
+                          </label>
+                          <input
+                            type="range"
+                            min="0.6" max="1.4" step="0.05"
+                            value={speechRate}
+                            onChange={e => setSpeechRate(Number(e.target.value))}
+                            className={styles.voicePanelSlider}
+                          />
+                          <div className={styles.voiceSliderTicks}>
+                            <span>Slow</span><span>Fast</span>
+                          </div>
+                        </div>
+
+                        {/* Pitch slider */}
+                        <div className={styles.voicePanelRow}>
+                          <label className={styles.voicePanelLabel}>
+                            Pitch <span className={styles.voicePanelValue}>{speechPitch.toFixed(2)}</span>
+                          </label>
+                          <input
+                            type="range"
+                            min="0.7" max="1.4" step="0.05"
+                            value={speechPitch}
+                            onChange={e => setSpeechPitch(Number(e.target.value))}
+                            className={styles.voicePanelSlider}
+                          />
+                          <div className={styles.voiceSliderTicks}>
+                            <span>Deep</span><span>High</span>
+                          </div>
+                        </div>
+
+                        {/* Preview button */}
+                        <button className={styles.voicePreviewBtn} onClick={handlePreviewVoice}>
+                          ▶ Preview Voice
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Close button */}
+              <button className={styles.closeButton} onClick={() => { handleStopSpeech(); onClose(); }}>✕</button>
+            </div>
           </div>
 
           {/* Step Progress Navigator */}
@@ -519,13 +864,19 @@ ${codeText}
               <div className={styles.conceptGrid}>
                 {/* Left Side: Summary & Explanation */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>What is it?</h2>
+                  <div className={`${styles.card} ${activeSpeakingSection === 'whatIsIt' ? styles.cardSpeaking : ''}`}>
+                    <h2 className={styles.cardTitle}>
+                      What is it?
+                      <SpeakerBtn sectionKey="whatIsIt" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                    </h2>
                     <p className={styles.whatIsItText}>{currentTopic.concept.whatIsIt}</p>
                   </div>
 
-                  <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>How it works</h2>
+                  <div className={`${styles.card} ${activeSpeakingSection === 'howItWorks' ? styles.cardSpeaking : ''}`}>
+                    <h2 className={styles.cardTitle}>
+                      How it works
+                      <SpeakerBtn sectionKey="howItWorks" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                    </h2>
                     <div className={styles.howItWorksList}>
                       {currentTopic.concept.howItWorks.map((step, idx) => (
                         <div key={idx} className={styles.howItWorksItem}>
@@ -539,8 +890,11 @@ ${codeText}
                     </div>
                   </div>
 
-                  <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>Real-world Analogy</h2>
+                  <div className={`${styles.card} ${activeSpeakingSection === 'realWorldExample' ? styles.cardSpeaking : ''}`}>
+                    <h2 className={styles.cardTitle}>
+                      Real-world Analogy
+                      <SpeakerBtn sectionKey="realWorldExample" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                    </h2>
                     <p className={styles.whatIsItText} style={{ fontStyle: 'italic', color: '#4f46e5' }}>
                       "{currentTopic.concept.realWorldExample}"
                     </p>
@@ -550,14 +904,20 @@ ${codeText}
                 {/* Right Side: Diagrams & Meta */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {/* Visual Diagram */}
-                  <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>Visual Architecture</h2>
+                  <div className={`${styles.card} ${activeSpeakingSection === 'diagram' ? styles.cardSpeaking : ''}`}>
+                    <h2 className={styles.cardTitle}>
+                      Visual Architecture
+                      <SpeakerBtn sectionKey="diagram" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                    </h2>
                     <TutorDiagram type={currentTopic.id} />
                   </div>
 
                   {/* Key Terms Grid */}
-                  <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>Key Vocabulary</h2>
+                  <div className={`${styles.card} ${activeSpeakingSection === 'keyTerms' ? styles.cardSpeaking : ''}`}>
+                    <h2 className={styles.cardTitle}>
+                      Key Vocabulary
+                      <SpeakerBtn sectionKey="keyTerms" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                    </h2>
                     <div className={styles.keyTermsGrid}>
                       {currentTopic.concept.keyTerms.slice(0, 4).map((term, idx) => (
                         <div key={idx} className={styles.termCard}>
@@ -569,8 +929,11 @@ ${codeText}
                   </div>
 
                   {/* Common Mistakes */}
-                  <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>Common Mistakes</h2>
+                  <div className={`${styles.card} ${activeSpeakingSection === 'commonMistakes' ? styles.cardSpeaking : ''}`}>
+                    <h2 className={styles.cardTitle}>
+                      Common Mistakes
+                      <SpeakerBtn sectionKey="commonMistakes" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                    </h2>
                     <div className={styles.mistakesList}>
                       {currentTopic.concept.commonMistakes.map((mistake, idx) => (
                         <div key={idx} className={styles.mistakeItem}>
@@ -582,8 +945,11 @@ ${codeText}
                   </div>
 
                   {/* Complexity Stats */}
-                  <div className={styles.card}>
-                    <h2 className={styles.cardTitle}>Complexities</h2>
+                  <div className={`${styles.card} ${activeSpeakingSection === 'complexity' ? styles.cardSpeaking : ''}`}>
+                    <h2 className={styles.cardTitle}>
+                      Complexities
+                      <SpeakerBtn sectionKey="complexity" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                    </h2>
                     <div className={styles.metaGrid}>
                       <div className={styles.metaBox}>
                         <div className={styles.metaLabel}>Time Complexity</div>
@@ -651,9 +1017,10 @@ ${codeText}
                         </div>
 
                         {/* Question Card */}
-                        <div className={`${styles.card} ${styles.quizCard}`} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                          <h2 className={styles.quizQuestion} style={{ margin: 0, fontSize: '17px', lineHeight: '1.4' }}>
-                            {q.question}
+                        <div className={`${styles.card} ${styles.quizCard} ${activeSpeakingSection === 'quizQuestion' ? styles.cardSpeaking : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <h2 className={styles.quizQuestion} style={{ margin: 0, fontSize: '17px', lineHeight: '1.4', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                            <span style={{ flex: 1 }}>{q.question}</span>
+                            <SpeakerBtn sectionKey="quizQuestion" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
                           </h2>
                           
                           <div className={styles.quizOptions} style={{ margin: 0 }}>
@@ -950,8 +1317,11 @@ ${codeText}
             {/* STEP 3: LOGIC VALIDATION */}
             {step === 3 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', width: '100%', margin: '0 auto' }}>
-                <div className={styles.card}>
-                  <h2 className={styles.cardTitle}>Describe Your Logic</h2>
+                <div className={`${styles.card} ${activeSpeakingSection === 'logicHints' ? styles.cardSpeaking : ''}`}>
+                  <h2 className={styles.cardTitle}>
+                    Describe Your Logic
+                    <SpeakerBtn sectionKey="logicHints" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                  </h2>
                   <p className={styles.whatIsItText} style={{ marginBottom: '16px' }}>
                     Describe your algorithm, pseudocode, or step-by-step approach to solve the <strong>{currentTopic.title}</strong> challenge. 
                     AI will verify if your logic checks out before you begin coding.
@@ -1031,8 +1401,11 @@ ${codeText}
             {/* STEP 4: CODE SOLUTION */}
             {step === 4 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div className={styles.card}>
-                  <h2 className={styles.cardTitle}>Implement in C</h2>
+                <div className={`${styles.card} ${activeSpeakingSection === 'codeChallenge' ? styles.cardSpeaking : ''}`}>
+                  <h2 className={styles.cardTitle}>
+                    Implement in C
+                    <SpeakerBtn sectionKey="codeChallenge" activeSpeakingSection={activeSpeakingSection} onSpeak={speakSection} onStop={handleStopSpeech} isSpeaking={isSpeaking} />
+                  </h2>
                   <p className={styles.whatIsItText} style={{ marginBottom: '16px' }}>
                     Write your C solution for <strong>{currentTopic.title}</strong>.
                     Run it against inputs, then verify with AI. Need help? Use <strong>Give Full Solution</strong> below.

@@ -910,6 +910,346 @@
 }
 
 /* ================================================================
+   VOICE TEACHER FEATURE
+   ================================================================ */
+
+/* Header right-side controls */
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Read All button */
+.readAllBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #6366f1;
+  background: #f5f3ff;
+  color: #4f46e5;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.readAllBtn:hover {
+  background: #ede9fe;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.readAllBtnActive {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #059669;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  animation: readAllPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes readAllPulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+  50% { box-shadow: 0 4px 20px rgba(16, 185, 129, 0.55); }
+}
+
+/* Playback controls bar */
+.playbackControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdf4;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 6px 10px;
+  animation: slideInRight 200ms ease-out;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.nowPlayingLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #065f46;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.playbackBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1.5px solid #a7f3d0;
+  background: #ffffff;
+  color: #047857;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.playbackBtn:hover {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+}
+
+.playbackBtnStop {
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.playbackBtnStop:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+/* Voice gear button */
+.voicePanelWrapper {
+  position: relative;
+}
+
+.voiceGearBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.voiceGearBtn:hover,
+.voiceGearBtnActive {
+  background: #f5f3ff;
+  border-color: #a5b4fc;
+  color: #4f46e5;
+}
+
+/* Voice Settings dropdown panel */
+.voicePanel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 300px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.06);
+  z-index: 3000;
+  animation: slideInDown 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.voicePanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #1e293b;
+  background: #f8fafc;
+}
+
+.voicePanelClose {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.voicePanelClose:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.voicePanelRow {
+  padding: 12px 18px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.voicePanelLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.voicePanelValue {
+  font-size: 12px;
+  font-weight: 800;
+  color: #4f46e5;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.voicePanelSelect {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.voicePanelSelect:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.voicePanelSlider {
+  width: 100%;
+  height: 4px;
+  accent-color: #6366f1;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.voiceSliderTicks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.voicePreviewBtn {
+  margin: 12px 18px;
+  width: calc(100% - 36px);
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+}
+
+.voicePreviewBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.35);
+}
+
+/* ── Individual SpeakerBtn (per-card) ── */
+.speakerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: all 0.18s ease;
+}
+
+.speakerBtn:hover {
+  border-color: #a5b4fc;
+  background: #eef2ff;
+  color: #4f46e5;
+  transform: scale(1.08);
+}
+
+.speakerBtnActive {
+  border-color: #6ee7b7;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #059669;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* ── Sound Wave Animation ── */
+.soundWave {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 14px;
+}
+
+.soundWaveBar {
+  display: inline-block;
+  width: 2.5px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: waveBounce 0.8s ease-in-out infinite alternate;
+}
+
+.soundWaveBar:nth-child(1) { height: 4px;  animation-delay: 0.0s; }
+.soundWaveBar:nth-child(2) { height: 10px; animation-delay: 0.1s; }
+.soundWaveBar:nth-child(3) { height: 14px; animation-delay: 0.2s; }
+.soundWaveBar:nth-child(4) { height: 8px;  animation-delay: 0.15s; }
+.soundWaveBar:nth-child(5) { height: 4px;  animation-delay: 0.05s; }
+
+@keyframes waveBounce {
+  from { transform: scaleY(0.4); opacity: 0.7; }
+  to   { transform: scaleY(1.0); opacity: 1.0; }
+}
+
+/* ── Active-speaking card highlight ── */
+.cardSpeaking {
+  border-color: #6ee7b7 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15), inset 0 0 0 1px rgba(16, 185, 129, 0.08);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ================================================================
    SYNTAX HIGHLIGHT TOKEN COLOURS
    ================================================================ */
 
