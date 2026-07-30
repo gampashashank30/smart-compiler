@@ -197,7 +197,7 @@ function AggregatedCard({ issues }) {
         iconColor="#0284c7"
         title="How to Fix"
         sectionClass="sectionSky"
-        defaultOpen={false}
+        defaultOpen={true}
       >
         <div className={styles.fixList}>
           {fixes.map((issue, i) => (
