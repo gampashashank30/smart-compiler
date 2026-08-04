@@ -19,10 +19,21 @@ jobs:
         #   Settings → Secrets and variables → Actions → New repository secret
         #   - COOLIFY_WEBHOOK_URL  (e.g. https://your-hetzner-ip:8000/api/v1/deploy/webhook)
         #   - COOLIFY_WEBHOOK_TOKEN (the token from Coolify dashboard)
+        env:
+          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_WEBHOOK_TOKEN: ${{ secrets.COOLIFY_WEBHOOK_TOKEN }}
         run: |
+          # Skip gracefully if secrets are not configured yet (before server is set up)
+          if [ -z "$COOLIFY_WEBHOOK_URL" ] || [ -z "$COOLIFY_WEBHOOK_TOKEN" ]; then
+            echo "⏭️  Coolify secrets not configured yet — skipping deploy trigger."
+            echo "   Add COOLIFY_WEBHOOK_URL and COOLIFY_WEBHOOK_TOKEN as GitHub Secrets"
+            echo "   after setting up your Hetzner server with Coolify."
+            exit 0
+          fi
+
           curl --silent --show-error --fail \
-            -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_WEBHOOK_TOKEN }}" \
+            -X POST "$COOLIFY_WEBHOOK_URL" \
+            -H "Authorization: Bearer $COOLIFY_WEBHOOK_TOKEN" \
             -H "Content-Type: application/json" \
             --max-time 30
           echo "✅ Coolify deploy triggered successfully"
