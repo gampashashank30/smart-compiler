@@ -172,9 +172,8 @@ app.use(helmet({
         "'self'",
         // Supabase — auth, DB, storage
         SUPABASE_URL || 'https://*.supabase.co',
-        // Groq / Z.AI — AI completions (server-side proxied, but keep for fetch)
-        "https://api.groq.com",
-        "https://api.z.ai",
+        // OpenRouter — AI completions (server-side proxied, but keep for fetch)
+        "https://openrouter.ai",
         // WebSocket — interactive terminal
         "ws://localhost:3001",
         "wss://smartcompiler.maadiotsolutions.co.in",
@@ -277,8 +276,8 @@ const adminLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // ── AI proxy endpoint ─────────────────────────────────────────────────────────
-// Calls Groq (or Z.AI) from the server so the API key stays off the frontend bundle.
-// Supports up to 3 API keys with automatic fallback when one hits a rate limit.
+// Calls OpenRouter (Meta: Llama 3.3 70B Instruct) from the server so the API key
+// stays off the frontend bundle.
 // 🔒 PROTECTED: Requires a valid Supabase JWT (logged-in user) + allowed origin.
 app.post('/api/ai', aiLimiter, async (req, res) => {
   // ── 1. Origin check ──────────────────────────────────────────────────────
@@ -357,58 +356,51 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
     });
   }
 
-  // Build the key rotation pool — filter out empty / placeholder values.
+  // Read the single API key from the environment.
   // IMPORTANT: only use server-side keys (no VITE_ prefix — those would bake into the bundle).
-  const PLACEHOLDER_FRAGMENTS = ['your_', 'REPLACE_WITH', 'your_second_api_key_here'];
+  const PLACEHOLDER_FRAGMENTS = ['your_', 'REPLACE_WITH'];
   const allKeys = [
-    process.env.GROQ_API_KEY,
-    process.env.GROQ_API_KEY_2,
-    process.env.GROQ_API_KEY_3,
+    process.env.OPENROUTER_API_KEY,
   ].filter((k) => k && k.trim() && !PLACEHOLDER_FRAGMENTS.some(p => k.includes(p)));
 
   if (allKeys.length === 0) {
-    return res.status(503).json({ error: 'AI service not configured (no valid GROQ_API_KEY found)' });
+    return res.status(503).json({ error: 'AI service not configured (no valid OPENROUTER_API_KEY found)' });
   }
 
   let lastError = null;
 
+  // OpenRouter endpoint and model
+  const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+  const OPENROUTER_MODEL   = 'meta-llama/llama-3.3-70b-instruct';
+
   // Try each key in order; move to the next on rate-limit (429) or auth error (401)
   for (let i = 0; i < allKeys.length; i++) {
     const apiKey = allKeys[i];
-    const isZai  = !apiKey.startsWith('gsk_');
-    const apiUrl = isZai
-      ? 'https://api.z.ai/api/paas/v4/chat/completions'
-      : 'https://api.groq.com/openai/v1/chat/completions';
-    const model  = isZai ? 'glm-4.7-Flash' : 'llama-3.3-70b-versatile';
 
     try {
+      // Enforce JSON mode when systemPrompt references JSON (but not a JSON array —
+      // json_object mode requires the top-level response to be an object {}).
+      const promptLower = systemPrompt.toLowerCase();
+      const wantsJsonObject = promptLower.includes('json') && !promptLower.includes('json array');
+
       const payload = {
-        model,
+        model: OPENROUTER_MODEL,
         max_tokens: 4096,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user',   content: userMessage  },
         ],
+        ...(wantsJsonObject ? { response_format: { type: 'json_object' } } : {}),
       };
-      if (isZai) {
-        payload.thinking = { type: 'disabled' };
-      } else {
-        // Enforce JSON mode for Groq models when systemPrompt contains "JSON".
-        // IMPORTANT: json_object mode requires the top-level response to be an object {}.
-        // If the prompt asks for a JSON array [...], do NOT enable json_object mode —
-        // Groq will wrap the array in an object or fail, causing a blank/broken response.
-        const promptLower = systemPrompt.toLowerCase();
-        const wantsJsonObject = promptLower.includes('json') && !promptLower.includes('json array');
-        if (wantsJsonObject) {
-          payload.response_format = { type: 'json_object' };
-        }
-      }
 
-      const response = await fetch(apiUrl, {
+      const response = await fetch(OPENROUTER_API_URL, {
         method:  'POST',
         headers: {
           'Content-Type':  'application/json',
           'Authorization': `Bearer ${apiKey}`,
+          // OpenRouter best-practice headers (optional but recommended)
+          'HTTP-Referer':  'https://smartcompiler.maadiotsolutions.co.in',
+          'X-Title':       'Smart Compiler',
         },
         body: JSON.stringify(payload),
       });
