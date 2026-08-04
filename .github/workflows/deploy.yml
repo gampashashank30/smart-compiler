@@ -1,0 +1,28 @@
+name: Deploy to Hetzner via Coolify
+
+on:
+  push:
+    branches: [main]
+
+# Minimal permissions — only what's needed
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Coolify Redeploy Webhook
+        # After setting up Coolify, get the webhook URL + token from:
+        # Coolify Dashboard → Your App → Deployments → Webhook
+        # Then add them as GitHub Secrets:
+        #   Settings → Secrets and variables → Actions → New repository secret
+        #   - COOLIFY_WEBHOOK_URL  (e.g. https://your-hetzner-ip:8000/api/v1/deploy/webhook)
+        #   - COOLIFY_WEBHOOK_TOKEN (the token from Coolify dashboard)
+        run: |
+          curl --silent --show-error --fail \
+            -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_WEBHOOK_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --max-time 30
+          echo "✅ Coolify deploy triggered successfully"
