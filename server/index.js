@@ -164,7 +164,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:     ["'self'"],
-      scriptSrc:      ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
+      scriptSrc:      ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://*.googlesyndication.com", "https://*.google.com", "https://*.monetag.com"],
       styleSrc:       ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
       fontSrc:        ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
       imgSrc:         ["'self'", "data:", "blob:", "https:"],
@@ -172,13 +172,15 @@ app.use(helmet({
         "'self'",
         // Supabase — auth, DB, storage
         SUPABASE_URL || 'https://*.supabase.co',
+        "https://*.supabase.co",
         // OpenRouter — AI completions (server-side proxied, but keep for fetch)
         "https://openrouter.ai",
         // WebSocket — interactive terminal
         "ws://localhost:3001",
         "wss://smartcompiler.maadiotsolutions.co.in",
+        "ws://smartcompiler.maadiotsolutions.co.in",
       ],
-      frameSrc:       ["'none'"],
+      frameSrc:       ["'self'", "https:"],
       objectSrc:      ["'none'"],
       baseUri:        ["'self'"],
       formAction:     ["'self'"],
