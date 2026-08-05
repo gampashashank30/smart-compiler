@@ -421,6 +421,7 @@ function attachWebSocketServer(httpServer) {
       const baseTmp = process.env.COMPILER_TMP_DIR || (process.platform === 'win32' ? os.tmpdir() : '/data/compiler-tmp');
       tmpDir = path.join(baseTmp, `sc-ws-${runId}`);
       fs.mkdirSync(tmpDir, { recursive: true });
+      try { fs.chmodSync(tmpDir, 0o777); } catch {}
 
       // Write code with stdio init prepended + #line directive for correct error lines
       fs.writeFileSync(path.join(tmpDir, 'main.c'), STDIO_INIT + code, 'utf8');

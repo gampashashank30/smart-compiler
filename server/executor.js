@@ -93,6 +93,7 @@ async function runWithDocker(code, stdin) {
 
   try {
     fs.mkdirSync(tmpDir, { recursive: true });
+    try { fs.chmodSync(tmpDir, 0o777); } catch {}
     const srcFile = path.join(tmpDir, 'main.c');
     fs.writeFileSync(srcFile, code, 'utf8');
 
