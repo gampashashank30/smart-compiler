@@ -418,7 +418,8 @@ function attachWebSocketServer(httpServer) {
         hasIncrementedGlobalRuns = true;
       }
       runId = uuidv4();
-      tmpDir = path.join(os.tmpdir(), `sc-ws-${runId}`);
+      const baseTmp = process.env.COMPILER_TMP_DIR || (process.platform === 'win32' ? os.tmpdir() : '/data/compiler-tmp');
+      tmpDir = path.join(baseTmp, `sc-ws-${runId}`);
       fs.mkdirSync(tmpDir, { recursive: true });
 
       // Write code with stdio init prepended + #line directive for correct error lines
