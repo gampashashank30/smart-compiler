@@ -40,15 +40,27 @@ RUN npm run build
 # ─────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS runtime
 
-# Install GCC + build tools needed for C compilation AND node-pty native addon
+# Install GCC + build tools + Docker CLI (needed to spawn gcc-runner sandbox containers)
 RUN apt-get update && apt-get install -y \
     build-essential \
     python3 \
+    ca-certificates \
+    curl \
+    gnupg \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && chmod a+r /etc/apt/keyrings/docker.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" \
+       | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user to run the application
-RUN groupadd --gid 1001 appuser && \
-    useradd --uid 1001 --gid appuser --shell /bin/bash --create-home appuser
+# Create docker group (GID 999 matches Hetzner host) + app user
+# appuser is added to docker group so it can access /var/run/docker.sock
+RUN groupadd --gid 999 docker && \
+    groupadd --gid 1001 appuser && \
+    useradd --uid 1001 --gid appuser --groups docker --shell /bin/bash --create-home appuser
 
 WORKDIR /app
 
