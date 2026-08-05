@@ -88,7 +88,8 @@ function resetDockerCache() {
 async function runWithDocker(code, stdin) {
   const startTime = Date.now();
   const runId     = uuidv4();
-  const tmpDir    = path.join(os.tmpdir(), `sc-${runId}`);
+  const baseTmp   = process.env.COMPILER_TMP_DIR || (process.platform === 'win32' ? os.tmpdir() : '/data/compiler-tmp');
+  const tmpDir    = path.join(baseTmp, `sc-${runId}`);
 
   try {
     fs.mkdirSync(tmpDir, { recursive: true });
