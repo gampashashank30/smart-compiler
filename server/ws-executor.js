@@ -142,6 +142,19 @@ async function isDockerReady() {
     if (_dockerReady) {
       console.log('[ws-executor] Docker ready — using Docker engine');
     } else {
+      console.warn('[ws-executor] Docker running but gcc-runner image not found. Attempting auto-build...');
+      const dockerfileGcc = path.join(__dirname, 'Dockerfile.gcc');
+      if (fs.existsSync(dockerfileGcc)) {
+        try {
+          console.log('[ws-executor] Auto-building gcc-runner:latest Docker image...');
+          await execFileAsync('docker', ['build', '-f', dockerfileGcc, '-t', DOCKER_IMAGE, __dirname], { timeout: 120_000 });
+          _dockerReady = true;
+          console.log('[ws-executor] ✅ gcc-runner image auto-built successfully!');
+          return _dockerReady;
+        } catch (buildErr) {
+          console.warn('[ws-executor] Auto-build failed:', buildErr.message);
+        }
+      }
       console.warn('[ws-executor] gcc-runner image not found — using Wandbox fallback');
     }
   } catch {
@@ -617,6 +630,22 @@ function attachWebSocketServer(httpServer) {
         .trim();
 
       if (compileTimeout || exitCode !== 0) {
+        // Check if Docker failed because of missing runner image or Docker daemon error
+        if (
+          compileOut.includes('Unable to find image') ||
+          compileOut.includes('pull access denied') ||
+          compileOut.includes('repository does not exist') ||
+          compileOut.includes('docker: Error response from daemon')
+        ) {
+          console.warn('[ws-executor] Docker runner image missing or daemon error. Invalidating cache & falling back to Wandbox API.');
+          resetDockerCache();
+          send({ type: 'engine', data: 'wandbox' });
+          send({ type: 'status', data: 'compiling' });
+          await runWithWandbox(code, providedStdin, send);
+          cleanup();
+          return;
+        }
+
         send({ type: 'compile-error', data: compileMsg || 'Compilation failed.' });
         cleanup();
         return;

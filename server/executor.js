@@ -63,9 +63,20 @@ async function isDockerReady() {
     if (_dockerReady) {
       console.log('[executor] Docker ready — using Docker engine');
     } else {
-      console.warn('[executor] Docker running but gcc-runner image not found');
-      console.warn('[executor]   → Run server/build-image.bat to build the image');
-      console.warn('[executor]   → Falling back to Piston API');
+      console.warn('[executor] Docker running but gcc-runner image not found. Attempting auto-build...');
+      const dockerfileGcc = path.join(__dirname, 'Dockerfile.gcc');
+      if (fs.existsSync(dockerfileGcc)) {
+        try {
+          console.log('[executor] Auto-building gcc-runner:latest Docker image...');
+          await execFileAsync('docker', ['build', '-f', dockerfileGcc, '-t', DOCKER_IMAGE, __dirname], { timeout: 120_000 });
+          _dockerReady = true;
+          console.log('[executor] ✅ gcc-runner image auto-built successfully!');
+          return _dockerReady;
+        } catch (buildErr) {
+          console.warn('[executor] Auto-build failed:', buildErr.message);
+        }
+      }
+      console.warn('[executor]   → Falling back to Wandbox API');
     }
   } catch {
     _dockerReady = false;
@@ -375,7 +386,21 @@ async function execute(code, stdin = '') {
 
   const dockerAvailable = await isDockerReady();
   if (dockerAvailable) {
-    return runWithDocker(code, stdin);
+    const result = await runWithDocker(code, stdin);
+    // If docker execution failed due to missing image or daemon error, reset cache and fallback to Wandbox
+    if (
+      !result.success &&
+      result.stderr &&
+      (result.stderr.includes('Unable to find image') ||
+       result.stderr.includes('pull access denied') ||
+       result.stderr.includes('repository does not exist') ||
+       result.stderr.includes('docker: Error response from daemon'))
+    ) {
+      console.warn('[executor] Docker runner image missing or Docker daemon error. Invalidating cache and falling back to Wandbox API.');
+      resetDockerCache();
+      return runWithWandbox(code, stdin);
+    }
+    return result;
   }
   return runWithWandbox(code, stdin);
 }

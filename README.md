@@ -105,7 +105,7 @@ If you want fully sandboxed execution, build the GCC Docker image:
 cd server
 build-image.bat        # Windows
 # or manually:
-docker build -f Dockerfile.gcc -t smart-compiler-gcc .
+docker build -f Dockerfile.gcc -t gcc-runner:latest .
 ```
 
 ### 5. Run the App Locally
