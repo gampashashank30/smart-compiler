@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────
-# Stage 1: BUILDER — compile the React frontend (Pure JS, no C++ tools needed)
+# Stage 1: BUILDER — compile the React frontend
 # ─────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS builder
 
@@ -28,8 +28,12 @@ FROM node:20-bookworm-slim AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install GCC, G++, Make & Python3 so C code compiles locally
-# and node-pty can build native addon during server npm install
+# CRITICAL FIX: Create /data/compiler-tmp FIRST before apt-get install runs,
+# because if TMPDIR=/data/compiler-tmp is set in Coolify env vars,
+# apt package post-install scripts (like ca-certificates) use mktemp in TMPDIR.
+RUN mkdir -p /tmp /data/compiler-tmp && chmod 777 /tmp /data/compiler-tmp
+
+# Install GCC, G++, Make & Python3
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
@@ -42,10 +46,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupadd --gid 1001 appuser && \
     useradd --uid 1001 --gid appuser --shell /bin/bash --create-home appuser
 
-WORKDIR /app
+# Ensure permissions on /data/compiler-tmp
+RUN chown -R appuser:appuser /data/compiler-tmp
 
-# Create compiler tmp dir (writable by appuser)
-RUN mkdir -p /data/compiler-tmp && chown -R appuser:appuser /data/compiler-tmp
+WORKDIR /app
 
 # Copy compiled frontend from builder
 COPY --from=builder /build/dist ./dist
