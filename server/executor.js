@@ -318,9 +318,144 @@ async function runWithWandbox(code, stdin) {
 }
 
 
-// ── Local GCC fallback execution (Stubbed to false for security/pentesting) ──
+// ── Local GCC execution (primary engine in production) ───────────────────────
+// The production Dockerfile (Stage 3) installs GCC directly into the container.
+// This means we can compile and run C code locally without docker-in-docker.
+// Docker-in-docker was the root cause of the 24-hour restart bug where
+// gcc-runner:latest would disappear and cause "Unable to find image" errors.
+let _localGccReady = null;
+
 async function isLocalGccReady() {
-  return false;
+  if (_localGccReady !== null) return _localGccReady;
+  try {
+    await execFileAsync('gcc', ['--version'], { timeout: 3000 });
+    console.log('[executor] Local GCC found — using local GCC engine (no docker-in-docker)');
+    _localGccReady = true;
+  } catch {
+    console.warn('[executor] Local GCC not found in PATH');
+    _localGccReady = false;
+  }
+  return _localGccReady;
+}
+
+async function runWithLocalGcc(code, stdin) {
+  const startTime = Date.now();
+  const runId     = uuidv4();
+  const baseTmp   = process.env.COMPILER_TMP_DIR || os.tmpdir();
+  const tmpDir    = path.join(baseTmp, `sc-local-${runId}`);
+
+  try {
+    fs.mkdirSync(tmpDir, { recursive: true });
+    const srcFile  = path.join(tmpDir, 'main.c');
+    const outFile  = path.join(tmpDir, 'prog');
+    const errFile  = path.join(tmpDir, 'stderr.txt');
+    fs.writeFileSync(srcFile, code, 'utf8');
+
+    // ── Step 1: Compile ────────────────────────────────────────────
+    let compileOut = '';
+    let compileOk  = false;
+    let compileKilled = false;
+
+    await new Promise((resolve) => {
+      const proc = spawn(
+        'gcc',
+        [srcFile, '-Wall', '-Wextra', '-O2', '-o', outFile, '-lm'],
+        { stdio: ['ignore', 'pipe', 'pipe'] }
+      );
+      proc.stdout.on('data', d => { compileOut += d.toString(); });
+      proc.stderr.on('data', d => { compileOut += d.toString(); });
+      const t = setTimeout(() => {
+        compileKilled = true;
+        proc.kill('SIGKILL');
+        resolve();
+      }, COMPILE_TIMEOUT);
+      proc.on('close', code => {
+        clearTimeout(t);
+        compileOk = code === 0;
+        resolve();
+      });
+      proc.on('error', err => {
+        clearTimeout(t);
+        compileOut += `\nGCC error: ${err.message}`;
+        resolve();
+      });
+    });
+
+    // Normalise paths in compiler output
+    const compileMsg = compileOut
+      .replace(new RegExp(tmpDir.replace(/\\/g, '\\\\'), 'g'), '')
+      .replace(/\/[^:]+main\.c/g, 'main.c')
+      .trim();
+
+    if (compileKilled || !compileOk) {
+      return {
+        success: false, stdout: '', stderr: compileMsg || 'Compilation failed',
+        exitCode: 1, signal: null, killed: compileKilled, compileError: true,
+        timeMs: Date.now() - startTime, engine: 'local-gcc',
+      };
+    }
+
+    // ── Step 2: Run ───────────────────────────────────────────────
+    let runStdout  = '';
+    let runStderr  = '';
+    let runExit    = 1;
+    let runKilled  = false;
+    let runSignal  = null;
+
+    await new Promise((resolve) => {
+      const proc = spawn(outFile, [], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: tmpDir,
+      });
+
+      if (stdin) proc.stdin.write(stdin);
+      proc.stdin.end();
+
+      const MAX_OUTPUT = 512 * 1024;
+      proc.stdout.on('data', d => {
+        if (runStdout.length < MAX_OUTPUT) runStdout += d.toString();
+      });
+      proc.stderr.on('data', d => {
+        if (runStderr.length < MAX_OUTPUT) runStderr += d.toString();
+      });
+
+      const t = setTimeout(() => {
+        runKilled = true;
+        runSignal = 'SIGKILL';
+        proc.kill('SIGKILL');
+        resolve();
+      }, EXEC_TIMEOUT_MS);
+
+      proc.on('close', (code, sig) => {
+        clearTimeout(t);
+        runExit   = code ?? 1;
+        runSignal = sig ?? null;
+        if (code === 137 || sig === 'SIGKILL') runKilled = true;
+        resolve();
+      });
+      proc.on('error', err => {
+        clearTimeout(t);
+        runStderr += `\nRuntime error: ${err.message}`;
+        resolve();
+      });
+    });
+
+    const fullStderr = [compileMsg, runStderr].filter(Boolean).join('\n').trim();
+    return {
+      success:      runExit === 0 && !runKilled,
+      stdout:       runStdout.trimEnd(),
+      stderr:       fullStderr,
+      exitCode:     runExit,
+      signal:       runSignal,
+      killed:       runKilled,
+      compileError: false,
+      timeMs:       Date.now() - startTime,
+      engine:       'local-gcc',
+    };
+
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+  }
 }
 
 // ── Dangerous code scanner ────────────────────────────────────────────────────
@@ -374,7 +509,13 @@ function checkDangerousCode(code) {
 
 // ── Public API ───────────────────────────────────────────────────────────────
 /**
- * Execute C code. Automatically chooses Docker or Wandbox.
+ * Execute C code.
+ *
+ * Engine priority (permanent fix for the 24-hour docker image loss bug):
+ *   1. Local GCC  — always available in production (baked into Dockerfile Stage 3)
+ *   2. Docker     — used only if docker socket is mounted AND gcc-runner image exists
+ *   3. Wandbox    — last resort (batch mode, no interactive stdin)
+ *
  * @param {string} code
  * @param {string} stdin
  * @returns {Promise<ExecutionResult>}
@@ -384,10 +525,17 @@ async function execute(code, stdin = '') {
   const blocked = checkDangerousCode(code);
   if (blocked) return blocked;
 
+  // 1. Try local GCC first — always available in production container
+  const localGcc = await isLocalGccReady();
+  if (localGcc) {
+    return runWithLocalGcc(code, stdin);
+  }
+
+  // 2. Try Docker (only if docker socket is mounted — e.g. self-hosted with Coolify)
   const dockerAvailable = await isDockerReady();
   if (dockerAvailable) {
     const result = await runWithDocker(code, stdin);
-    // If docker execution failed due to missing image or daemon error, reset cache and fallback to Wandbox
+    // If docker failed due to missing image, fall through to Wandbox
     if (
       !result.success &&
       result.stderr &&
@@ -396,12 +544,14 @@ async function execute(code, stdin = '') {
        result.stderr.includes('repository does not exist') ||
        result.stderr.includes('docker: Error response from daemon'))
     ) {
-      console.warn('[executor] Docker runner image missing or Docker daemon error. Invalidating cache and falling back to Wandbox API.');
+      console.warn('[executor] Docker runner image missing. Falling back to Wandbox API.');
       resetDockerCache();
       return runWithWandbox(code, stdin);
     }
     return result;
   }
+
+  // 3. Last resort: Wandbox batch API
   return runWithWandbox(code, stdin);
 }
 

@@ -192,12 +192,13 @@ function getCleanEnv() {
 
 // ── Local GCC probe ──────────────────────────────────────────────────────────
 // Tries `gcc --version`. Returns true if GCC is in PATH.
-// In production (NODE_ENV=production) this is always disabled — Render uses Docker.
+// NOTE: We NO LONGER disable this in production. The Dockerfile now installs
+// GCC directly into the production container, so local GCC is always preferred
+// over docker-in-docker (which caused the 24-hour restart image-loss bug).
 async function isLocalGccReady() {
-  if (process.env.NODE_ENV === 'production') return false;
   try {
     await execFileAsync('gcc', ['--version'], { timeout: 3000 });
-    console.log('[ws-executor] Local GCC found — PTY interactive mode active');
+    console.log('[ws-executor] Local GCC found — using local GCC engine (no docker-in-docker)');
     return true;
   } catch {
     console.warn('[ws-executor] Local GCC not found in PATH');
@@ -439,21 +440,13 @@ function attachWebSocketServer(httpServer) {
       // Write code with stdio init prepended + #line directive for correct error lines
       fs.writeFileSync(path.join(tmpDir, 'main.c'), STDIO_INIT + code, 'utf8');
 
-      const dockerAvailable = await isDockerReady();
+      // ── Engine selection (permanent fix for 24-hour docker image loss bug) ──
+      // 1. Local GCC  — always available (GCC baked into Dockerfile Stage 3)
+      // 2. Docker     — only if docker socket mounted AND gcc-runner image exists
+      // 3. Wandbox    — last resort (batch mode, no interactive stdin)
+      const localGcc = await isLocalGccReady();
 
-      // ── No Docker: try local GCC (interactive PTY), then Wandbox (batch) ──
-      if (!dockerAvailable) {
-        const localGcc = await isLocalGccReady();
-
-        if (!localGcc) {
-          // Last resort: Wandbox batch API
-          send({ type: 'engine', data: 'wandbox' });
-          send({ type: 'status', data: 'compiling' });
-          await runWithWandbox(code, providedStdin, send);
-          cleanup();
-          return;
-        }
-
+      if (localGcc) {
         // ── Local GCC + node-pty: fully interactive, exactly like OnlineGDB ──
         send({ type: 'engine', data: 'local' });
         send({ type: 'status', data: 'compiling' });
@@ -573,11 +566,24 @@ function attachWebSocketServer(httpServer) {
           if (plainProc) { try { plainProc.kill('SIGKILL');  } catch {} }
         }, EXEC_TIMEOUT_MS);
 
-        return; // done — skip Docker path below
+        return; // done — skip Docker/Wandbox path below
+      }
+
+      // ── No local GCC: try Docker, then Wandbox ─────────────────────────────
+      const dockerAvailable = await isDockerReady();
+      if (!dockerAvailable) {
+        // Last resort: Wandbox batch API
+        send({ type: 'engine', data: 'wandbox' });
+        send({ type: 'status', data: 'compiling' });
+        await runWithWandbox(code, providedStdin, send);
+        cleanup();
+        return;
       }
 
       send({ type: 'engine', data: 'docker' });
       send({ type: 'status', data: 'compiling' });
+
+
 
       // ── Step 1: Compile (no PTY needed) ──────────────────────────────
       const mountPath = toDockerPath(tmpDir);

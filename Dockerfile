@@ -1,5 +1,24 @@
 # ─────────────────────────────────────────────────────────────────
-# Stage 1: BUILDER — compile the React frontend
+# Stage 1: GCC SANDBOX IMAGE — built into the main image
+# This is the gcc-runner:latest image, but baked directly into the
+# production image so it is ALWAYS available and never needs to be
+# built separately on the host. This eliminates the
+# "Unable to find image 'gcc-runner:latest' locally" error forever.
+# ─────────────────────────────────────────────────────────────────
+FROM alpine:3.19 AS gcc-sandbox
+
+# Install GCC toolchain (same as server/Dockerfile.gcc)
+RUN apk add --no-cache gcc g++ musl-dev binutils
+
+# Create non-root runner user
+RUN adduser -D -H -s /sbin/nologin runner
+
+WORKDIR /sandbox
+USER runner
+CMD ["/bin/sh"]
+
+# ─────────────────────────────────────────────────────────────────
+# Stage 2: BUILDER — compile the React frontend
 # Nothing from this stage leaks into the production image.
 # ─────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS builder
@@ -34,35 +53,35 @@ COPY src/ ./src/
 RUN npm run build
 
 # ─────────────────────────────────────────────────────────────────
-# Stage 2: RUNTIME — lean production image
+# Stage 3: RUNTIME — lean production image
 # Contains ONLY: built dist/ + server/ + server node_modules.
 # Source code, dev configs, test files, .git — NONE of it.
+#
+# KEY FIX: We install GCC directly into this image so we can
+# compile and run C code WITHOUT needing docker-in-docker.
+# Docker-in-docker on Render/Coolify causes the 24-hour restart
+# problem because the gcc-runner image is lost on every restart.
 # ─────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS runtime
 
-# Install GCC + build tools + Docker CLI (needed to spawn gcc-runner sandbox containers)
+# Install GCC + build tools so we can compile C code directly
+# inside this container (no docker-in-docker needed)
 RUN apt-get update && apt-get install -y \
     build-essential \
+    gcc \
+    g++ \
     python3 \
     ca-certificates \
-    curl \
-    gnupg \
-    && install -m 0755 -d /etc/apt/keyrings \
-    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
-    && chmod a+r /etc/apt/keyrings/docker.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" \
-       | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update \
-    && apt-get install -y docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
-# Create docker group (GID 999 matches Hetzner host) + app user
-# appuser is added to docker group so it can access /var/run/docker.sock
-RUN groupadd --gid 999 docker && \
-    groupadd --gid 1001 appuser && \
-    useradd --uid 1001 --gid appuser --groups docker --shell /bin/bash --create-home appuser
+# Create app user
+RUN groupadd --gid 1001 appuser && \
+    useradd --uid 1001 --gid appuser --shell /bin/bash --create-home appuser
 
 WORKDIR /app
+
+# Create compiler tmp dir (writable by appuser)
+RUN mkdir -p /data/compiler-tmp && chown -R appuser:appuser /data/compiler-tmp
 
 # Copy only the compiled frontend from the builder stage (not source!)
 COPY --from=builder /build/dist ./dist
