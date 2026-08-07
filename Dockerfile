@@ -1,15 +1,7 @@
 # ─────────────────────────────────────────────────────────────────
-# Stage 1: BUILDER — compile the React frontend
+# Stage 1: BUILDER — compile the React frontend (Pure JS, no C++ tools needed)
 # ─────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS builder
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install build tools needed for frontend build
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3 \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 
@@ -19,7 +11,7 @@ ARG VITE_SUPABASE_ANON_KEY
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
-# Copy package files & install deps
+# Copy package files & install frontend deps
 COPY package*.json ./
 RUN npm install
 
@@ -36,10 +28,9 @@ FROM node:20-bookworm-slim AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install GCC + build tools so code runs directly inside container
-# and node-pty can compile native bindings during server npm install
+# Install GCC, G++, Make & Python3 so C code compiles locally
+# and node-pty can build native addon during server npm install
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
     gcc \
     g++ \
     make \
@@ -59,7 +50,7 @@ RUN mkdir -p /data/compiler-tmp && chown -R appuser:appuser /data/compiler-tmp
 # Copy compiled frontend from builder
 COPY --from=builder /build/dist ./dist
 
-# Copy server package files and install server dependencies (node-pty builds here)
+# Copy server package files and install server dependencies
 COPY server/package*.json ./server/
 RUN cd server && npm install
 
