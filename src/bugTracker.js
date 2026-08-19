@@ -90,12 +90,58 @@ export function classifyCompileError(stderr) {
   return 'Compilation Error';
 }
 
+// ─── Java error classifiers ───────────────────────────────────────────────────────────────
+const JAVA_COMPILE_CLASSIFIERS = [
+  { type: 'Missing Semicolon',       re: /error:.*';' expected/i },
+  { type: 'Missing Parenthesis',     re: /error:.*'\(' expected|error:.*'\)' expected/i },
+  { type: 'Missing Brace/Bracket',   re: /error:.*'\{' expected|error:.*'\}' expected/i },
+  { type: 'Missing Return Statement',re: /error:.*missing return statement/i },
+  { type: 'Missing Import',          re: /error:.*package.*does not exist|error:.*cannot find symbol.*class\s/i },
+  { type: 'Undeclared Variable',     re: /error:.*cannot find symbol/i },
+  { type: 'Type Mismatch',           re: /error:.*incompatible types/i },
+  { type: 'Static Context Error',    re: /error:.*non-static.*cannot be referenced from a static context/i },
+  { type: 'Class Not Found',         re: /error:.*class.*is public.*should be declared in a file/i },
+  { type: 'Null Pointer Exception',  re: /NullPointerException/i },
+  { type: 'Array Out of Bounds',     re: /ArrayIndexOutOfBoundsException/i },
+  { type: 'Stack Overflow Error',    re: /StackOverflowError/i },
+  { type: 'Infinite Loop / TLE',     re: /killed|TLE/i },
+];
+
+/**
+ * Classify a javac/java stderr string → error subtype string.
+ */
+export function classifyJavaError(stderr) {
+  if (!stderr) return 'Java Compilation Error';
+
+  const firstErrorLine = stderr
+    .split('\n')
+    .find(l => /error:|warning:|Exception|Error/i.test(l)) ?? stderr;
+
+  for (const { type, re } of JAVA_COMPILE_CLASSIFIERS) {
+    if (re.test(firstErrorLine)) return type;
+  }
+  for (const { type, re } of JAVA_COMPILE_CLASSIFIERS) {
+    if (re.test(stderr)) return type;
+  }
+
+  return 'Java Compilation Error';
+}
+
 /**
  * Extract the first line number from gcc stderr like  main.c:12:5: error:…
  */
 export function extractLineHint(stderr) {
   if (!stderr) return null;
   const m = stderr.match(/main\.c:(\d+):/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+/**
+ * Extract line number from javac error like  Main.java:12: error:…
+ */
+export function extractJavaLineHint(stderr) {
+  if (!stderr) return null;
+  const m = stderr.match(/\.java:(\d+):/);
   return m ? parseInt(m[1], 10) : null;
 }
 
@@ -269,6 +315,7 @@ export const bugTrackerStore = {
       exitCode:  event.exitCode ?? null,
       lineHint:  event.lineHint ?? null,
       stderr:    event.stderr   ?? '',
+      language:  event.language ?? 'c',   // 'c' | 'java'
     };
 
     // Keep only the most-recent MAX_SESSIONS entries.
@@ -352,9 +399,12 @@ export const bugTrackerStore = {
 
   /**
    * Returns derived statistics for the UI.
+   * @param {'c'|'java'|null} language - filter by language, or null for all
    */
-  getStats() {
-    const sessions = this.sessions;
+  getStats(language = null) {
+    const sessions = language
+      ? this.sessions.filter(s => s.language === language)
+      : this.sessions;
 
     // Total runs = compile-errors + successful/runtime done events
     const totalRuns = sessions.length;

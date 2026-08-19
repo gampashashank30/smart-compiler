@@ -212,6 +212,14 @@ export default function LoginPage() {
           Google
         </button>
 
+        {/* Legal notice & policy links required for Google OAuth verification */}
+        <p className={styles.legalNotice}>
+          By signing in, you agree to SmartCompiler's{' '}
+          <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+          {' '}and{' '}
+          <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+        </p>
+
         {/* Demo Bypass / Fallback Mode Details */}
         {(!supabase || supabase.isDummy) && (
           <div className={styles.demoNotice}>
