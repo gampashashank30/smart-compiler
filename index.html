@@ -40,8 +40,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
     rel="stylesheet" />
+
 
   <style>
     /* ── Reset ─────────────────────────────────────────────── */
@@ -1171,6 +1172,80 @@
       color: #64748b;
       line-height: 1.55;
     }
+
+    /* ── Open Sans Feature Typography Styles ── */
+    .feature-text-opensans {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif !important;
+    }
+
+    .feature-text-opensans .section-label {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif !important;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .feature-text-opensans .section-headline {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif !important;
+      font-size: clamp(1.85rem, 3.2vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      color: #0f172a;
+      margin-bottom: 16px;
+    }
+
+    .feature-text-opensans .section-sub {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif !important;
+      font-size: 15.5px;
+      font-weight: 400;
+      color: #475569;
+      line-height: 1.68;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-text-opensans .feature-point {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif !important;
+    }
+
+    .feature-text-opensans .feature-point-title {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif !important;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+      line-height: 1.35;
+      margin-bottom: 2px;
+    }
+
+    .feature-text-opensans .feature-point-desc {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif !important;
+      font-size: 13.5px;
+      font-weight: 400;
+      color: #64748b;
+      line-height: 1.55;
+    }
+
+    .dot-ai {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.28) !important;
+    }
+
+    .dot-emerald {
+      background: #059669 !important;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25) !important;
+    }
+
+    .tracker-grad-text {
+      background: linear-gradient(135deg, #059669 0%, #0ea5e9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
 
     @media (max-width: 900px) {
       .feature-grid {
@@ -2904,8 +2979,8 @@
     <!-- ── Feature 4: AI Bug Analysis ── -->
     <section class="feature-section" aria-labelledby="feat-ai-heading">
       <div class="feature-grid flip container">
-        <div class="feature-text reveal">
-          <div class="section-label">AI Analysis</div>
+        <div class="feature-text reveal feature-text-opensans">
+          <div class="section-label" style="color:var(--ai-indigo)">AI Analysis</div>
           <h2 class="section-headline" id="feat-ai-heading">
             Root cause.<br />
             <span class="ai-grad-text">Explained in plain English.</span>
@@ -2917,34 +2992,42 @@
           </p>
           <div class="feature-points">
             <div class="feature-point">
-              <div class="feature-point-dot"
-                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-ai">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              100+ error patterns: off-by-one, uninitialized variables, wrong operators
+              <div class="feature-point-content">
+                <div class="feature-point-title">100+ error patterns</div>
+                <div class="feature-point-desc">Catches off-by-one, uninitialized variables, wrong operators, and logic mistakes.</div>
+              </div>
             </div>
+
             <div class="feature-point">
-              <div class="feature-point-dot"
-                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-ai">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              Pinpoints the exact line number instead of a file-level guess
+              <div class="feature-point-content">
+                <div class="feature-point-title">Exact line number precision</div>
+                <div class="feature-point-desc">Pinpoints the exact line number instead of a file-level guess.</div>
+              </div>
             </div>
+
             <div class="feature-point">
-              <div class="feature-point-dot"
-                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-ai">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              "Apply Fix" patches the editor directly without manual copy-paste
+              <div class="feature-point-content">
+                <div class="feature-point-title">One-click "Apply Fix"</div>
+                <div class="feature-point-desc">Patches the editor directly without manual copy-paste.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -3025,10 +3108,11 @@
     <!-- ── Feature 5: Bug Tracker ── -->
     <section class="feature-section" style="background:var(--surface-3)" aria-labelledby="feat-tracker-heading">
       <div class="feature-grid container">
-        <div class="feature-text reveal">
-          <div class="section-label">Bug Tracker</div>
+        <div class="feature-text reveal feature-text-opensans">
+          <div class="section-label" style="color:var(--brand-emerald)">Bug Tracker</div>
           <h2 class="section-headline" id="feat-tracker-heading">
-            See every mistake.<br />Stop repeating them.
+            See every mistake.<br />
+            <span class="tracker-grad-text">Stop repeating them.</span>
           </h2>
           <p class="section-sub">
             A donut chart breaks error types by frequency.
@@ -3037,31 +3121,42 @@
           </p>
           <div class="feature-points">
             <div class="feature-point">
-              <div class="feature-point-dot">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-emerald">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              Error breakdown: logical, syntax, and runtime visualised by frequency
+              <div class="feature-point-content">
+                <div class="feature-point-title">Error breakdown</div>
+                <div class="feature-point-desc">Logical, syntax, and runtime errors visualised by frequency.</div>
+              </div>
             </div>
+
             <div class="feature-point">
-              <div class="feature-point-dot">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-emerald">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              Ranked "Common Mistakes to Avoid" with per-error learning tips
+              <div class="feature-point-content">
+                <div class="feature-point-title">Common Mistakes to Avoid</div>
+                <div class="feature-point-desc">Ranked leaderboard of your most frequent bugs with actionable learning tips.</div>
+              </div>
             </div>
+
             <div class="feature-point">
-              <div class="feature-point-dot">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-emerald">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              Persists across sessions to keep your bug history always available
+              <div class="feature-point-content">
+                <div class="feature-point-title">Persistent session history</div>
+                <div class="feature-point-desc">Persists across sessions to keep your bug insights and growth history always available.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -3125,7 +3220,7 @@
     <!-- ── Feature 7: AI Tutor ── -->
     <section class="feature-section" style="background:var(--surface-3)" aria-labelledby="feat-tutor-heading">
       <div class="feature-grid container">
-        <div class="feature-text reveal">
+        <div class="feature-text reveal feature-text-opensans">
           <div class="section-label" style="color:var(--ai-indigo)">AI Tutor</div>
           <h2 class="section-headline" id="feat-tutor-heading">
             Learn C from<br />
@@ -3137,34 +3232,42 @@
           </p>
           <div class="feature-points">
             <div class="feature-point">
-              <div class="feature-point-dot"
-                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-ai">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              5 levels, 40+ topics: from variables through linked lists and hash tables
+              <div class="feature-point-content">
+                <div class="feature-point-title">5 levels, 40+ topics</div>
+                <div class="feature-point-desc">From variables and pointers through linked lists, trees, and hash tables.</div>
+              </div>
             </div>
+
             <div class="feature-point">
-              <div class="feature-point-dot"
-                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-ai">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              AI validates your pseudocode logic before you write the actual C
+              <div class="feature-point-content">
+                <div class="feature-point-title">AI pseudocode validation</div>
+                <div class="feature-point-desc">AI validates your pseudocode logic before you write the actual C.</div>
+              </div>
             </div>
+
             <div class="feature-point">
-              <div class="feature-point-dot"
-                style="background:linear-gradient(135deg,var(--ai-indigo),var(--ai-violet))">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              <div class="feature-point-dot dot-ai">
+                <svg viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7.5l3.5 3.5 5.5-6.5" stroke="white" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </svg>
               </div>
-              Custom visual diagram + quiz for every concept
+              <div class="feature-point-content">
+                <div class="feature-point-title">Interactive visual diagrams</div>
+                <div class="feature-point-desc">Custom visual diagram + quiz for every concept.</div>
+              </div>
             </div>
           </div>
         </div>
