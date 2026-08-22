@@ -1,4 +1,5 @@
 import styles from './Header.module.css';
+import { BrainCircuit, ShieldCheck, BarChart3, Clock, Bug } from 'lucide-react';
 
 /**
  * SmartCompiler Header
@@ -84,7 +85,7 @@ export default function Header({
             title="Admin Dashboard"
             style={adminDashboardOpen ? { borderColor: '#a7f3d0', color: '#059669', background: '#f0fdf4' } : {}}
           >
-            <span className={styles.aiTutorBtnIcon} aria-hidden="true" style={{ fontSize: '14px' }}>⚙️</span>
+          <ShieldCheck size={15} aria-hidden="true" />
             <span className={styles.aiTutorBtnLabel}>Admin</span>
           </button>
         )}
@@ -97,7 +98,7 @@ export default function Header({
           aria-label="Open AI Tutor overlay"
           title="AI Tutor"
         >
-          <span className={styles.aiTutorBtnIcon} aria-hidden="true">🎓</span>
+          <BrainCircuit size={16} aria-hidden="true" />
           <span className={styles.aiTutorBtnLabel}>AI Tutor</span>
         </button>
 
@@ -109,14 +110,7 @@ export default function Header({
           aria-label="Open Analytics Dashboard"
           title="Analytics Dashboard"
         >
-          <span className={styles.analyticsBtnIcon} aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="12" width="3" height="6" rx="1" fill="currentColor" opacity="0.6"/>
-              <rect x="7" y="8" width="3" height="10" rx="1" fill="currentColor" opacity="0.75"/>
-              <rect x="12" y="4" width="3" height="14" rx="1" fill="currentColor" opacity="0.9"/>
-              <rect x="17" y="1" width="3" height="17" rx="1" fill="currentColor"/>
-            </svg>
-          </span>
+          <BarChart3 size={16} aria-hidden="true" />
           <span className={styles.analyticsBtnLabel}>Analytics</span>
         </button>
 
@@ -128,14 +122,7 @@ export default function Header({
           aria-label="Open Compilation History panel"
           title="Compilation History"
         >
-          {/* Clock icon */}
-          <span className={styles.historyBtnIcon} aria-hidden="true">
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="8.5" stroke="currentColor" strokeWidth="1.6"/>
-              <path d="M10 5.5v5l3 2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="10" cy="10" r="1" fill="currentColor"/>
-            </svg>
-          </span>
+          <Clock size={16} aria-hidden="true" />
           <span className={styles.historyBtnLabel}>History</span>
           {/* Count badge — shows total compilations */}
           {historyCount > 0 && (
@@ -153,22 +140,7 @@ export default function Header({
           aria-label="Open Bug Tracker panel"
           title="Bug Tracker — analytics dashboard"
         >
-          {/* Hand-drawn beetle SVG icon */}
-          <span className={styles.bugTrackerBtnIcon} aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <ellipse cx="10" cy="11.5" rx="5" ry="6" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-              <ellipse cx="10" cy="7.2" rx="3" ry="2.5" fill="none" stroke="currentColor" strokeWidth="1.3"/>
-              <line x1="10" y1="7.5" x2="10" y2="17.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="5.2" y1="9.5" x2="2" y2="7.2"  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              <line x1="5.2" y1="12"  x2="1.5" y2="12"  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              <line x1="5.2" y1="14.5" x2="2" y2="16.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              <line x1="14.8" y1="9.5" x2="18" y2="7.2"  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              <line x1="14.8" y1="12"  x2="18.5" y2="12"  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              <line x1="14.8" y1="14.5" x2="18" y2="16.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              <circle cx="8.3" cy="6.8" r="0.7" fill="currentColor"/>
-              <circle cx="11.7" cy="6.8" r="0.7" fill="currentColor"/>
-            </svg>
-          </span>
+          <Bug size={17} aria-hidden="true" />
           <span className={styles.bugTrackerBtnLabel}>Bug Tracker</span>
 
           {/* Pulsing error count badge */}

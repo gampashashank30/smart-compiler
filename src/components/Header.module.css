@@ -281,23 +281,18 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-.historyBtnIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* History icon — targets both old wrapper span and bare Lucide svg */
+.historyBtnIcon,
+.historyBtn > svg {
   flex-shrink: 0;
   color: inherit;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-/* Rotate clock hand on hover */
-.historyBtn:hover .historyBtnIcon {
+.historyBtn:hover .historyBtnIcon,
+.historyBtn:hover > svg {
   transform: rotate(20deg) scale(1.1);
 }
-
-.historyBtnLabel {
-  flex-shrink: 0;
-}
+.historyBtnLabel { flex-shrink: 0; }
 
 /* History count badge — blue tinted */
 .historyBadge {
@@ -356,20 +351,17 @@
   color: #6366f1;
   background: #f5f3ff;
 }
-.analyticsBtnIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.analyticsBtnIcon,
+.analyticsBtn > svg {
   flex-shrink: 0;
   color: inherit;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.analyticsBtn:hover .analyticsBtnIcon {
+.analyticsBtn:hover .analyticsBtnIcon,
+.analyticsBtn:hover > svg {
   transform: translateY(-2px) scale(1.1);
 }
-.analyticsBtnLabel {
-  flex-shrink: 0;
-}
+.analyticsBtnLabel { flex-shrink: 0; }
 
 /* ─── Bug Tracker button ──────────────────────────────────────── */
 .bugTrackerBtn {
@@ -394,7 +386,6 @@
     border-color 0.15s ease,
     color 0.15s ease;
 }
-
 .bugTrackerBtn:hover {
   box-shadow:
     0 4px 16px rgba(16, 185, 129, 0.18),
@@ -403,28 +394,21 @@
   border-color: #a7f3d0;
   color: #059669;
 }
-
 .bugTrackerBtn:active {
   transform: translateY(0);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
-
-.bugTrackerBtnIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.bugTrackerBtnIcon,
+.bugTrackerBtn > svg {
   flex-shrink: 0;
   color: inherit;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.bugTrackerBtn:hover .bugTrackerBtnIcon {
+.bugTrackerBtn:hover .bugTrackerBtnIcon,
+.bugTrackerBtn:hover > svg {
   transform: rotate(-10deg) scale(1.1);
 }
-
-.bugTrackerBtnLabel {
-  flex-shrink: 0;
-}
+.bugTrackerBtnLabel { flex-shrink: 0; }
 
 /* Pulsing error count badge */
 .bugTrackerBadge {
@@ -487,7 +471,6 @@
     border-color 0.15s ease,
     color 0.15s ease;
 }
-
 .aiTutorBtn:hover {
   box-shadow:
     0 4px 16px rgba(139, 92, 246, 0.2),
@@ -496,37 +479,30 @@
   border-color: #ddd6fe;
   color: #7c3aed;
 }
-
 .aiTutorBtn:active {
   transform: translateY(0);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
-
 .aiTutorBtnActive {
   border-color: #c084fc;
   color: #7c3aed;
   background: #faf5ff;
 }
-
-.aiTutorBtnIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.aiTutorBtnIcon,
+.aiTutorBtn > svg {
   flex-shrink: 0;
   color: inherit;
   font-size: 15px;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.aiTutorBtn:hover .aiTutorBtnIcon {
+.aiTutorBtn:hover .aiTutorBtnIcon,
+.aiTutorBtn:hover > svg {
   transform: scale(1.2) translateY(-1px);
 }
-
-.aiTutorBtnLabel {
-  flex-shrink: 0;
-}
+.aiTutorBtnLabel { flex-shrink: 0; }
 
 /* ─── Google Auth Styles ──────────────────────────────────────── */
+
 .loginBtn {
   display: flex;
   align-items: center;

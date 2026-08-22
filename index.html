@@ -155,15 +155,7 @@
       pointer-events: none;
     }
 
-    /* ── Hero Particles Canvas ─────────────────────────────── */
-    #hero-particles {
-      position: absolute;
-      inset: 0;
-      width: 100% !important;
-      height: 100% !important;
-      pointer-events: none;
-      z-index: 0;
-    }
+
 
     /* ══════════════════════════════════════════════════════════
        NAV
@@ -323,28 +315,7 @@
       overflow: hidden;
     }
 
-    /* Subtle grid background */
-    #hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--border-light) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border-light) 1px, transparent 1px);
-      background-size: 64px 64px;
-      opacity: 0.6;
-      pointer-events: none;
-    }
 
-    /* Cursor-following radial glow */
-    #hero::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, -120px), rgba(16, 185, 129, 0.06) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 1;
-    }
 
     .hero-inner {
       position: relative;
@@ -2421,8 +2392,7 @@
      HERO
 ════════════════════════════════════════════════════════════ -->
   <section id="hero" aria-label="Hero section">
-    <!-- Interactive canvas particles backdrop -->
-    <canvas id="hero-particles"></canvas>
+
 
     <div class="hero-inner">
       <div class="hero-badge">
