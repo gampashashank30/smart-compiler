@@ -273,21 +273,26 @@ function ModelDropdown({ value, onChange }) {
   );
 }
 
-/* ── Chat bubble ── */
+/* ── Chat bubble (Claude style) ── */
 function ChatBubble({ msg }) {
+  const isUser = msg.role === 'user';
   return (
-    <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAi}`}>
-      {msg.role === 'assistant' && (
-        <div className={styles.chatAiAvatar}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+    <div className={`${styles.chatBubble} ${isUser ? styles.chatBubbleUser : styles.chatBubbleAi}`}>
+      {!isUser && (
+        <div className={styles.chatAiAvatar} title="AI Assistant">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+            <path d="M12 6v6l4 2"/>
           </svg>
         </div>
       )}
-      <div className={styles.chatBubbleText}>
-        {msg.content.split('\n').map((line, i) => (
-          <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{line || <br />}</p>
-        ))}
+      <div className={styles.chatBubbleContent}>
+        {isUser && <span className={styles.userLabel}>You</span>}
+        <div className={styles.chatBubbleText}>
+          {msg.content.split('\n').map((line, i) => (
+            <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{line || <br />}</p>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -343,26 +348,15 @@ export default function AIExplanationTab({ code, onApplyFix }) {
       const raw    = await callClaude(ANALYSIS_SYSTEM_PROMPT, 'Code:\n' + numberedCode);
       let parsed = parseJSON(raw);
 
-      // Normalise whatever the AI returns into the array format we need.
-      // Groq / z.ai can return the data in several shapes depending on whether
-      // json_object mode is active, so we handle all known cases gracefully.
       if (parsed !== null && !Array.isArray(parsed) && typeof parsed === 'object') {
         const vals = Object.values(parsed);
-
-        // Case A: { issues: [{...}], ... }  — one key holds the array
         const arrVal = vals.find(v => Array.isArray(v));
         if (arrVal) {
           parsed = arrVal;
-
-        // Case B: { "1": {...}, "2": {...} }  — numbered-key object
         } else if (vals.every(v => v && typeof v === 'object' && ('type' in v || 'id' in v))) {
           parsed = vals;
-
-        // Case C: the object IS a single issue  { id, type, hint, ... }
         } else if ('type' in parsed || 'id' in parsed) {
           parsed = [parsed];
-
-        // Case D: totally unknown shape — build a generic issue so UI doesn't blank
         } else {
           const rawText = JSON.stringify(parsed);
           parsed = [{ id: 1, type: 'logical', hint: 'See description', line: null,
@@ -370,9 +364,7 @@ export default function AIExplanationTab({ code, onApplyFix }) {
         }
       }
 
-      // Last-resort: if it's still not an array, extract anything useful from raw text
       if (!Array.isArray(parsed) || parsed.length === 0) {
-        // Try one more time — scan the raw string for any bracketed JSON array
         const arrMatch = raw.match(/\[[\s\S]*\]/);
         if (arrMatch) {
           try { parsed = JSON.parse(arrMatch[0]); } catch (_) { /* ignore */ }
@@ -380,7 +372,6 @@ export default function AIExplanationTab({ code, onApplyFix }) {
       }
 
       if (!Array.isArray(parsed) || parsed.length === 0) {
-        // Absolute fallback: show a generic message rather than a blank screen
         parsed = [{ id: 0, type: 'clean', hint: 'Analysis inconclusive', line: null,
                     description: 'No issues were detected, or the AI response could not be parsed.',
                     fix: '', corrected_code_snippet: '' }];
@@ -421,9 +412,6 @@ export default function AIExplanationTab({ code, onApplyFix }) {
         `Code:\n${code}\n\nIssues:\n${issuesSummary}`);
       const parsed = parseJSON(raw);
       const rawCode = parsed.corrected_code ?? '';
-      // sanitizeAiCode strips markdown fences and converts double-escaped
-      // structural \n sequences to real newlines while leaving C string
-      // escapes like printf("hello\n") intact.
       const cleanCode = sanitizeAiCode(rawCode);
       setCorrectedCode(cleanCode);
       setLearningNotes(parsed.learning_notes ?? []);
@@ -444,21 +432,20 @@ export default function AIExplanationTab({ code, onApplyFix }) {
     if (!code?.trim()) return;
     setIsExplaining(true);
     setChatError(null);
-    const explainPrompt = `You are a friendly C programming teacher. Look at this student's code carefully.
+    const explainPrompt = `You are an expert, encouraging programming tutor. Look at this student's C code carefully.
 
-If the code looks CORRECT (no obvious errors, logic seems right):
-- Explain what the code does in 3-4 short, simple paragraphs
-- Use very simple language like you're explaining to a beginner
-- Each paragraph should cover one concept: what it does overall, key logic, how it works step by step
-- Do NOT use bullet points — only paragraphs
+If the code is CORRECT (syntax is valid and logic is sound):
+- Explain what the code does in 2-3 short, clear, beginner-friendly paragraphs
+- Break down the goal, the key steps, and how the program executes
+- Do NOT use bullet points — write in clear, short paragraphs
 
-If the code has ERRORS or PROBLEMS:
-- Start your response with "I think..."
-- Briefly describe what seems wrong in 1-2 short paragraphs
-- End with a simple hint about how to fix it
-- Keep it short and encouraging
+If the code has BUGS, SYNTAX ERRORS, or LOGICAL ISSUES:
+- Start directly with: "I think there is an issue with your code..."
+- Clearly identify the mistake in 1-2 concise paragraphs
+- Provide a helpful hint on how they can correct it
 
-ALWAYS keep your response SHORT and SIMPLE. Max 4 paragraphs total.`;
+Keep the explanation concise, warm, and helpful.`;
+
     try {
       const reply = await callClaude(explainPrompt, `Here is my C code:
 
@@ -483,11 +470,11 @@ ${code}`, { model: selectedModel });
     const userMsg = { role: 'user', content: text };
     setChatMessages(prev => [...prev, userMsg]);
     setIsChatting(true);
-    const systemPrompt = `You are a helpful C programming tutor. The student is working with this code:
+    const systemPrompt = `You are a helpful and intelligent C programming tutor. The student is working on this code in their editor:
 
-${code || '(no code provided)'}
+${code || '(empty editor)'}
 
-Answer their questions in simple, clear language. Keep responses concise. If they ask about errors, help them understand the problem and how to fix it. Be encouraging and friendly.`;
+Answer the student's question clearly, accurately, and concisely. If they have errors or doubts, explain simply and provide constructive hints or code snippets when helpful.`;
     const history = [...chatMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
     try {
       const reply = await callClaude(systemPrompt, text, { model: selectedModel, messages: history });
@@ -520,179 +507,180 @@ Answer their questions in simple, clear language. Keep responses concise. If the
   return (
     <div className={styles.container}>
 
-      {/* ── Run Analysis button ── */}
-      <div className={styles.header}>
-        <button
-          id="analyze-btn"
-          className={styles.analyzeBtn}
-          onClick={handleAnalyze}
-          disabled={isAnalyzing}
-        >
-          {isAnalyzing ? (
-            <><span className={styles.spinner} /> Analyzing…</>
-          ) : (
-            <><IconStar /> Run Analysis</>
-          )}
-        </button>
-        <p className={styles.headerSub}>Finds syntax errors, logic mistakes, and offers fixes</p>
+      {/* ── Main Scrollable Area ── */}
+      <div className={styles.scrollArea}>
+
+        {/* ── Run Analysis header ── */}
+        <div className={styles.header}>
+          <button
+            id="analyze-btn"
+            className={styles.analyzeBtn}
+            onClick={handleAnalyze}
+            disabled={isAnalyzing}
+          >
+            {isAnalyzing ? (
+              <><span className={styles.spinner} /> Analyzing…</>
+            ) : (
+              <><IconStar /> Run Analysis</>
+            )}
+          </button>
+          <p className={styles.headerSub}>Finds syntax errors, logic mistakes, and offers fixes</p>
+        </div>
+
+        {/* ── Error ── */}
+        {analysisError && (
+          <div className={styles.errorBanner} role="alert">{analysisError}</div>
+        )}
+
+        {/* ── Results ── */}
+        {issues && (
+          <div className={styles.results}>
+
+            {isClean ? (
+              <div className={styles.cleanCard}>
+                <span className={styles.cleanDot} />
+                <div>
+                  <div className={styles.cleanTitle}>Looks good</div>
+                  <div className={styles.cleanSub}>No errors found. Logic checks out.</div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Single aggregated card */}
+                <AggregatedCard issues={realIssues} />
+
+                {/* Generate fix */}
+                {!correctedCode && (
+                  <div className={styles.generateWrap}>
+                    <button
+                      id="generate-btn"
+                      className={styles.generateBtn}
+                      onClick={handleGenerate}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? (
+                        <><TypingDots /> Building fix…</>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+                            <path d="M2 8l4 4 8-8" stroke="currentColor" strokeWidth="2"
+                              strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Show corrected code
+                        </>
+                      )}
+                    </button>
+                    {generateError && <p className={styles.errorBanner}>{generateError}</p>}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Corrected code */}
+            {correctedCode && (
+              <div className={styles.correctedSection}>
+                <div className={styles.correctedHeader}>
+                  <span className={styles.correctedLabel}>Corrected program</span>
+                  {applied && <span className={styles.appliedPill}>✓ Applied</span>}
+                </div>
+                <pre className={styles.correctedCode}><code>{correctedCode}</code></pre>
+                {!applied && (
+                  <button id="apply-fix-btn" className={styles.applyBtn} onClick={handleApplyFix}>
+                    Apply to editor
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Learning notes */}
+            {learningNotes && learningNotes.length > 0 && (
+              <div className={styles.notes}>
+                <div className={styles.notesTitle}>Key takeaways</div>
+                <div className={styles.notesList}>
+                  {visibleNotes.map((note, i) => (
+                    <div key={i} className={styles.noteRow}>
+                      <span className={styles.noteNum} style={{ background: noteColors[i % 3] }}>
+                        {i + 1}
+                      </span>
+                      <p className={styles.noteText}>{note}</p>
+                    </div>
+                  ))}
+                </div>
+                {hasMoreNotes && (
+                  <button className={styles.showMoreBtn} onClick={() => setShowAllNotes(true)}>
+                    Show {learningNotes.length - 3} more
+                  </button>
+                )}
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* ── Conversation Message Stream (Claude style) ── */}
+        {chatMessages.length > 0 && (
+          <div className={styles.chatThread}>
+            <div className={styles.threadHeader}>
+              <span className={styles.threadTitle}>AI Chat</span>
+              <button className={styles.chatClearBtn} onClick={() => setChatMessages([])}>
+                Clear
+              </button>
+            </div>
+            {chatMessages.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
+            {isChatting && (
+              <div className={`${styles.chatBubble} ${styles.chatBubbleAi}`}>
+                <div className={styles.chatAiAvatar}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                </div>
+                <div className={styles.typingContainer}>
+                  <TypingDots />
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+        )}
+
       </div>
 
-      {/* ── Error ── */}
-      {analysisError && (
-        <div className={styles.errorBanner} role="alert">{analysisError}</div>
-      )}
-
-      {/* ── Results ── */}
-      {issues && (
-        <div className={styles.results}>
-
-          {isClean ? (
-            <div className={styles.cleanCard}>
-              <span className={styles.cleanDot} />
-              <div>
-                <div className={styles.cleanTitle}>Looks good</div>
-                <div className={styles.cleanSub}>No errors found. Logic checks out.</div>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Single aggregated card */}
-              <AggregatedCard issues={realIssues} />
-
-              {/* Generate fix */}
-              {!correctedCode && (
-                <div className={styles.generateWrap}>
-                  <button
-                    id="generate-btn"
-                    className={styles.generateBtn}
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? (
-                      <><TypingDots /> Building fix…</>
-                    ) : (
-                      <>
-                        <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
-                          <path d="M2 8l4 4 8-8" stroke="currentColor" strokeWidth="2"
-                            strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Show corrected code
-                      </>
-                    )}
-                  </button>
-                  {generateError && <p className={styles.errorBanner}>{generateError}</p>}
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Corrected code */}
-          {correctedCode && (
-            <div className={styles.correctedSection}>
-              <div className={styles.correctedHeader}>
-                <span className={styles.correctedLabel}>Corrected program</span>
-                {applied && <span className={styles.appliedPill}>✓ Applied</span>}
-              </div>
-              <pre className={styles.correctedCode}><code>{correctedCode}</code></pre>
-              {!applied && (
-                <button id="apply-fix-btn" className={styles.applyBtn} onClick={handleApplyFix}>
-                  Apply to editor
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Learning notes */}
-          {learningNotes && learningNotes.length > 0 && (
-            <div className={styles.notes}>
-              <div className={styles.notesTitle}>Key takeaways</div>
-              <div className={styles.notesList}>
-                {visibleNotes.map((note, i) => (
-                  <div key={i} className={styles.noteRow}>
-                    <span className={styles.noteNum} style={{ background: noteColors[i % 3] }}>
-                      {i + 1}
-                    </span>
-                    <p className={styles.noteText}>{note}</p>
-                  </div>
-                ))}
-              </div>
-              {hasMoreNotes && (
-                <button className={styles.showMoreBtn} onClick={() => setShowAllNotes(true)}>
-                  Show {learningNotes.length - 3} more
-                </button>
-              )}
-            </div>
-          )}
-
-        </div>
-      )}
-
       {/* ════════════════════════════════════════════
-          AI CHATBOT SECTION
+          DOCKED BOTTOM CHATBAR (Claude Style)
           ════════════════════════════════════════════ */}
-      <div className={styles.chatSection}>
+      <div className={styles.bottomDock}>
 
-        {/* Header row: title + model dropdown */}
-        <div className={styles.chatHeader}>
-          <div className={styles.chatHeaderLeft}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span className={styles.chatHeaderTitle}>AI Chat</span>
-          </div>
+        {/* Action Toolbar above input */}
+        <div className={styles.dockToolbar}>
+          <button
+            className={styles.explainBtn}
+            onClick={handleExplain}
+            disabled={isExplaining || !code?.trim()}
+            title="Explain what this code does"
+          >
+            {isExplaining ? (
+              <><span className={styles.explainSpinner} /> Explaining…</>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                <span>Explain My Code</span>
+              </>
+            )}
+          </button>
+
           <ModelDropdown value={selectedModel} onChange={setSelectedModel} />
         </div>
 
-        {/* Explain Code button */}
-        <button
-          className={styles.explainBtn}
-          onClick={handleExplain}
-          disabled={isExplaining || !code?.trim()}
-        >
-          {isExplaining ? (
-            <><span className={styles.explainSpinner} /> Explaining…</>
-          ) : (
-            <>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              Explain My Code
-            </>
-          )}
-        </button>
-
-        {/* Messages */}
-        <div className={styles.chatMessages}>
-          {chatMessages.length === 0 && !isChatting && (
-            <div className={styles.chatEmpty}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-              <p>Click <strong>Explain My Code</strong> or ask a question below</p>
-            </div>
-          )}
-          {chatMessages.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
-          {isChatting && (
-            <div className={`${styles.chatBubble} ${styles.chatBubbleAi}`}>
-              <div className={styles.chatAiAvatar}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-                </svg>
-              </div>
-              <TypingDots />
-            </div>
-          )}
-          <div ref={chatEndRef} />
-        </div>
-
-        {/* Error */}
         {chatError && <div className={styles.chatError}>{chatError}</div>}
 
-        {/* Input row */}
-        <div className={styles.chatInputRow}>
+        {/* Claude-style Input Box */}
+        <div className={styles.chatInputContainer}>
           <textarea
             className={styles.chatInput}
-            placeholder="Ask about your code… (Enter to send)"
+            placeholder="Ask AI a question about your code… (Enter to send)"
             value={chatInput}
             onChange={e => setChatInput(e.target.value)}
             onKeyDown={handleChatKey}
@@ -703,22 +691,19 @@ Answer their questions in simple, clear language. Keep responses concise. If the
             className={styles.chatSendBtn}
             onClick={handleSend}
             disabled={isChatting || !chatInput.trim()}
-            title="Send"
+            title="Send message"
+            aria-label="Send message"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/>
+              <polyline points="5 12 12 5 19 12"/>
             </svg>
           </button>
         </div>
 
-        {/* Clear chat */}
-        {chatMessages.length > 0 && (
-          <button className={styles.chatClearBtn} onClick={() => setChatMessages([])}>
-            Clear conversation
-          </button>
-        )}
-
       </div>
+
     </div>
   );
 }
+

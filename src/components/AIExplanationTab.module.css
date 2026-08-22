@@ -1,4 +1,4 @@
-﻿/* ================================================================
+/* ================================================================
    AIExplanationTab â€” Premium redesign
    Inspired by: LeetCode (card hierarchy), HackerRank (badges),
                 Replit (clean layout), JetBrains (typography)
@@ -35,18 +35,26 @@
   --shadow-focus: 0 0 0 3px rgba(5,150,105,0.18);
 }
 
-/* â”€â”€â”€ Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── Container ─────────────────────────────────────────────────── */
 .container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--surface-2);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: var(--brand-dark);
+}
+
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
+
 
 /* â”€â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .header {
@@ -523,7 +531,7 @@
 .applyBtn:hover  { background: linear-gradient(135deg, #047857, #059669); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(5,150,105,0.35); }
 .applyBtn:active { transform: translateY(0); }
 
-/* â”€â”€â”€ Learning notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── Learning notes ────────────────────────────────────────────────────────────── */
 .notes {
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -595,7 +603,7 @@
 }
 .showMoreBtn:hover { color: #0284c7; }
 
-/* â”€â”€â”€ Body text fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── Body text fallback ────────────────────────────────────────────────────────── */
 .bodyText {
   font-size: 13px;
   color: #4b5563;
@@ -603,101 +611,264 @@
   margin: 0;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   AI CHATBOT SECTION â€” Clean, ChatGPT-style, matches site theme
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ══════════════════════════════════════════════════════════════
+   CLAUDE-STYLE AI CHAT & DOCKED BOTTOM BAR
+   ══════════════════════════════════════════════════════════════ */
 
-.chatSection {
-  margin-top: 20px;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 14px;
+/* ── Chat Messages Stream inside scrollArea ── */
+.chatThread {
+  padding: 16px 16px 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 10px;
 }
 
-/* â”€â”€ Header row â”€â”€ */
-.chatHeader {
+.threadHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.threadTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.chatClearBtn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.chatClearBtn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Chat Bubbles (Claude Style) ── */
+.chatBubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: bubbleIn 0.18s ease;
+}
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.chatBubbleAi {
+  align-self: stretch;
+}
+
+.chatBubbleUser {
+  align-self: flex-end;
+  max-width: 85%;
+}
+
+.chatAiAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: #0f172a;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chatBubbleContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.userLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  align-self: flex-end;
+  padding-right: 4px;
+}
+
+.chatBubbleUser .chatBubbleText {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-radius: 14px 14px 2px 14px;
+  padding: 9px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  border: 1px solid #e2e8f0;
+}
+
+.chatBubbleAi .chatBubbleText {
+  background: transparent;
+  color: #1e293b;
+  font-size: 13.5px;
+  line-height: 1.68;
+  padding: 2px 0;
+}
+.chatBubbleAi .chatBubbleText p { margin: 0; }
+.chatBubbleAi .chatBubbleText p + p { margin-top: 8px; }
+
+.typingContainer {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+/* ── Docked Bottom Bar (Always pinned at bottom) ── */
+.bottomDock {
+  flex-shrink: 0;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  box-shadow: 0 -3px 12px rgba(15, 23, 42, 0.04);
+  z-index: 10;
+}
+
+/* ── Toolbar: Explain button + Model dropdown ── */
+.dockToolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 2px;
 }
-.chatHeaderLeft {
-  display: flex;
+
+/* ── Explain My Code button (Solid, high contrast, prominent) ── */
+.explainBtn {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: #64748b;
-}
-.chatHeaderTitle {
+  gap: 7px;
+  padding: 7px 14px;
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid #1e293b;
+  border-radius: 9px;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.explainBtn:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #334155;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+}
+.explainBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.explainBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.explainSpinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Model Dropdown (Claude style pill) ── */
+.modelDropdownWrap {
+  position: relative;
 }
 
-/* â”€â”€ Model Dropdown â”€â”€ */
-.modelDropdownWrap { position: relative; }
-
 .modelDropdownBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 9px 4px 7px;
+  gap: 6px;
+  padding: 6px 10px 6px 8px;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 7px;
-  font-size: 11.5px;
-  font-weight: 500;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
   font-family: inherit;
-  color: #64748b;
+  color: #334155;
   cursor: pointer;
-  transition: all 0.12s;
+  transition: all 0.15s ease;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 .modelDropdownBtn:hover {
   background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #334155;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 .modelDot {
-  width: 6px; height: 6px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #10b981;
   flex-shrink: 0;
 }
-.modelBtnLabel { font-size: 11.5px; }
+.modelBtnLabel {
+  font-size: 12px;
+}
 .modelBtnBadge {
-  font-size: 9.5px;
-  font-weight: 600;
-  background: #f0fdf4;
-  color: #059669;
+  font-size: 10px;
+  font-weight: 700;
+  background: #e0f2fe;
+  color: #0284c7;
   border-radius: 4px;
-  padding: 1px 4px;
+  padding: 1px 5px;
 }
 .modelChevron {
   transition: transform 0.15s;
-  color: #94a3b8;
+  color: #64748b;
 }
 .modelChevronOpen { transform: rotate(180deg); }
 
 .modelMenu {
   position: absolute;
-  top: calc(100% + 5px);
+  bottom: calc(100% + 6px);
   right: 0;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(15,23,42,0.08), 0 1px 4px rgba(15,23,42,0.04);
-  z-index: 50;
-  min-width: 190px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+  z-index: 60;
+  min-width: 200px;
   overflow: hidden;
-  animation: menuFadeIn 0.14s cubic-bezier(0.16,1,0.3,1);
+  animation: menuPop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes menuFadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
+@keyframes menuPop {
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .modelMenuItem {
@@ -705,7 +876,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 9px 12px;
   background: none;
   border: none;
   font-size: 12.5px;
@@ -717,15 +888,15 @@
   text-align: left;
 }
 .modelMenuItem:hover { background: #f8fafc; }
-.modelMenuItemActive { background: #f0fdf4; color: #059669; }
+.modelMenuItemActive { background: #f0fdf4; color: #059669; font-weight: 600; }
 .modelMenuDot {
-  width: 6px; height: 6px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.modelMenuLabel { flex: 1; font-size: 12.5px; }
 .modelMenuBadge {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 600;
   background: #f1f5f9;
   color: #64748b;
@@ -733,165 +904,20 @@
   padding: 1px 5px;
 }
 
-/* â”€â”€ Explain Code button â”€â”€ */
-.explainBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  background: #f0fdf4;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  align-self: flex-start;
-}
-.explainBtn:hover:not(:disabled) {
-  background: #dcfce7;
-  border-color: #6ee7b7;
-  color: #047857;
-}
-.explainBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.explainSpinner {
-  width: 11px; height: 11px;
-  border: 1.5px solid rgba(5,150,105,0.3);
-  border-top-color: #059669;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  display: inline-block;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* â”€â”€ Messages area â”€â”€ */
-.chatMessages {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 80px;
-  max-height: 340px;
-  overflow-y: auto;
-  padding: 4px 0;
-  scroll-behavior: smooth;
-}
-.chatMessages::-webkit-scrollbar { width: 4px; }
-.chatMessages::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-.chatMessages::-webkit-scrollbar-track { background: transparent; }
-
-/* No empty state â€” just blank space when empty */
-.chatEmpty { display: none; }
-
-/* â”€â”€ Bubbles â€” ChatGPT/Claude style â”€â”€ */
-.chatBubble {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 4px;
-  animation: bubbleIn 0.18s ease;
-}
-@keyframes bubbleIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* AI message: full width, no border/bubble */
-.chatBubbleAi {
-  align-self: stretch;
-  flex-direction: row;
-}
-
-/* User message: right-aligned pill */
-.chatBubbleUser {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.chatAiAvatar {
-  width: 22px; height: 22px;
-  border-radius: 6px;
-  background: #0f172a;
-  color: #10b981;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.chatBubbleText {
-  font-size: 13px;
-  line-height: 1.65;
-  color: #1e293b;
-  flex: 1;
-}
-.chatBubbleText p { margin: 0; }
-.chatBubbleText p + p { margin-top: 8px; }
-
-/* User bubble â€” simple rounded pill */
-.chatBubbleUser .chatBubbleText {
-  flex: 0 1 auto;
-  max-width: 80%;
-  background: #f1f5f9;
-  color: #1e293b;
-  border-radius: 16px 16px 4px 16px;
-  padding: 8px 13px;
-  font-size: 13px;
-}
-
-/* AI text â€” plain, no background */
-.chatBubbleAi .chatBubbleText {
-  background: none;
-  padding: 0;
-}
-
-/* â”€â”€ Typing dots â”€â”€ */
-.typingDots span {
-  display: inline-block;
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: #94a3b8;
-  margin: 0 2px;
-  animation: dot 1.2s infinite;
-}
-.typingDots span:nth-child(2) { animation-delay: 0.2s; }
-.typingDots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes dot {
-  0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
-  40%            { transform: scale(1);   opacity: 1;   }
-}
-
-/* Thin divider between AI messages and user messages */
-.chatBubble + .chatBubble {
-  border-top: 0;
-}
-
-/* â”€â”€ Chat error â”€â”€ */
-.chatError {
-  font-size: 12px;
-  color: #dc2626;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 7px 11px;
-}
-
-/* â”€â”€ Input row â€” exactly like Claude/ChatGPT â”€â”€ */
-.chatInputRow {
+/* ── Claude-style Input Container ── */
+.chatInputContainer {
   display: flex;
   align-items: flex-end;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 4px 4px 4px 12px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 6px 6px 6px 14px;
+  transition: all 0.15s ease;
 }
-.chatInputRow:focus-within {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
+.chatInputContainer:focus-within {
+  background: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
 }
 
 .chatInput {
@@ -901,50 +927,52 @@
   background: transparent;
   font-size: 13px;
   font-family: inherit;
-  color: #1e293b;
+  color: #0f172a;
   resize: none;
   line-height: 1.5;
   padding: 6px 0;
-  min-height: 30px;
+  min-height: 28px;
   max-height: 120px;
+  font-weight: 500;
 }
 .chatInput::placeholder { color: #94a3b8; }
 .chatInput:disabled { opacity: 0.55; }
 
+/* Send Button — Circular/Squircle with upward arrow */
 .chatSendBtn {
-  width: 30px; height: 30px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
   border: none;
-  background: #10b981;
-  color: #fff;
+  background: #059669;
+  color: #ffffff;
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
   flex-shrink: 0;
-  margin: 2px;
+  box-shadow: 0 1px 4px rgba(5, 150, 105, 0.25);
+  margin-left: 6px;
 }
 .chatSendBtn:hover:not(:disabled) {
-  background: #059669;
-  transform: scale(1.05);
+  background: #047857;
+  transform: scale(1.04);
 }
 .chatSendBtn:disabled {
   background: #e2e8f0;
   color: #94a3b8;
+  box-shadow: none;
   cursor: not-allowed;
   transform: none;
 }
 
-/* â”€â”€ Clear button â”€â”€ */
-.chatClearBtn {
-  align-self: flex-end;
-  background: none;
-  border: none;
-  font-size: 11px;
-  color: #cbd5e1;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 2px 0;
-  transition: color 0.15s;
-  margin-top: -2px;
-}
-.chatClearBtn:hover { color: #94a3b8; }
+/* ── Chat Error ── */
+.chatError {
+  font-size: 12px;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 7px 11px;
+}
