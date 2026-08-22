@@ -1,5 +1,5 @@
 import styles from './Header.module.css';
-import { BookOpen, ShieldCheck, BarChart2, Clock, Bug } from 'lucide-react';
+import { BookOpen, Presentation, BarChart2, Clock, Bug } from 'lucide-react';
 
 /**
  * SmartCompiler Header
@@ -85,7 +85,7 @@ export default function Header({
             title="Admin Dashboard"
             style={adminDashboardOpen ? { borderColor: '#a7f3d0', color: '#059669', background: '#f0fdf4' } : {}}
           >
-          <ShieldCheck size={15} aria-hidden="true" />
+          <Presentation size={15} aria-hidden="true" />
             <span className={styles.aiTutorBtnLabel}>Admin</span>
           </button>
         )}
