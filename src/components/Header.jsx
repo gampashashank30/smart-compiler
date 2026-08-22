@@ -1,5 +1,5 @@
 import styles from './Header.module.css';
-import { BookOpen, ShieldCheck, BarChart3, Clock, Bug } from 'lucide-react';
+import { BookOpen, ShieldCheck, BarChart2, Clock, Bug } from 'lucide-react';
 
 /**
  * SmartCompiler Header
@@ -110,7 +110,7 @@ export default function Header({
           aria-label="Open Analytics Dashboard"
           title="Analytics Dashboard"
         >
-          <BarChart3 size={16} aria-hidden="true" />
+          <BarChart2 size={16} aria-hidden="true" />
           <span className={styles.analyticsBtnLabel}>Analytics</span>
         </button>
 
