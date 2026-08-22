@@ -2053,10 +2053,11 @@
        CONTACT SECTION
     ══════════════════════════════════════════════════════════ */
     #contact {
-      padding: 100px 40px;
+      padding: 100px 24px;
       background: var(--surface-2);
       position: relative;
       overflow: hidden;
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
     }
 
     #contact::before {
@@ -2072,98 +2073,142 @@
     }
 
     .contact-inner {
-      max-width: 1100px;
+      max-width: 1080px;
       margin: 0 auto;
     }
 
     .contact-header {
       text-align: center;
-      margin-bottom: 60px;
+      margin-bottom: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .contact-header .section-label {
+      margin: 0 auto 12px;
+      display: inline-flex;
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .contact-header .section-headline {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+      font-size: clamp(2rem, 3.5vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      color: #0f172a;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .contact-header .section-sub {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: #64748b;
+      line-height: 1.65;
+      text-align: center;
+      max-width: 580px;
+      margin: 0 auto;
+      letter-spacing: -0.01em;
     }
 
     .contact-grid {
       display: grid;
-      grid-template-columns: 1fr 1.2fr;
-      gap: 60px;
-      align-items: start;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 48px;
+      align-items: stretch;
     }
 
     .contact-info {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
+      justify-content: space-between;
     }
 
     .contact-info-title {
-      font-size: 1.25rem;
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+      font-size: 1.3rem;
       font-weight: 800;
-      color: var(--text-primary);
-      letter-spacing: -0.03em;
-      margin-bottom: 8px;
+      color: #0f172a;
+      letter-spacing: -0.025em;
+      margin-bottom: 6px;
     }
 
     .contact-info-sub {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
       font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.65;
-      margin-bottom: 20px;
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 14px;
     }
 
     .contact-item {
       display: flex;
       align-items: center;
       gap: 16px;
-      padding: 18px 20px;
+      padding: 16px 20px;
       border-radius: var(--r-lg);
       background: #ffffff;
       border: 1.5px solid var(--border);
       box-shadow: var(--shadow-card);
-      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease-spring);
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease-spring), border-color 0.2s ease;
     }
 
     .contact-item:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow-lift);
+      border-color: #cbd5e1;
     }
 
     .contact-item-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      background: linear-gradient(135deg, rgba(15, 165, 124, 0.12), rgba(20, 184, 166, 0.18));
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(14, 165, 233, 0.14));
+      color: #059669;
     }
 
     .contact-item-icon svg {
-      color: var(--brand-green);
+      color: #059669;
     }
 
     .contact-item-label {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 3px;
+      letter-spacing: 0.07em;
+      color: #94a3b8;
+      margin-bottom: 2px;
     }
 
     .contact-item-value {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
       font-size: 14.5px;
       font-weight: 600;
-      color: var(--text-primary);
+      color: #0f172a;
     }
 
     .contact-item-value a {
-      color: var(--brand-emerald);
+      color: #059669;
       text-decoration: none;
       transition: color 0.15s;
     }
 
     .contact-item-value a:hover {
-      color: var(--brand-sky);
+      color: #0284c7;
+      text-decoration: underline;
     }
 
     /* Feedback form card */
@@ -2172,23 +2217,26 @@
       border-radius: var(--r-xl);
       border: 1.5px solid var(--border);
       box-shadow: var(--shadow-card);
-      padding: 36px;
+      padding: 36px 36px 32px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
+      justify-content: space-between;
     }
 
     .feedback-card-title {
-      font-size: 1.2rem;
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+      font-size: 1.3rem;
       font-weight: 800;
-      color: var(--text-primary);
-      letter-spacing: -0.03em;
+      color: #0f172a;
+      letter-spacing: -0.025em;
     }
 
     .feedback-card-sub {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
       font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.65;
+      color: #64748b;
+      line-height: 1.6;
       margin-top: -8px;
     }
 
@@ -2196,25 +2244,29 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      margin: 4px 0;
     }
 
     .feedback-highlight {
       display: flex;
       align-items: center;
       gap: 12px;
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
       font-size: 13.5px;
-      color: var(--text-secondary);
+      font-weight: 500;
+      color: #334155;
     }
 
     .feedback-highlight-dot {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--brand-green), var(--brand-sky));
+      background: #059669;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 2px 5px rgba(5, 150, 105, 0.25);
     }
 
     .btn-feedback {
@@ -2224,27 +2276,29 @@
       gap: 10px;
       padding: 14px 28px;
       border-radius: var(--r-pill);
-      background: linear-gradient(135deg, var(--brand-green), var(--brand-sky));
+      background: linear-gradient(135deg, #059669, #0ea5e9);
       color: #fff;
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
       font-size: 15px;
       font-weight: 700;
       text-decoration: none;
       letter-spacing: -0.01em;
       transition: transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease-spring), opacity 0.15s;
-      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+      box-shadow: 0 4px 18px rgba(16, 185, 129, 0.32);
       align-self: flex-start;
+      margin-top: 4px;
     }
 
     .btn-feedback:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.45);
-      opacity: 0.95;
+      box-shadow: 0 8px 28px rgba(16, 185, 129, 0.42);
+      opacity: 0.96;
     }
 
     @media (max-width: 768px) {
       .contact-grid {
         grid-template-columns: 1fr;
-        gap: 40px;
+        gap: 36px;
       }
 
       #contact {
@@ -2255,6 +2309,7 @@
         padding: 24px;
       }
     }
+
 
     /* ══════════════════════════════════════════════════════════
        FOOTER
@@ -3398,12 +3453,12 @@
   <section id="contact" aria-labelledby="contact-heading">
     <div class="contact-inner">
       <div class="contact-header reveal">
-        <div class="section-label" style="justify-content:center">Contact Us</div>
-        <h2 class="section-headline" id="contact-heading" style="text-align:center">
+        <div class="section-label">Contact Us</div>
+        <h2 class="section-headline" id="contact-heading">
           Get in touch &amp;
           <span class="grad-text">share feedback.</span>
         </h2>
-        <p class="section-sub" style="text-align:center;max-width:560px;margin:0 auto">
+        <p class="section-sub">
           Have a question, suggestion, or spotted a bug? We would love to hear from you. Reach out directly or drop us your feedback.
         </p>
       </div>
