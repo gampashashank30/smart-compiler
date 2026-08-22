@@ -377,61 +377,89 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
   const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
   const DEFAULT_MODEL      = 'meta-llama/llama-3.3-70b-instruct';
 
-  // Allowlist of selectable models — anything else falls back to default
+  // Allowlist of selectable models + alias mappings
+  const MODEL_ALIASES = {
+    'qwen/qwen3-coder-30b-a3b': 'qwen/qwen-2.5-coder-32b-instruct',
+    'deepseek/deepseek-chat-v3-0324:free': 'deepseek/deepseek-chat',
+    'deepseek/deepseek-v3': 'deepseek/deepseek-chat',
+    'google/gemini-flash': 'google/gemini-2.0-flash-001',
+  };
+
   const ALLOWED_MODELS = new Set([
     'meta-llama/llama-3.3-70b-instruct',
-    'qwen/qwen3-coder-30b-a3b',
-    'deepseek/deepseek-chat-v3-0324:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'qwen/qwen-2.5-coder-32b-instruct',
+    'qwen/qwen-2.5-coder-32b-instruct:free',
+    'deepseek/deepseek-chat',
+    'deepseek/deepseek-chat:free',
+    'deepseek/deepseek-r1',
+    'deepseek/deepseek-r1:free',
     'google/gemini-2.0-flash-001',
+    'google/gemini-2.0-flash-exp:free',
+    'google/gemini-flash-1.5',
   ]);
 
-  const selectedModel = (reqModel && ALLOWED_MODELS.has(reqModel)) ? reqModel : DEFAULT_MODEL;
+  let targetModel = reqModel ? (MODEL_ALIASES[reqModel] || reqModel) : DEFAULT_MODEL;
+  if (!ALLOWED_MODELS.has(targetModel)) {
+    targetModel = DEFAULT_MODEL;
+  }
 
-  // Try each key in order; move to the next on rate-limit (429) or auth error (401)
+  // Helper function to query OpenRouter with a specific model
+  const queryOpenRouter = async (apiKey, modelToUse) => {
+    const promptLower = (systemPrompt || '').toLowerCase();
+    const wantsJsonObject = promptLower.includes('json') && !promptLower.includes('json array');
+
+    const chatMessages = Array.isArray(reqMessages) && reqMessages.length > 0
+      ? [{ role: 'system', content: systemPrompt || '' }, ...reqMessages]
+      : [
+          { role: 'system', content: systemPrompt || '' },
+          { role: 'user',   content: userMessage  || '' },
+        ];
+
+    const payload = {
+      model: modelToUse,
+      max_tokens: 4096,
+      messages: chatMessages,
+      ...(wantsJsonObject ? { response_format: { type: 'json_object' } } : {}),
+    };
+
+    const response = await fetch(OPENROUTER_API_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer':  'https://smartcompiler.maadiotsolutions.co.in',
+        'X-Title':       'Smart Compiler',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    return { ok: response.ok, status: response.status, data };
+  };
+
+  // Try each key in order; move to next key on failure, with automatic fallback to DEFAULT_MODEL if model unavailable
   for (let i = 0; i < allKeys.length; i++) {
     const apiKey = allKeys[i];
 
     try {
-      // Enforce JSON mode when systemPrompt references JSON (but not a JSON array —
-      // json_object mode requires the top-level response to be an object {}).
-      const promptLower = (systemPrompt || '').toLowerCase();
-      const wantsJsonObject = promptLower.includes('json') && !promptLower.includes('json array');
+      let result = await queryOpenRouter(apiKey, targetModel);
 
-      // Support multi-turn messages array OR legacy single-message format
-      const chatMessages = Array.isArray(reqMessages) && reqMessages.length > 0
-        ? [{ role: 'system', content: systemPrompt || '' }, ...reqMessages]
-        : [
-            { role: 'system', content: systemPrompt || '' },
-            { role: 'user',   content: userMessage  || '' },
-          ];
-
-      const payload = {
-        model: selectedModel,
-        max_tokens: 4096,
-        messages: chatMessages,
-        ...(wantsJsonObject ? { response_format: { type: 'json_object' } } : {}),
-      };
-
-      const response = await fetch(OPENROUTER_API_URL, {
-        method:  'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          // OpenRouter best-practice headers (optional but recommended)
-          'HTTP-Referer':  'https://smartcompiler.maadiotsolutions.co.in',
-          'X-Title':       'Smart Compiler',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorMsg = data?.error?.message || `API error ${response.status}`;
-        console.warn(`[/api/ai] Key #${i + 1} failed with status ${response.status}: ${errorMsg} — trying next key...`);
-        lastError = errorMsg;
-        continue; // 👈 move to next key
+      // If requested model failed (e.g. 400 or 404), retry once with DEFAULT_MODEL
+      if (!result.ok && targetModel !== DEFAULT_MODEL) {
+        console.warn(`[/api/ai] Model ${targetModel} failed (${result.status}: ${result.data?.error?.message || 'Error'}). Retrying with default model (${DEFAULT_MODEL})...`);
+        result = await queryOpenRouter(apiKey, DEFAULT_MODEL);
       }
+
+      if (!result.ok) {
+        const errorMsg = result.data?.error?.message || `API error ${result.status}`;
+        console.warn(`[/api/ai] Key #${i + 1} failed with status ${result.status}: ${errorMsg} — trying next key...`);
+        lastError = errorMsg;
+        continue;
+      }
+
+      const data = result.data;
+
 
       // ✅ Success — update token count in Supabase server-side, then return result
       const tokensUsed = data.usage?.total_tokens ?? 0;

@@ -223,13 +223,14 @@ function AggregatedCard({ issues }) {
   );
 }
 
-/* ── Model options ── */
+/* ── Model options (Verified OpenRouter Slugs) ── */
 const AI_MODELS = [
-  { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B',    badge: 'Default' },
-  { id: 'qwen/qwen3-coder-30b-a3b',          label: 'Qwen3 Coder 30B',  badge: 'Code' },
-  { id: 'deepseek/deepseek-chat-v3-0324:free', label: 'DeepSeek V3',    badge: 'Free' },
-  { id: 'google/gemini-2.0-flash-001',       label: 'Gemini 2.0 Flash', badge: 'Fast' },
+  { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B',      badge: 'Default' },
+  { id: 'qwen/qwen-2.5-coder-32b-instruct',  label: 'Qwen 2.5 Coder 32B', badge: 'Code' },
+  { id: 'deepseek/deepseek-chat',            label: 'DeepSeek V3',        badge: 'Smart' },
+  { id: 'google/gemini-2.0-flash-001',       label: 'Gemini 2.0 Flash',   badge: 'Fast' },
 ];
+
 
 /* ── Model Dropdown ── */
 function ModelDropdown({ value, onChange }) {
