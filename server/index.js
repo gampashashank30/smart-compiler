@@ -233,7 +233,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -538,6 +538,70 @@ app.get('/api/admin/analytics', adminLimiter, async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+// ── Admin: set token limit for a user ─────────────────────────────────────
+// PATCH /api/admin/set-token-limit  { userId, tokenLimit }
+// Protected: admin JWT required. Uses service role key to bypass RLS.
+app.patch('/api/admin/set-token-limit', adminLimiter, async (req, res) => {
+  // 1. Origin check
+  const origin = req.headers.origin || '';
+  if (origin && !ALLOWED_ORIGINS.some(o => origin === o)) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  // 2. Verify JWT and confirm admin
+  const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+  if (!token) return res.status(401).json({ error: 'No token' });
+  const supabaseUser = await verifySupabaseToken(token);
+  if (!supabaseUser?.email) return res.status(401).json({ error: 'Invalid token' });
+  if (!ADMIN_EMAILS.includes(supabaseUser.email.toLowerCase())) {
+    return res.status(403).json({ error: 'Forbidden: Admin only' });
+  }
+
+  // 3. Validate input
+  const { userId, tokenLimit } = req.body ?? {};
+  if (!userId || typeof userId !== 'string') {
+    return res.status(400).json({ error: 'userId is required' });
+  }
+  const newLimit = parseInt(tokenLimit, 10);
+  if (isNaN(newLimit) || newLimit < 1000 || newLimit > 500000) {
+    return res.status(400).json({ error: 'tokenLimit must be between 1,000 and 500,000' });
+  }
+
+  // 4. Update user_stats using service role key
+  if (!SUPABASE_SERVICE_KEY) {
+    return res.status(503).json({ error: 'SUPABASE_SERVICE_KEY not configured on server' });
+  }
+  try {
+    const updateRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/user_stats?id=eq.${userId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'apikey':        SUPABASE_SERVICE_KEY,
+          'Content-Type':  'application/json',
+          'Prefer':        'return=representation',
+        },
+        body: JSON.stringify({ token_limit: newLimit }),
+      }
+    );
+
+    if (!updateRes.ok) {
+      const errText = await updateRes.text();
+      console.error('[/api/admin/set-token-limit] Supabase error:', errText);
+      return res.status(502).json({ error: 'DB update failed', detail: errText });
+    }
+
+    console.log(`[Admin] ${supabaseUser.email} set token_limit=${newLimit} for userId=${userId}`);
+    return res.json({ success: true, userId, tokenLimit: newLimit });
+  } catch (err) {
+    console.error('[/api/admin/set-token-limit] Error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 // ── Health endpoint ───────────────────────────────────────────────────────────
 // ISSUE 6 FIX: Public callers only get { ok: true }.
