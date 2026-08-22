@@ -302,13 +302,15 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized: Invalid or expired session. Please log in again.' });
   }
 
-  const { systemPrompt, userMessage } = req.body ?? {};
+  const { systemPrompt, userMessage, model: reqModel, messages: reqMessages } = req.body ?? {};
 
   // ── 3. Input size limits ──────────────────────────────────────────────────
-  if (!systemPrompt || !userMessage) {
-    return res.status(400).json({ error: 'systemPrompt and userMessage are required' });
+  // userMessage can be empty when the caller sends a messages array (multi-turn chat)
+  const hasMessages = Array.isArray(reqMessages) && reqMessages.length > 0;
+  if (!systemPrompt || (!userMessage && !hasMessages)) {
+    return res.status(400).json({ error: 'systemPrompt and userMessage (or messages) are required' });
   }
-  if (systemPrompt.length > 10000 || userMessage.length > 20000) {
+  if ((systemPrompt && systemPrompt.length > 10000) || (userMessage && userMessage.length > 20000)) {
     return res.status(400).json({ error: 'Input too large' });
   }
 
@@ -383,7 +385,6 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
     'google/gemini-2.0-flash-001',
   ]);
 
-  const { systemPrompt, userMessage, model: reqModel, messages: reqMessages } = req.body ?? {};
   const selectedModel = (reqModel && ALLOWED_MODELS.has(reqModel)) ? reqModel : DEFAULT_MODEL;
 
   // Try each key in order; move to the next on rate-limit (429) or auth error (401)
