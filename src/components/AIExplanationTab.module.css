@@ -1,5 +1,5 @@
-/* ================================================================
-   AIExplanationTab — Premium redesign
+﻿/* ================================================================
+   AIExplanationTab â€” Premium redesign
    Inspired by: LeetCode (card hierarchy), HackerRank (badges),
                 Replit (clean layout), JetBrains (typography)
    Color palette: emerald + teal + slate (matches SmartCompiler brand)
@@ -7,7 +7,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ─── Variables ──────────────────────────────────────────────────── */
+/* â”€â”€â”€ Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
   --emerald:      #059669;
   --emerald-light:#d1fae5;
@@ -35,7 +35,7 @@
   --shadow-focus: 0 0 0 3px rgba(5,150,105,0.18);
 }
 
-/* ─── Container ──────────────────────────────────────────────────── */
+/* â”€â”€â”€ Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .container {
   display: flex;
   flex-direction: column;
@@ -48,7 +48,7 @@
   scrollbar-color: var(--border) transparent;
 }
 
-/* ─── Header ─────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .header {
   padding: 16px 16px 12px;
   background: var(--surface);
@@ -59,7 +59,7 @@
   gap: 10px;
 }
 
-/* ── Analyze Button — emerald gradient, LeetCode-inspired ── */
+/* â”€â”€ Analyze Button â€” emerald gradient, LeetCode-inspired â”€â”€ */
 .analyzeBtn {
   display: flex;
   align-items: center;
@@ -124,7 +124,7 @@
   animation: spin 0.7s linear infinite;
 }
 
-/* ─── Error banner ───────────────────────────────────────────────── */
+/* â”€â”€â”€ Error banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .errorBanner {
   margin: 10px 16px 0;
   font-size: 12.5px;
@@ -136,7 +136,7 @@
   line-height: 1.5;
 }
 
-/* ─── Results ────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .results {
   flex: 1;
   display: flex;
@@ -145,7 +145,7 @@
   padding: 16px 16px 28px;
 }
 
-/* ─── Clean state ────────────────────────────────────────────────── */
+/* â”€â”€â”€ Clean state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cleanCard {
   display: flex;
   align-items: center;
@@ -171,9 +171,9 @@
 .cleanTitle { font-size: 14.5px; font-weight: 700; color: #166534; margin-bottom: 3px; }
 .cleanSub   { font-size: 12.5px; color: #15803d; line-height: 1.55; }
 
-/* ═══════════════════════════════════════════════════════════════════
-   AGGREGATED CARD — premium card holding all issue sections
-   ═══════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AGGREGATED CARD â€” premium card holding all issue sections
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .aggCard {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -186,7 +186,7 @@
   box-shadow: var(--shadow-md);
 }
 
-/* ── AI Analysis banner — warm amber/orange gradient ── */
+/* â”€â”€ AI Analysis banner â€” warm amber/orange gradient â”€â”€ */
 .aggBanner {
   display: flex;
   align-items: flex-start;
@@ -248,7 +248,7 @@
   gap: 6px;
 }
 
-/* ── Accordion sections ── */
+/* â”€â”€ Accordion sections â”€â”€ */
 .accordion {
   border-bottom: 1px solid var(--border-light);
 }
@@ -308,7 +308,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Numbered list items ── */
+/* â”€â”€ Numbered list items â”€â”€ */
 .numList, .aggNumList {
   display: flex;
   flex-direction: column;
@@ -349,7 +349,7 @@
 }
 .numTextMuted { color: var(--brand-mid); }
 
-/* ── Root Cause: line pills ── */
+/* â”€â”€ Root Cause: line pills â”€â”€ */
 .linePill {
   display: inline-flex;
   align-items: center;
@@ -364,7 +364,7 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Fix list ── */
+/* â”€â”€ Fix list â”€â”€ */
 .fixList { display: flex; flex-direction: column; gap: 12px; }
 .fixItem { display: flex; flex-direction: column; gap: 6px; }
 
@@ -391,7 +391,7 @@
 }
 .fixCode code { font-family: inherit; }
 
-/* ─── Generate fix button ─────────────────────────────────────────── */
+/* â”€â”€â”€ Generate fix button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .generateWrap {
   display: flex;
   flex-direction: column;
@@ -444,7 +444,7 @@
   30%          { transform: translateY(-5px); opacity: 1; }
 }
 
-/* ─── Corrected code section ──────────────────────────────────────── */
+/* â”€â”€â”€ Corrected code section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .correctedSection {
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -523,7 +523,7 @@
 .applyBtn:hover  { background: linear-gradient(135deg, #047857, #059669); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(5,150,105,0.35); }
 .applyBtn:active { transform: translateY(0); }
 
-/* ─── Learning notes ──────────────────────────────────────────────── */
+/* â”€â”€â”€ Learning notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .notes {
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -595,7 +595,7 @@
 }
 .showMoreBtn:hover { color: #0284c7; }
 
-/* ─── Body text fallback ─────────────────────────────────────────── */
+/* â”€â”€â”€ Body text fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .bodyText {
   font-size: 13px;
   color: #4b5563;
@@ -603,101 +603,101 @@
   margin: 0;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   AI CHATBOT SECTION
-   ══════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AI CHATBOT SECTION â€” Clean, ChatGPT-style, matches site theme
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .chatSection {
   margin-top: 20px;
-  border-top: 1.5px solid #e2e8f0;
-  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* ── Header row ── */
+/* â”€â”€ Header row â”€â”€ */
 .chatHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  margin-bottom: 2px;
 }
 .chatHeaderLeft {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #334155;
+  color: #64748b;
 }
 .chatHeaderTitle {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #1e293b;
-  letter-spacing: -0.01em;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-/* ── Model Dropdown ── */
-.modelDropdownWrap {
-  position: relative;
-}
+/* â”€â”€ Model Dropdown â”€â”€ */
+.modelDropdownWrap { position: relative; }
+
 .modelDropdownBtn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px 5px 8px;
+  gap: 5px;
+  padding: 4px 9px 4px 7px;
   background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 500;
   font-family: inherit;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.12s;
   white-space: nowrap;
 }
 .modelDropdownBtn:hover {
-  background: #f0f9ff;
-  border-color: #7dd3fc;
-  color: #0284c7;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
 }
 .modelDot {
-  width: 7px; height: 7px;
+  width: 6px; height: 6px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #0ea5e9);
+  background: #10b981;
   flex-shrink: 0;
 }
-.modelBtnLabel { font-size: 12px; }
+.modelBtnLabel { font-size: 11.5px; }
 .modelBtnBadge {
-  font-size: 10px;
-  font-weight: 700;
-  background: #e0f2fe;
-  color: #0284c7;
+  font-size: 9.5px;
+  font-weight: 600;
+  background: #f0fdf4;
+  color: #059669;
   border-radius: 4px;
-  padding: 1px 5px;
-  letter-spacing: 0.02em;
+  padding: 1px 4px;
 }
 .modelChevron {
-  transition: transform 0.18s ease;
+  transition: transform 0.15s;
   color: #94a3b8;
 }
 .modelChevronOpen { transform: rotate(180deg); }
 
 .modelMenu {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 5px);
   right: 0;
   background: #fff;
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+  box-shadow: 0 4px 16px rgba(15,23,42,0.08), 0 1px 4px rgba(15,23,42,0.04);
   z-index: 50;
-  min-width: 200px;
+  min-width: 190px;
   overflow: hidden;
-  animation: menuFadeIn 0.15s cubic-bezier(0.16,1,0.3,1);
+  animation: menuFadeIn 0.14s cubic-bezier(0.16,1,0.3,1);
 }
 @keyframes menuFadeIn {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(-5px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .modelMenuItem {
@@ -705,7 +705,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 12px;
+  padding: 8px 12px;
   background: none;
   border: none;
   font-size: 12.5px;
@@ -713,203 +713,238 @@
   font-weight: 500;
   color: #334155;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 0.1s;
   text-align: left;
 }
 .modelMenuItem:hover { background: #f8fafc; }
 .modelMenuItemActive { background: #f0fdf4; color: #059669; }
 .modelMenuDot {
-  width: 7px; height: 7px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
-  transition: background 0.15s;
 }
-.modelMenuLabel { flex: 1; }
+.modelMenuLabel { flex: 1; font-size: 12.5px; }
 .modelMenuBadge {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 9.5px;
+  font-weight: 600;
   background: #f1f5f9;
   color: #64748b;
   border-radius: 4px;
   padding: 1px 5px;
 }
 
-/* ── Explain Code button ── */
+/* â”€â”€ Explain Code button â”€â”€ */
 .explainBtn {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px 16px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  border: none;
-  border-radius: 9px;
-  font-size: 13px;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #f0fdf4;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.18s ease;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+  transition: all 0.15s;
   align-self: flex-start;
 }
 .explainBtn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
-  transform: translateY(-1px);
+  background: #dcfce7;
+  border-color: #6ee7b7;
+  color: #047857;
 }
 .explainBtn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
 }
 .explainSpinner {
-  width: 12px; height: 12px;
-  border: 2px solid rgba(255,255,255,0.35);
-  border-top-color: #fff;
+  width: 11px; height: 11px;
+  border: 1.5px solid rgba(5,150,105,0.3);
+  border-top-color: #059669;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
   display: inline-block;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Messages area ── */
+/* â”€â”€ Messages area â”€â”€ */
 .chatMessages {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 320px;
+  gap: 4px;
+  min-height: 80px;
+  max-height: 340px;
   overflow-y: auto;
-  padding: 4px 2px;
+  padding: 4px 0;
   scroll-behavior: smooth;
 }
-.chatMessages::-webkit-scrollbar { width: 5px; }
+.chatMessages::-webkit-scrollbar { width: 4px; }
 .chatMessages::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+.chatMessages::-webkit-scrollbar-track { background: transparent; }
 
-.chatEmpty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 24px 16px;
-  color: #94a3b8;
-  font-size: 12.5px;
-  text-align: center;
-}
-.chatEmpty p { margin: 0; line-height: 1.5; }
-.chatEmpty strong { color: #6366f1; }
+/* No empty state â€” just blank space when empty */
+.chatEmpty { display: none; }
 
-/* ── Bubbles ── */
+/* â”€â”€ Bubbles â€” ChatGPT/Claude style â”€â”€ */
 .chatBubble {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  animation: bubbleIn 0.2s ease;
+  gap: 10px;
+  padding: 8px 4px;
+  animation: bubbleIn 0.18s ease;
 }
 @keyframes bubbleIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.chatBubbleAi { align-self: flex-start; }
-.chatBubbleUser { align-self: flex-end; flex-direction: row-reverse; }
+
+/* AI message: full width, no border/bubble */
+.chatBubbleAi {
+  align-self: stretch;
+  flex-direction: row;
+}
+
+/* User message: right-aligned pill */
+.chatBubbleUser {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
 
 .chatAiAvatar {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #10b981;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .chatBubbleText {
-  max-width: 85%;
   font-size: 13px;
-  line-height: 1.6;
-  padding: 9px 13px;
-  border-radius: 12px;
-}
-.chatBubbleAi .chatBubbleText {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-top-left-radius: 3px;
+  line-height: 1.65;
   color: #1e293b;
+  flex: 1;
 }
+.chatBubbleText p { margin: 0; }
+.chatBubbleText p + p { margin-top: 8px; }
+
+/* User bubble â€” simple rounded pill */
 .chatBubbleUser .chatBubbleText {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  border-top-right-radius: 3px;
+  flex: 0 1 auto;
+  max-width: 80%;
+  background: #f1f5f9;
+  color: #1e293b;
+  border-radius: 16px 16px 4px 16px;
+  padding: 8px 13px;
+  font-size: 13px;
 }
 
-/* ── Chat error ── */
+/* AI text â€” plain, no background */
+.chatBubbleAi .chatBubbleText {
+  background: none;
+  padding: 0;
+}
+
+/* â”€â”€ Typing dots â”€â”€ */
+.typingDots span {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #94a3b8;
+  margin: 0 2px;
+  animation: dot 1.2s infinite;
+}
+.typingDots span:nth-child(2) { animation-delay: 0.2s; }
+.typingDots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+  40%            { transform: scale(1);   opacity: 1;   }
+}
+
+/* Thin divider between AI messages and user messages */
+.chatBubble + .chatBubble {
+  border-top: 0;
+}
+
+/* â”€â”€ Chat error â”€â”€ */
 .chatError {
   font-size: 12px;
   color: #dc2626;
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 7px 11px;
 }
 
-/* ── Input row ── */
+/* â”€â”€ Input row â€” exactly like Claude/ChatGPT â”€â”€ */
 .chatInputRow {
   display: flex;
-  gap: 8px;
   align-items: flex-end;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 4px 4px 4px 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
+.chatInputRow:focus-within {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
+}
+
 .chatInput {
   flex: 1;
-  padding: 9px 13px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
+  border: none;
+  outline: none;
+  background: transparent;
   font-size: 13px;
   font-family: inherit;
   color: #1e293b;
-  background: #f8fafc;
-  outline: none;
   resize: none;
   line-height: 1.5;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  min-height: 38px;
-  max-height: 100px;
-}
-.chatInput:focus {
-  border-color: #a5b4fc;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.09);
+  padding: 6px 0;
+  min-height: 30px;
+  max-height: 120px;
 }
 .chatInput::placeholder { color: #94a3b8; }
-.chatInput:disabled { opacity: 0.6; }
+.chatInput:disabled { opacity: 0.55; }
 
 .chatSendBtn {
-  width: 38px; height: 38px;
-  border-radius: 10px;
+  width: 30px; height: 30px;
+  border-radius: 8px;
   border: none;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: #10b981;
   color: #fff;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.15s;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.2);
+  margin: 2px;
 }
 .chatSendBtn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  transform: scale(1.06);
+  background: #059669;
+  transform: scale(1.05);
 }
-.chatSendBtn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.chatSendBtn:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
 
-/* ── Clear button ── */
+/* â”€â”€ Clear button â”€â”€ */
 .chatClearBtn {
-  align-self: center;
+  align-self: flex-end;
   background: none;
   border: none;
-  font-size: 11.5px;
-  color: #94a3b8;
+  font-size: 11px;
+  color: #cbd5e1;
   cursor: pointer;
   font-family: inherit;
-  padding: 2px 4px;
+  padding: 2px 0;
   transition: color 0.15s;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  margin-top: -2px;
 }
-.chatClearBtn:hover { color: #dc2626; }
+.chatClearBtn:hover { color: #94a3b8; }
