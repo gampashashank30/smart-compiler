@@ -1,5 +1,5 @@
 import styles from './Header.module.css';
-import { BrainCircuit, ShieldCheck, BarChart3, Clock, Bug } from 'lucide-react';
+import { BookOpen, ShieldCheck, BarChart3, Clock, Bug } from 'lucide-react';
 
 /**
  * SmartCompiler Header
@@ -98,7 +98,7 @@ export default function Header({
           aria-label="Open AI Tutor overlay"
           title="AI Tutor"
         >
-          <BrainCircuit size={16} aria-hidden="true" />
+          <BookOpen size={16} aria-hidden="true" />
           <span className={styles.aiTutorBtnLabel}>AI Tutor</span>
         </button>
 
