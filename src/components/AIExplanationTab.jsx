@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { callClaude, parseJSON } from '../api.js';
 import { ANALYSIS_SYSTEM_PROMPT, CORRECTION_SYSTEM_PROMPT } from '../constants.js';
 import { sanitizeAiCode } from '../aiCodeUtils.js';
@@ -223,6 +223,76 @@ function AggregatedCard({ issues }) {
   );
 }
 
+/* ── Model options ── */
+const AI_MODELS = [
+  { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B',    badge: 'Default' },
+  { id: 'qwen/qwen3-coder-30b-a3b',          label: 'Qwen3 Coder 30B',  badge: 'Code' },
+  { id: 'deepseek/deepseek-chat-v3-0324:free', label: 'DeepSeek V3',    badge: 'Free' },
+  { id: 'google/gemini-2.0-flash-001',       label: 'Gemini 2.0 Flash', badge: 'Fast' },
+];
+
+/* ── Model Dropdown ── */
+function ModelDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const selected = AI_MODELS.find(m => m.id === value) || AI_MODELS[0];
+
+  useEffect(() => {
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className={styles.modelDropdownWrap} ref={ref}>
+      <button className={styles.modelDropdownBtn} onClick={() => setOpen(v => !v)}>
+        <span className={styles.modelDot} />
+        <span className={styles.modelBtnLabel}>{selected.label}</span>
+        <span className={styles.modelBtnBadge}>{selected.badge}</span>
+        <svg className={`${styles.modelChevron} ${open ? styles.modelChevronOpen : ''}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      {open && (
+        <div className={styles.modelMenu}>
+          {AI_MODELS.map(m => (
+            <button
+              key={m.id}
+              className={`${styles.modelMenuItem} ${m.id === value ? styles.modelMenuItemActive : ''}`}
+              onClick={() => { onChange(m.id); setOpen(false); }}
+            >
+              <span className={styles.modelMenuDot} style={{ background: m.id === value ? '#10b981' : '#cbd5e1' }} />
+              <span className={styles.modelMenuLabel}>{m.label}</span>
+              <span className={styles.modelMenuBadge}>{m.badge}</span>
+              {m.id === value && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Chat bubble ── */
+function ChatBubble({ msg }) {
+  return (
+    <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAi}`}>
+      {msg.role === 'assistant' && (
+        <div className={styles.chatAiAvatar}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          </svg>
+        </div>
+      )}
+      <div className={styles.chatBubbleText}>
+        {msg.content.split('\n').map((line, i) => (
+          <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0' }}>{line || <br />}</p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════
    MAIN TAB
    ══════════════════════════════════════════════════════════════ */
@@ -238,6 +308,20 @@ export default function AIExplanationTab({ code, onApplyFix }) {
 
   const [applied, setApplied]           = useState(false);
   const [showAllNotes, setShowAllNotes] = useState(false);
+
+  // ── Chat + Explain state ──
+  const [selectedModel, setSelectedModel] = useState(AI_MODELS[0].id);
+  const [chatMessages, setChatMessages]   = useState([]);
+  const [chatInput, setChatInput]         = useState('');
+  const [isChatting, setIsChatting]       = useState(false);
+  const [isExplaining, setIsExplaining]   = useState(false);
+  const [chatError, setChatError]         = useState(null);
+  const chatEndRef = useRef(null);
+
+  // Auto-scroll to latest message
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isChatting]);
 
   /* ── Analyze ── */
   const handleAnalyze = useCallback(async () => {
@@ -354,6 +438,70 @@ export default function AIExplanationTab({ code, onApplyFix }) {
       setIsGenerating(false);
     }
   }, [code, issues]);
+
+  /* ── Explain Code ── */
+  const handleExplain = useCallback(async () => {
+    if (!code?.trim()) return;
+    setIsExplaining(true);
+    setChatError(null);
+    const explainPrompt = `You are a friendly C programming teacher. Look at this student's code carefully.
+
+If the code looks CORRECT (no obvious errors, logic seems right):
+- Explain what the code does in 3-4 short, simple paragraphs
+- Use very simple language like you're explaining to a beginner
+- Each paragraph should cover one concept: what it does overall, key logic, how it works step by step
+- Do NOT use bullet points — only paragraphs
+
+If the code has ERRORS or PROBLEMS:
+- Start your response with "I think..."
+- Briefly describe what seems wrong in 1-2 short paragraphs
+- End with a simple hint about how to fix it
+- Keep it short and encouraging
+
+ALWAYS keep your response SHORT and SIMPLE. Max 4 paragraphs total.`;
+    try {
+      const reply = await callClaude(explainPrompt, `Here is my C code:
+
+${code}`, { model: selectedModel });
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: reply.trim() },
+      ]);
+    } catch (err) {
+      setChatError(err.message);
+    } finally {
+      setIsExplaining(false);
+    }
+  }, [code, selectedModel]);
+
+  /* ── Send chat message ── */
+  const handleSend = useCallback(async () => {
+    const text = chatInput.trim();
+    if (!text || isChatting) return;
+    setChatInput('');
+    setChatError(null);
+    const userMsg = { role: 'user', content: text };
+    setChatMessages(prev => [...prev, userMsg]);
+    setIsChatting(true);
+    const systemPrompt = `You are a helpful C programming tutor. The student is working with this code:
+
+${code || '(no code provided)'}
+
+Answer their questions in simple, clear language. Keep responses concise. If they ask about errors, help them understand the problem and how to fix it. Be encouraging and friendly.`;
+    const history = [...chatMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
+    try {
+      const reply = await callClaude(systemPrompt, text, { model: selectedModel, messages: history });
+      setChatMessages(prev => [...prev, { role: 'assistant', content: reply.trim() }]);
+    } catch (err) {
+      setChatError(err.message);
+    } finally {
+      setIsChatting(false);
+    }
+  }, [chatInput, isChatting, chatMessages, code, selectedModel]);
+
+  function handleChatKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  }
 
   /* ── Apply fix ── */
   const handleApplyFix = useCallback(() => {
@@ -478,6 +626,99 @@ export default function AIExplanationTab({ code, onApplyFix }) {
 
         </div>
       )}
+
+      {/* ════════════════════════════════════════════
+          AI CHATBOT SECTION
+          ════════════════════════════════════════════ */}
+      <div className={styles.chatSection}>
+
+        {/* Header row: title + model dropdown */}
+        <div className={styles.chatHeader}>
+          <div className={styles.chatHeaderLeft}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span className={styles.chatHeaderTitle}>AI Chat</span>
+          </div>
+          <ModelDropdown value={selectedModel} onChange={setSelectedModel} />
+        </div>
+
+        {/* Explain Code button */}
+        <button
+          className={styles.explainBtn}
+          onClick={handleExplain}
+          disabled={isExplaining || !code?.trim()}
+        >
+          {isExplaining ? (
+            <><span className={styles.explainSpinner} /> Explaining…</>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              Explain My Code
+            </>
+          )}
+        </button>
+
+        {/* Messages */}
+        <div className={styles.chatMessages}>
+          {chatMessages.length === 0 && !isChatting && (
+            <div className={styles.chatEmpty}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              <p>Click <strong>Explain My Code</strong> or ask a question below</p>
+            </div>
+          )}
+          {chatMessages.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
+          {isChatting && (
+            <div className={`${styles.chatBubble} ${styles.chatBubbleAi}`}>
+              <div className={styles.chatAiAvatar}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                </svg>
+              </div>
+              <TypingDots />
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Error */}
+        {chatError && <div className={styles.chatError}>{chatError}</div>}
+
+        {/* Input row */}
+        <div className={styles.chatInputRow}>
+          <textarea
+            className={styles.chatInput}
+            placeholder="Ask about your code… (Enter to send)"
+            value={chatInput}
+            onChange={e => setChatInput(e.target.value)}
+            onKeyDown={handleChatKey}
+            disabled={isChatting}
+            rows={1}
+          />
+          <button
+            className={styles.chatSendBtn}
+            onClick={handleSend}
+            disabled={isChatting || !chatInput.trim()}
+            title="Send"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Clear chat */}
+        {chatMessages.length > 0 && (
+          <button className={styles.chatClearBtn} onClick={() => setChatMessages([])}>
+            Clear conversation
+          </button>
+        )}
+
+      </div>
     </div>
   );
 }

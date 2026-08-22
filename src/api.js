@@ -9,20 +9,28 @@ import { analyticsStore } from './analytics.js';
 import { supabase } from './supabaseClient.js';
 
 /**
- * Call the Groq API via the server-side proxy (/api/ai)
+ * Call the AI API via the server-side proxy (/api/ai)
  * @param {string} systemPrompt
  * @param {string} userMessage
+ * @param {object} [opts]  - { model?: string, messages?: Array<{role,content}> }
  * @returns {Promise<string>}
  */
-export async function callClaude(systemPrompt, userMessage) {
-  // Enforce the 15,000 token limit per user
+export async function callClaude(systemPrompt, userMessage, opts = {}) {
+  // Enforce the token limit per user
   if (analyticsStore.isLimitReached()) {
-    throw new Error('AI Limit Reached: You have used all of your 15,000 free AI tokens. Upgrade to continue.');
+    throw new Error('AI Limit Reached: You have used all of your free AI tokens. Upgrade to continue.');
   }
 
   // Attach the Supabase JWT so the server can verify the user is logged in
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token || '';
+
+  const body = {
+    systemPrompt,
+    userMessage,
+    ...(opts.model    ? { model:    opts.model    } : {}),
+    ...(opts.messages ? { messages: opts.messages } : {}),
+  };
 
   const response = await fetch('/api/ai', {
     method:  'POST',
@@ -30,7 +38,7 @@ export async function callClaude(systemPrompt, userMessage) {
       'Content-Type':  'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ systemPrompt, userMessage }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -41,13 +49,13 @@ export async function callClaude(systemPrompt, userMessage) {
   const data = await response.json();
 
   // Reload the authoritative token count from DB so the local counter stays accurate.
-  // The server already wrote the correct new total — we just need to reflect it locally.
   if (data.usage?.total_tokens) {
     analyticsStore.recordTokens(data.usage.total_tokens);
   }
 
   return data.content ?? '';
 }
+
 
 
 /**

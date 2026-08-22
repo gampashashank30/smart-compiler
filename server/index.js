@@ -371,9 +371,20 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
 
   let lastError = null;
 
-  // OpenRouter endpoint and model
+  // OpenRouter endpoint
   const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-  const OPENROUTER_MODEL   = 'meta-llama/llama-3.3-70b-instruct';
+  const DEFAULT_MODEL      = 'meta-llama/llama-3.3-70b-instruct';
+
+  // Allowlist of selectable models — anything else falls back to default
+  const ALLOWED_MODELS = new Set([
+    'meta-llama/llama-3.3-70b-instruct',
+    'qwen/qwen3-coder-30b-a3b',
+    'deepseek/deepseek-chat-v3-0324:free',
+    'google/gemini-2.0-flash-001',
+  ]);
+
+  const { systemPrompt, userMessage, model: reqModel, messages: reqMessages } = req.body ?? {};
+  const selectedModel = (reqModel && ALLOWED_MODELS.has(reqModel)) ? reqModel : DEFAULT_MODEL;
 
   // Try each key in order; move to the next on rate-limit (429) or auth error (401)
   for (let i = 0; i < allKeys.length; i++) {
@@ -382,16 +393,21 @@ app.post('/api/ai', aiLimiter, async (req, res) => {
     try {
       // Enforce JSON mode when systemPrompt references JSON (but not a JSON array —
       // json_object mode requires the top-level response to be an object {}).
-      const promptLower = systemPrompt.toLowerCase();
+      const promptLower = (systemPrompt || '').toLowerCase();
       const wantsJsonObject = promptLower.includes('json') && !promptLower.includes('json array');
 
+      // Support multi-turn messages array OR legacy single-message format
+      const chatMessages = Array.isArray(reqMessages) && reqMessages.length > 0
+        ? [{ role: 'system', content: systemPrompt || '' }, ...reqMessages]
+        : [
+            { role: 'system', content: systemPrompt || '' },
+            { role: 'user',   content: userMessage  || '' },
+          ];
+
       const payload = {
-        model: OPENROUTER_MODEL,
+        model: selectedModel,
         max_tokens: 4096,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userMessage  },
-        ],
+        messages: chatMessages,
         ...(wantsJsonObject ? { response_format: { type: 'json_object' } } : {}),
       };
 
