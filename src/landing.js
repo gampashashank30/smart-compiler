@@ -31,10 +31,15 @@ const headlineEl = document.querySelector('.hero-headline');
 if (headlineEl) {
   // Split headline into words for stagger bounce
   headlineEl.innerHTML = `
+    <span class="hero-word">Smart</span>
+    <span class="hero-word">Compiler</span>
+    <span class="hero-word">&mdash;</span>
     <span class="hero-word">The</span>
-    <span class="hero-word">compiler</span>
-    <span class="hero-word">that</span>
-    <span class="hero-word">catches</span><br/>
+    <span class="hero-word">AI</span>
+    <span class="hero-word">C</span>
+    <span class="hero-word">Compiler</span>
+    <span class="hero-word">That</span>
+    <span class="hero-word">Catches</span><br/>
     <span class="hero-word grad-text">the</span>
     <span class="hero-word grad-text">bugs</span>
     <span class="hero-word grad-text">GCC</span>

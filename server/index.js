@@ -770,10 +770,19 @@ if (fs.existsSync(distDir)) {
     res.sendFile(path.join(distDir, 'app.html'));
   });
 
-  // Root and any other non-API route serves the landing page
-  app.get('*', apiLimiter, (req, res) => {
-    // Prevent 404 error message from reflecting the raw request path
+  // Root route explicitly serves the landing page
+  app.get('/', apiLimiter, (req, res) => {
     res.sendFile(path.join(distDir, 'index.html'));
+  });
+
+  // Return genuine HTTP 404 for unknown routes to eliminate Google Soft-404 penalties
+  app.use((req, res) => {
+    const custom404 = path.join(distDir, '404.html');
+    if (fs.existsSync(custom404)) {
+      res.status(404).sendFile(custom404);
+    } else {
+      res.status(404).send('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>404 - Not Found | Smart Compiler</title><meta name="robots" content="noindex"></head><body style="background:#0b0e14;color:#f8fafc;font-family:sans-serif;text-align:center;padding:50px"><h1>404 - Page Not Found</h1><p>The requested URL was not found.</p><p><a href="/" style="color:#10b981">Return to Smart Compiler</a></p></body></html>');
+    }
   });
 } else {
   // Dev fallback — Vite handles the frontend

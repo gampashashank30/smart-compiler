@@ -1,11 +1,11 @@
 User-agent: *
 Allow: /
 
-# Disallow internal app routes and API
+# Disallow internal app editor and backend endpoints
 Disallow: /api/
 Disallow: /ws/
+Disallow: /app
 Disallow: /app.html
-Disallow: /login.html
 
 # Sitemap location
 Sitemap: https://smartcompiler.maadiotsolutions.co.in/sitemap.xml
