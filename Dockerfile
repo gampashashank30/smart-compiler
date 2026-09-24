@@ -33,13 +33,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 # apt package post-install scripts (like ca-certificates) use mktemp in TMPDIR.
 RUN mkdir -p /tmp /data/compiler-tmp && chmod 777 /tmp /data/compiler-tmp
 
-# Install GCC, G++, Make & Python3
+# Install GCC, G++, Make, Python3 & curl for healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     make \
     python3 \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app user
@@ -66,6 +67,6 @@ EXPOSE 10000
 USER appuser
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 10000) + '/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+  CMD curl -f http://localhost:${PORT:-10000}/api/health || exit 1
 
 CMD ["node", "server/index.js"]
