@@ -1,11 +1,10 @@
-// Register ScrollTrigger plugin
-gsap.registerPlugin(ScrollTrigger);
-
 /* ── Nav scroll state ── */
 const nav = document.getElementById('nav');
-window.addEventListener('scroll', () => {
-  nav.classList.toggle('scrolled', window.scrollY > 20);
-}, { passive: true });
+if (nav) {
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+}
 
 /* ── Scroll Progress Bar ── */
 window.addEventListener('scroll', () => {
@@ -16,205 +15,180 @@ window.addEventListener('scroll', () => {
   if (progressEl) progressEl.style.width = scrollPercent + '%';
 }, { passive: true });
 
-/* ── GSAP Slide Down Nav on Load ── */
-gsap.from('#nav', {
-  y: -70,
-  opacity: 0,
-  duration: 0.8,
-  ease: 'power3.out'
-});
-
-
-
-/* ── Hero staggered reveal — badge → headline → sub → CTAs ── */
-const headlineEl = document.querySelector('.hero-headline');
-if (headlineEl) {
-  // Split headline into words for stagger bounce
-  headlineEl.innerHTML = `
-    <span class="hero-word">Smart</span>
-    <span class="hero-word">Compiler</span>
-    <span class="hero-word">&mdash;</span>
-    <span class="hero-word">The</span>
-    <span class="hero-word">AI</span>
-    <span class="hero-word">C</span>
-    <span class="hero-word">Compiler</span>
-    <span class="hero-word">That</span>
-    <span class="hero-word">Catches</span><br/>
-    <span class="hero-word grad-text">the</span>
-    <span class="hero-word grad-text">bugs</span>
-    <span class="hero-word grad-text">GCC</span>
-    <span class="hero-word grad-text">can't.</span>
-  `;
-  // Badge fades in first
-  gsap.fromTo('.hero-badge',
-    { opacity: 0, y: 16 },
-    { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }
-  );
-  // Headline words bounce in
-  gsap.fromTo('.hero-word',
-    { opacity: 0, y: 24 },
-    { opacity: 1, y: 0, duration: 0.8, stagger: 0.07, delay: 0.2, ease: 'back.out(1.7)' }
-  );
-  // Sub-headline slides in
-  gsap.fromTo('.hero-sub',
-    { opacity: 0, y: 16 },
-    { opacity: 1, y: 0, duration: 0.8, delay: 0.55, ease: 'power2.out' }
-  );
-  // CTA buttons pop in
-  gsap.fromTo('.hero-ctas .btn-primary',
-    { opacity: 0, y: 12, scale: 0.95 },
-    { opacity: 1, y: 0, scale: 1, duration: 0.6, delay: 0.8, ease: 'back.out(1.8)' }
-  );
-  // Hero visual slides up
-  gsap.fromTo('.hero-visual',
-    { opacity: 0, y: 32 },
-    { opacity: 1, y: 0, duration: 1.0, delay: 0.6, ease: 'power3.out' }
-  );
-}
-
-/* ── Staggered Scroll Reveal via GSAP ScrollTrigger ── */
-document.querySelectorAll('.reveal').forEach(el => {
-  gsap.fromTo(el,
-    { opacity: 0, y: 28 },
-    {
-      scrollTrigger: {
-        trigger: el,
-        start: 'top 88%',
-        toggleActions: 'play none none none'
-      },
-      opacity: 1,
-      y: 0,
-      duration: 0.85,
-      ease: 'power2.out'
+function initGsap() {
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(initGsap, 30));
+    } else {
+      setTimeout(initGsap, 40);
     }
-  );
-});
-
-/* ── Horizontal Feature sections sliding in ── */
-document.querySelectorAll('.feature-grid').forEach(grid => {
-  const isFlipped = grid.classList.contains('flip');
-  const text = grid.querySelector('.feature-text');
-  const visual = grid.querySelector('.feature-text + div');
-  if (text && visual) {
-    gsap.from(text, {
-      scrollTrigger: {
-        trigger: grid,
-        start: 'top 85%',
-      },
-      opacity: 0,
-      x: isFlipped ? 40 : -40,
-      duration: 0.8,
-      ease: 'power2.out'
-    });
-    gsap.from(visual, {
-      scrollTrigger: {
-        trigger: grid,
-        start: 'top 85%',
-      },
-      opacity: 0,
-      x: isFlipped ? -40 : 40,
-      duration: 0.8,
-      ease: 'power2.out'
-    });
+    return;
   }
-});
 
-/* ── Product Flow Step-by-Step Scroll Trigger ── */
-const progressMap = {
-  'write': '10%',
-  'compile': '30%',
-  'ai-detect': '50%',
-  'shows-fix': '70%',
-  'applied': '90%',
-  'learn': '100%'
-};
+  // Register ScrollTrigger plugin
+  gsap.registerPlugin(ScrollTrigger);
 
-document.querySelectorAll('.flow-step-card').forEach((card) => {
-  const step = card.getAttribute('data-step');
+  /* ── GSAP Slide Down Nav on Load ── */
+  gsap.from('#nav', {
+    y: -70,
+    opacity: 0,
+    duration: 0.8,
+    ease: 'power3.out'
+  });
+
+  /* ── Hero staggered reveal — badge → headline → sub → CTAs ── */
+  const headlineEl = document.querySelector('.hero-headline');
+  if (headlineEl) {
+    // Split headline into words for stagger bounce
+    headlineEl.innerHTML = `
+      <span class="hero-word">Smart</span>
+      <span class="hero-word">Compiler</span>
+      <span class="hero-word">&mdash;</span>
+      <span class="hero-word">The</span>
+      <span class="hero-word">AI</span>
+      <span class="hero-word">C</span>
+      <span class="hero-word">Compiler</span>
+      <span class="hero-word">That</span>
+      <span class="hero-word">Catches</span><br/>
+      <span class="hero-word grad-text">the</span>
+      <span class="hero-word grad-text">bugs</span>
+      <span class="hero-word grad-text">GCC</span>
+      <span class="hero-word grad-text">can't.</span>
+    `;
+    // Badge fades in first
+    gsap.fromTo('.hero-badge',
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }
+    );
+    // Headline words bounce in
+    gsap.fromTo('.hero-word',
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.8, stagger: 0.07, delay: 0.2, ease: 'back.out(1.7)' }
+    );
+    // Sub-headline slides in
+    gsap.fromTo('.hero-sub',
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.8, delay: 0.55, ease: 'power2.out' }
+    );
+    // CTA buttons pop in
+    gsap.fromTo('.hero-ctas .btn-primary',
+      { opacity: 0, y: 12, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.6, delay: 0.8, ease: 'back.out(1.8)' }
+    );
+    // Hero visual slides up
+    gsap.fromTo('.hero-visual',
+      { opacity: 0, y: 32 },
+      { opacity: 1, y: 0, duration: 1.0, delay: 0.6, ease: 'power3.out' }
+    );
+  }
+
+  /* ── Staggered Scroll Reveal via GSAP ScrollTrigger ── */
+  document.querySelectorAll('.reveal').forEach(el => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 28 },
+      {
+        scrollTrigger: {
+          trigger: el,
+          start: 'top 88%',
+          toggleActions: 'play none none none'
+        },
+        opacity: 1,
+        y: 0,
+        duration: 0.85,
+        ease: 'power2.out'
+      }
+    );
+  });
+
+  /* ── Horizontal Feature sections sliding in ── */
+  document.querySelectorAll('.feature-grid').forEach(grid => {
+    const isFlipped = grid.classList.contains('flip');
+    const text = grid.querySelector('.feature-text');
+    const visual = grid.querySelector('.feature-text + div');
+    if (text && visual) {
+      gsap.from(text, {
+        scrollTrigger: {
+          trigger: grid,
+          start: 'top 85%',
+        },
+        opacity: 0,
+        x: isFlipped ? 40 : -40,
+        duration: 0.8,
+        ease: 'power2.out'
+      });
+      gsap.from(visual, {
+        scrollTrigger: {
+          trigger: grid,
+          start: 'top 85%',
+        },
+        opacity: 0,
+        x: isFlipped ? -40 : 40,
+        duration: 0.8,
+        ease: 'power2.out'
+      });
+    }
+  });
+
+  /* ── Product Flow Step-by-Step Scroll Trigger ── */
+  document.querySelectorAll('.flow-step-card').forEach((card) => {
+    const step = card.getAttribute('data-step');
+    ScrollTrigger.create({
+      trigger: card,
+      start: 'top 60%',
+      end: 'bottom 40%',
+      onEnter: () => activateStep(step, card),
+      onEnterBack: () => activateStep(step, card)
+    });
+  });
+
+  /* ── Donut chart animation on scroll ── */
+  const donutData = { logical: 0, syntax: 0, runtime: 0, other: 0 };
   ScrollTrigger.create({
-    trigger: card,
-    start: 'top 60%',
-    end: 'bottom 40%',
-    onEnter: () => activateStep(step, card),
-    onEnterBack: () => activateStep(step, card)
+    trigger: '.bug-tracker-ui',
+    start: 'top 85%',
+    onEnter: () => {
+      gsap.to(donutData, {
+        logical: 38,
+        syntax: 27,
+        runtime: 15,
+        other: 20,
+        duration: 1.6,
+        ease: 'power2.out',
+        onUpdate: () => {
+          const donut = document.querySelector('.donut');
+          if (donut) {
+            const l = donutData.logical;
+            const s = l + donutData.syntax;
+            const r = s + donutData.runtime;
+            donut.style.background = `conic-gradient(
+              #ef4444 0% ${l}%,
+              #f59e0b ${l}% ${s}%,
+              #10b981 ${s}% ${r}%,
+              #0ea5e9 ${r}% 100%
+            )`;
+          }
+        }
+      });
+    }
   });
-});
 
-function activateStep(step, activeCard) {
-  // Dim all step cards
-  document.querySelectorAll('.flow-step-card').forEach(c => {
-    gsap.to(c, { opacity: 0.4, borderColor: 'var(--border)', boxShadow: 'none', duration: 0.3 });
-  });
-  // Highlight active card
-  gsap.to(activeCard, {
-    opacity: 1,
-    borderColor: 'var(--brand-green)',
-    boxShadow: 'var(--shadow-lift)',
-    duration: 0.3
+  /* ── Language detector confidence fill on scroll ── */
+  ScrollTrigger.create({
+    trigger: '.lang-detector-ui',
+    start: 'top 85%',
+    onEnter: () => {
+      gsap.to('.lang-confidence-fill', {
+        width: '94%',
+        duration: 1.4,
+        ease: 'power2.out'
+      });
+    }
   });
 
-  // Fade out all visual states
-  document.querySelectorAll('.flow-state').forEach(state => {
-    state.classList.remove('active');
-  });
-  // Fade in active visual state
-  const activeState = document.querySelector('.flow-state.state-' + step);
-  if (activeState) {
-    activeState.classList.add('active');
-  }
-
-  // Update progress line height
-  const progressLine = document.getElementById('flow-progress-line');
-  if (progressLine && progressMap[step]) {
-    progressLine.style.height = progressMap[step];
-  }
+  /* ── 3D Perspective Card Tilt on Mousemove ── */
+  init3DTilt();
 }
 
-/* ── Donut chart animation on scroll ── */
-const donutData = { logical: 0, syntax: 0, runtime: 0, other: 0 };
-ScrollTrigger.create({
-  trigger: '.bug-tracker-ui',
-  start: 'top 85%',
-  onEnter: () => {
-    gsap.to(donutData, {
-      logical: 38,
-      syntax: 27,
-      runtime: 15,
-      other: 20,
-      duration: 1.6,
-      ease: 'power2.out',
-      onUpdate: () => {
-        const donut = document.querySelector('.donut');
-        if (donut) {
-          const l = donutData.logical;
-          const s = l + donutData.syntax;
-          const r = s + donutData.runtime;
-          donut.style.background = `conic-gradient(
-            #ef4444 0% ${l}%,
-            #f59e0b ${l}% ${s}%,
-            #10b981 ${s}% ${r}%,
-            #0ea5e9 ${r}% 100%
-          )`;
-        }
-      }
-    });
-  }
-});
-
-/* ── Language detector confidence fill on scroll ── */
-ScrollTrigger.create({
-  trigger: '.lang-detector-ui',
-  start: 'top 85%',
-  onEnter: () => {
-    gsap.to('.lang-confidence-fill', {
-      width: '94%',
-      duration: 1.4,
-      ease: 'power2.out'
-    });
-  }
-});
-
-/* ── 3D Perspective Card Tilt on Mousemove ── */
 function init3DTilt() {
   document.querySelectorAll('.flow-step-card, .mistake-card').forEach(card => {
     card.style.transformStyle = 'preserve-3d';
@@ -228,29 +202,34 @@ function init3DTilt() {
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
 
-      const rotateX = ((y - centerY) / centerY) * -5; // subtle tilt (max 5 deg)
+      const rotateX = ((y - centerY) / centerY) * -5;
       const rotateY = ((x - centerX) / centerX) * 5;
 
-      gsap.to(card, {
-        rotateX: rotateX,
-        rotateY: rotateY,
-        transformPerspective: 1000,
-        ease: 'power1.out',
-        duration: 0.3
-      });
+      if (typeof gsap !== 'undefined') {
+        gsap.to(card, {
+          rotateX: rotateX,
+          rotateY: rotateY,
+          transformPerspective: 1000,
+          ease: 'power1.out',
+          duration: 0.3
+        });
+      }
     });
 
     card.addEventListener('mouseleave', () => {
-      gsap.to(card, {
-        rotateX: 0,
-        rotateY: 0,
-        ease: 'power2.out',
-        duration: 0.5
-      });
+      if (typeof gsap !== 'undefined') {
+        gsap.to(card, {
+          rotateX: 0,
+          rotateY: 0,
+          ease: 'power2.out',
+          duration: 0.5
+        });
+      }
     });
   });
 }
-init3DTilt();
+
+initGsap();
 
 /* ══════════════════════════════════════════════════════════════
    HERO TYPING ANIMATION
