@@ -57,10 +57,17 @@ export const analyticsStore = {
       let statsData = null;
 
       if (!data) {
-        // If row doesn't exist in user_analytics, create both manually
+        // If row doesn't exist in user_analytics, create both manually.
+        // Detect provider and google_id from the Supabase user identity metadata.
+        const providerName = user.app_metadata?.provider ?? 'email';
+        const googleIdentity = user.identities?.find(i => i.provider === 'google');
+        const googleId = googleIdentity?.identity_data?.sub ?? null;
+
         const newAnalyticsRow = {
           id: currentUserId,
           email: user.email,
+          provider: providerName,
+          google_id: googleId,
           last_activity_date: null
         };
         

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient.js';
 import styles from './AdminDashboard.module.css';
 
@@ -233,6 +233,7 @@ export default function AdminDashboard({ onClose }) {
                     <thead><tr>
                       <th className={styles.th}>#</th>
                       <th className={styles.th}>User</th>
+                      <th className={styles.th}>Sign-in</th>
                       <th className={styles.th}>Compilations</th>
                       <th className={styles.th}>Tokens Used</th>
                       <th className={styles.th}>Token Limit <span className={styles.thHint}>editable</span></th>
@@ -247,6 +248,24 @@ export default function AdminDashboard({ onClose }) {
                           <tr key={u.id} className={styles.tr}>
                             <td className={styles.td}><span className={styles.rank} style={{background:globalRank===0?'#fef9c3':globalRank===1?'#f1f5f9':globalRank===2?'#fef3c7':'#f8fafc',color:globalRank===0?'#92400e':globalRank===1?'#475569':globalRank===2?'#78350f':'#94a3b8',border:globalRank<3?`1.5px solid ${globalRank===0?'#fde68a':globalRank===1?'#e2e8f0':'#fcd34d'}`:'1.5px solid #e2e8f0'}}>{globalRank===0?'🥇':globalRank===1?'🥈':globalRank===2?'🥉':`#${globalRank+1}`}</span></td>
                             <td className={styles.td}><div className={styles.userCell}><div className={styles.userAvatar}>{(u.email||'?')[0].toUpperCase()}</div><span className={styles.userEmail}>{u.email||'—'}</span></div></td>
+                            <td className={styles.td}>
+                              {u.provider === 'google' ? (
+                                <div style={{display:'flex',flexDirection:'column',gap:'3px'}}>
+                                  <span style={{display:'inline-flex',alignItems:'center',gap:'4px',background:'#fef9f0',color:'#d97706',border:'1.5px solid #fde68a',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:'600',letterSpacing:'0.04em',width:'fit-content'}}>
+                                    <svg width="11" height="11" viewBox="0 0 24 24"><path fill="#ea4335" d="M5.27 9.76A7.08 7.08 0 0 1 12 4.9c1.69 0 3.22.6 4.41 1.57l3.31-3.31A11.95 11.95 0 0 0 12 1 12 12 0 0 0 1.04 8.27l4.23 3.49z"/><path fill="#fbbc05" d="M16.8 18.32A7.08 7.08 0 0 1 12 19.1a7.08 7.08 0 0 1-6.72-4.87l-4.24 3.27A12 12 0 0 0 12 23c3.23 0 6.16-1.23 8.37-3.23l-3.57-1.45z"/><path fill="#4285f4" d="M23 12c0-.83-.07-1.62-.2-2.38H12v4.51h6.19a5.3 5.3 0 0 1-2.3 3.47l3.57 1.45A11.95 11.95 0 0 0 23 12z"/><path fill="#34a853" d="M5.28 14.23A7.08 7.08 0 0 1 4.9 12c0-.78.13-1.53.37-2.24L1.04 6.27A11.95 11.95 0 0 0 0 12c0 1.93.46 3.76 1.27 5.37l4.01-3.14z"/></svg>
+                                    Google
+                                  </span>
+                                  {u.google_id && (
+                                    <span title={`Google ID: ${u.google_id}`} style={{fontSize:'10px',color:'#94a3b8',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'130px',cursor:'help'}}>{u.google_id.slice(0,12)}…</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{display:'inline-flex',alignItems:'center',gap:'4px',background:'#f0f9ff',color:'#0284c7',border:'1.5px solid #bae6fd',borderRadius:'6px',padding:'2px 8px',fontSize:'11px',fontWeight:'600',letterSpacing:'0.04em'}}>
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                  Email
+                                </span>
+                              )}
+                            </td>
                             <td className={styles.td}><span className={styles.pill} style={{background:'#f0f9ff',color:'#0284c7'}}>{(u.total_runs||0).toLocaleString()}</span></td>
                             <td className={styles.td}><div className={styles.tokenCell}><span>{(u.ai_tokens_used||0).toLocaleString()}</span><div className={styles.tokenBar}><div className={styles.tokenBarFill} style={{width:`${tokenPct}%`,background:tokenPct>80?'#ef4444':tokenPct>50?'#f59e0b':'#10b981'}}/></div></div></td>
                             <td className={styles.td}><TokenLimitCell user={u} sessionToken={sessionToken} onUpdate={handleTokenUpdate} /></td>
@@ -255,7 +274,7 @@ export default function AdminDashboard({ onClose }) {
                           </tr>
                         );
                       })}
-                      {filteredUsers.length === 0 && (<tr><td colSpan={7} className={styles.emptyRow}>{search?`No users matching "${search}"`:'No users found.'}</td></tr>)}
+                      {filteredUsers.length === 0 && (<tr><td colSpan={8} className={styles.emptyRow}>{search?`No users matching "${search}"`:'No users found.'}</td></tr>)}
                     </tbody>
                   </table>
                 </div>
