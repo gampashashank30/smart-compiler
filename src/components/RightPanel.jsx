@@ -31,23 +31,22 @@ const RightPanel = forwardRef(function RightPanel(
             aria-selected={activeTab === tab.id}
             role="tab"
           >
-            {tab.label}
+            <span className={styles.tabInner}>
+              {tab.label}
+              {/* Show run status inside the Console tab */}
+              {tab.id === 'terminal' && isRunning === 'compiling' && (
+                <span className={styles.statusCompiling}>
+                  <span className={styles.spinner} /> Compiling…
+                </span>
+              )}
+              {tab.id === 'terminal' && isRunning === 'running' && (
+                <span className={styles.statusRunning}>
+                  <span className={styles.runDot} /> Running
+                </span>
+              )}
+            </span>
           </button>
         ))}
-
-        {/* Status indicator */}
-        <div className={styles.statusArea}>
-          {isRunning === 'compiling' && (
-            <span className={styles.statusCompiling}>
-              <span className={styles.spinner} /> Compiling…
-            </span>
-          )}
-          {isRunning === 'running' && (
-            <span className={styles.statusRunning}>
-              <span className={styles.runDot} /> Running
-            </span>
-          )}
-        </div>
       </div>
 
       <div className={styles.tabContent}>
