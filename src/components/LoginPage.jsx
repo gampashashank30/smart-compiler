@@ -5,7 +5,7 @@ import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
   const { user, loading: sessionLoading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
