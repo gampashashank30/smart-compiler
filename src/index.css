@@ -64,3 +64,38 @@ textarea {
   background: #5c5fee22;
   color: inherit;
 }
+
+/* ================================================================
+   MOBILE GLOBAL FIXES
+   These apply to ALL pages (app, login, landing) on mobile.
+   ================================================================ */
+
+/* Eliminate 300ms tap delay on all buttons, links, and inputs */
+button,
+a,
+input,
+select,
+label,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Prevent iOS from zooming in when focusing inputs (requires font-size ≥ 16px) */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* On mobile, allow body to scroll when virtual keyboard opens (for login page) */
+@media (max-width: 768px) {
+  /* Only allow body scroll on non-app pages (login/landing).
+     The app shell (app.html) manages its own overflow via 100dvh + panel switching. */
+  body.login-page,
+  body.landing-page {
+    overflow-y: auto;
+    height: auto;
+  }
+}

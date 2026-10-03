@@ -732,3 +732,30 @@
   margin-bottom: 14px;
 }
 
+/* ================================================================
+   ADMIN DASHBOARD — MOBILE RESPONSIVE (≤768px)
+   ================================================================ */
+@media (max-width: 768px) {
+  .panel {
+    top: 58px; /* match smaller mobile header height */
+    width: calc(100vw - 20px);
+    margin: 10px auto;
+    max-height: calc(100dvh - 68px);
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .panel {
+    top: 56px;
+    width: calc(100vw - 12px);
+    margin: 6px auto;
+    border-radius: 10px;
+    max-height: calc(100dvh - 62px);
+  }
+
+  .panelHeader {
+    padding: 14px 16px;
+  }
+}
+

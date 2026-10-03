@@ -21,6 +21,19 @@ import { sanitizeAiCode } from './aiCodeUtils.js';
 import { supabase } from './supabaseClient.js';
 import styles from './App.module.css';
 
+// ── useIsMobile hook ─────────────────────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isMobile;
+}
+
+
 // ISSUE 7 FIX: Build the WebSocket URL using a short-lived ticket, NOT the raw JWT.
 // Flow:
 //   1. Exchange the Supabase JWT for a 30s ticket via POST /api/ws-ticket
@@ -186,6 +199,17 @@ export default function App() {
   }, [setCode]);
   const [runStatus, setRunStatus] = useState('idle'); // 'idle' | 'compiling' | 'running'
   const [activeTab, setActiveTab] = useState('terminal');
+
+  // ── Mobile state ─────────────────────────────────────────────────────────
+  const isMobile = useIsMobile();
+  // 'editor' | 'console' | 'ai'
+  const [mobilePanelTab, setMobilePanelTab] = useState('editor');
+
+  // When Run is pressed on mobile, auto-switch to console
+  const handleMobileRunAndSwitch = useCallback(() => {
+    if (isMobile) setMobilePanelTab('console');
+    handleRun();
+  }, [isMobile]);
 
   // Panel width: left panel percent of total workspace width
   const [leftWidth, setLeftWidth] = useState(55);
@@ -355,6 +379,7 @@ export default function App() {
     // Skip if user already dismissed for this exact code ("Keep as C")
     if (dismissedCodeRef.current === code) {
       setActiveTab('terminal');
+      setMobilePanelTab('console');
       buildWsUrl().then(wsUrl => terminalRef.current?.connect(wsUrl, code));
       analyticsStore.recordRun();
       return;
@@ -374,6 +399,8 @@ export default function App() {
 
     // Switch to terminal tab
     setActiveTab('terminal');
+    // On mobile, also switch the visible panel to console
+    setMobilePanelTab('console');
 
     // Build WS URL with JWT token, then connect
     buildWsUrl().then(wsUrl => {
@@ -467,7 +494,8 @@ export default function App() {
         {/* Left — Editor */}
         <div
           className={styles.leftPane}
-          style={{ width: `${leftWidth}%` }}
+          style={!isMobile ? { width: `${leftWidth}%` } : undefined}
+          data-hidden={isMobile ? (mobilePanelTab !== 'editor' ? 'true' : 'false') : undefined}
         >
           <EditorPanel
             code={code}
@@ -487,18 +515,22 @@ export default function App() {
           />
         </div>
 
-        {/* Vertical drag divider */}
-        <DragDivider orientation="vertical" onMouseDown={onDividerMouseDown} />
+        {/* Vertical drag divider — desktop only, hidden on mobile via CSS */}
+        {!isMobile && <DragDivider orientation="vertical" onMouseDown={onDividerMouseDown} />}
 
         {/* Right — Terminal / AI */}
         <div
           className={styles.rightPane}
-          style={{ width: `${100 - leftWidth}%` }}
+          style={!isMobile ? { width: `${100 - leftWidth}%` } : undefined}
+          data-hidden={isMobile ? (mobilePanelTab === 'editor' ? 'true' : 'false') : undefined}
         >
           <RightPanel
             ref={terminalRef}
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              if (isMobile) setMobilePanelTab(tab === 'ai' ? 'ai' : 'console');
+            }}
             code={code}
             onApplyFix={handleApplyFix}
             isRunning={runStatus}
@@ -507,6 +539,77 @@ export default function App() {
           />
         </div>
       </div>
+
+      {/* ── Mobile Bottom Tab Bar ─────────────────────────────────────────── */}
+      <nav className={styles.mobileTabs} aria-label="Panel navigation">
+        {/* Editor tab */}
+        <button
+          className={`${styles.mobileTab} ${mobilePanelTab === 'editor' ? styles.mobileTabActive : ''}`}
+          onClick={() => setMobilePanelTab('editor')}
+          aria-label="Code Editor"
+          id="mobile-tab-editor"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+          Editor
+        </button>
+
+        {/* Console tab */}
+        <button
+          className={`${styles.mobileTab} ${mobilePanelTab === 'console' ? styles.mobileTabActive : ''}`}
+          onClick={() => { setMobilePanelTab('console'); setActiveTab('terminal'); }}
+          aria-label="Console"
+          id="mobile-tab-console"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+          Console
+        </button>
+
+        {/* AI tab */}
+        <button
+          className={`${styles.mobileTab} ${mobilePanelTab === 'ai' ? styles.mobileTabActive : ''}`}
+          onClick={() => { setMobilePanelTab('ai'); setActiveTab('ai'); }}
+          aria-label="AI Explanation"
+          id="mobile-tab-ai"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 10 10"/>
+            <path d="M12 8v4l2 2"/>
+            <circle cx="18" cy="6" r="3" fill="currentColor"/>
+          </svg>
+          AI
+        </button>
+
+        {/* Tools (opens history/analytics/bugs) */}
+        <button
+          className={`${styles.mobileTab}`}
+          onClick={() => setHistoryPanelOpen(true)}
+          aria-label="Tools"
+          id="mobile-tab-tools"
+        >
+          {bugErrorCount > 0 && <span className={styles.mobileTabBadge}>{bugErrorCount > 9 ? '9+' : bugErrorCount}</span>}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          History
+        </button>
+      </nav>
+
+      {/* ── Mobile Run FAB ────────────────────────────────────────────────── */}
+      {isMobile && (
+        <button
+          id="mobile-run-fab"
+          className={`${styles.mobileRunFab} ${isRunning ? styles.mobileRunFabRunning : ''}`}
+          onClick={isRunning ? handleKill : handleRun}
+          aria-label={isRunning ? 'Stop program' : 'Run program'}
+          title={isRunning ? 'Stop' : 'Run'}
+        >
+          {isRunning ? '■' : '▶'}
+        </button>
+      )}
 
       {/* Language Detector Popup — rendered outside the split layout */}
       {showLangPopup && langDetect && (

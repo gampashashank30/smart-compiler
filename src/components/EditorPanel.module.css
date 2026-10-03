@@ -557,3 +557,48 @@
 
 /* Punctuation: {, }, (, ), ;, … */
 :global(.hl-punctuation){ color: #79c0ff; }   /* same as operators */
+
+/* ================================================================
+   EDITOR PANEL — MOBILE RESPONSIVE (≤768px)
+   Desktop layout is UNCHANGED above this breakpoint.
+   ================================================================ */
+@media (max-width: 768px) {
+  /* Bigger tab bar touch targets */
+  .tabBar {
+    height: 46px;
+  }
+
+  .fileTab {
+    height: 42px;
+    padding: 0 10px;
+    min-width: 70px;
+  }
+
+  .fileName {
+    font-size: 11.5px;
+  }
+
+  /* Taller run bar with bigger buttons for easy tapping */
+  .runBar {
+    height: 60px;
+  }
+
+  .runBtn,
+  .downloadBtn,
+  .clearBtn {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Slightly smaller mono font in editor on narrow screens */
+  .textarea,
+  .highlight {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* Gutter line numbers */
+  .gutter {
+    font-size: 11px;
+  }
+}

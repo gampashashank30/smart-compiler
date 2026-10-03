@@ -49,3 +49,100 @@
 .terminal :global(.xterm-viewport)::-webkit-scrollbar-thumb:hover {
   background: #484f58;
 }
+
+/* ================================================================
+   Mobile stdin input bar
+   Hidden on desktop. On mobile ≤768px it appears as a dark bar
+   at the bottom of the terminal with Ctrl+C, text input, and Send.
+   ================================================================ */
+.mobileInputBar {
+  display: none; /* hidden on desktop */
+}
+
+@media (max-width: 768px) {
+  /* shrink xterm to leave room for the input bar */
+  .wrapper {
+    flex-direction: column;
+  }
+
+  .terminal {
+    flex: 1;
+    position: relative; /* not absolute on mobile — let it be block */
+    inset: auto;
+  }
+
+  .mobileInputBar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: #010409;
+    border-top: 1px solid #21262d;
+    flex-shrink: 0;
+    /* Absorb safe-area on iPhones */
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobileCtrlC {
+    flex-shrink: 0;
+    padding: 8px 10px;
+    border-radius: 7px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    color: #f97316;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+  }
+
+  .mobileCtrlC:active {
+    background: #2d1100;
+  }
+
+  .mobileStdinInput {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #e6edf3;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    caret-color: #58a6ff;
+  }
+
+  .mobileStdinInput::placeholder {
+    color: #484f58;
+  }
+
+  .mobileStdinInput:focus {
+    border-color: #388bfd;
+    box-shadow: 0 0 0 2px rgba(56, 139, 253, 0.15);
+  }
+
+  .mobileInputSend {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #238636;
+    border: none;
+    color: #ffffff;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobileInputSend:active {
+    background: #2ea043;
+    transform: scale(0.95);
+  }
+}

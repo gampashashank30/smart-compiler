@@ -1,6 +1,20 @@
 <svg width="100%" height="100%" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="6" y="6" width="500" height="500" rx="108" fill="#0B192C" stroke="#1E293B" stroke-width="12"/>
-  <path d="M200 140 L110 256 L200 372" stroke="white" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M312 140 L402 256 L312 372" stroke="white" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M256 166 Q256 256 316 256 Q256 256 256 346 Q256 256 196 256 Q256 256 256 166 Z" fill="#FF7A00"/>
+  <!-- Background with rounded corners matching your icon exactly -->
+  <rect width="512" height="512" rx="115" fill="#0D1B2A"/>
+
+  <!-- Left chevron < -->
+  <polyline points="205,148 115,256 205,364" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Right chevron > -->
+  <polyline points="307,148 397,256 307,364" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- 4-pointed star (orange diamond) in center -->
+  <path d="
+    M256,172
+    C256,172 268,244 300,256
+    C268,268 256,340 256,340
+    C256,340 244,268 212,256
+    C244,244 256,172 256,172
+    Z
+  " fill="#F97316"/>
 </svg>

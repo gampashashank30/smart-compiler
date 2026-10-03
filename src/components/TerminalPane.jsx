@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
@@ -450,11 +450,79 @@ const TerminalPane = forwardRef(function TerminalPane(
     focus: () => termRef.current?.focus(),
   }), [connect, kill, clear]);
 
+  // ── Mobile stdin bar state ───────────────────────────────────────────────
+  const [mobileInput, setMobileInput] = useState('');
+
+  const handleMobileInputSend = useCallback(() => {
+    const ws = wsRef.current;
+    const term = termRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN || !runningRef.current) return;
+
+    const line = mobileInput;
+    setMobileInput('');
+
+    // Echo the typed line + newline to the terminal display
+    term.writeln(line);
+
+    // Send to server PTY as if the user pressed Enter
+    ws.send(JSON.stringify({ type: 'stdin', data: line + '\r' }));
+  }, [mobileInput]);
+
+  const handleMobileInputKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleMobileInputSend();
+    }
+  }, [handleMobileInputSend]);
+
+  const handleMobileCtrlC = useCallback(() => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({ type: 'stdin', data: '\x03' }));
+  }, []);
+
   return (
     <div className={styles.wrapper}>
       <div ref={containerRef} className={styles.terminal} />
+      {/* ── Mobile stdin input bar ─────────────────────────────────────────
+          Only visible on mobile (≤768px). Gives touch users a native input
+          field for interactive programs (scanf, gets, etc.) since xterm.js
+          virtual keyboard handling is unreliable on mobile browsers.
+          On desktop this is hidden via CSS — xterm.js handles all input.
+      ──────────────────────────────────────────────────────────────────── */}
+      <div className={styles.mobileInputBar}>
+        <button
+          className={styles.mobileCtrlC}
+          onClick={handleMobileCtrlC}
+          title="Send Ctrl+C (interrupt)"
+          aria-label="Send Ctrl+C"
+        >
+          ⌃C
+        </button>
+        <input
+          className={styles.mobileStdinInput}
+          type="text"
+          value={mobileInput}
+          onChange={(e) => setMobileInput(e.target.value)}
+          onKeyDown={handleMobileInputKeyDown}
+          placeholder="Type stdin input…"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          aria-label="Terminal input"
+        />
+        <button
+          className={styles.mobileInputSend}
+          onClick={handleMobileInputSend}
+          aria-label="Send input"
+        >
+          ↵
+        </button>
+      </div>
     </div>
   );
 });
 
 export default TerminalPane;
+

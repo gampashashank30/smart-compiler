@@ -1,14 +1,25 @@
 .pageContainer {
   position: relative;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh; /* handles virtual keyboard */
   background-color: #f8fafc; /* Premium light slate background */
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-y: auto; /* allows scrolling when keyboard pushes content */
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1e293b; /* Dark text for light mode */
+  padding: 16px;
+}
+
+/* Mobile: reduce card padding and allow vertical scroll */
+@media (max-width: 520px) {
+  .authCard {
+    padding: 28px 24px;
+    border-radius: 16px;
+    max-width: 100%;
+  }
 }
 
 /* Subtle grid overlay matching index.html light mode */
