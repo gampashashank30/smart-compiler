@@ -1007,37 +1007,45 @@ ${codeText}
 
           {/* Step Progress Navigator */}
           <div className={styles.stepNav}>
-            <div 
+            <button 
+              type="button"
               className={`${styles.stepNavItem} ${step === 1 ? styles.stepNavActive : ''} ${step > 1 ? styles.stepNavDone : ''}`}
               onClick={() => setStep(1)}
             >
-              <span className={styles.stepNumber}>1</span>
-              <span>Learn Concept</span>
-            </div>
+              <span className={styles.stepNumber}>{step > 1 ? '✓' : '1'}</span>
+              <span className={styles.stepLabelFull}>Learn Concept</span>
+              <span className={styles.stepLabelShort}>Concept</span>
+            </button>
             <div className={styles.stepNavSeparator} />
-            <div 
+            <button 
+              type="button"
               className={`${styles.stepNavItem} ${step === 2 ? styles.stepNavActive : ''} ${step > 2 ? styles.stepNavDone : ''}`}
               onClick={() => setStep(2)}
             >
-              <span className={styles.stepNumber}>2</span>
-              <span>Test Knowledge</span>
-            </div>
+              <span className={styles.stepNumber}>{step > 2 ? '✓' : '2'}</span>
+              <span className={styles.stepLabelFull}>Test Knowledge</span>
+              <span className={styles.stepLabelShort}>Quiz</span>
+            </button>
             <div className={styles.stepNavSeparator} />
-            <div 
+            <button 
+              type="button"
               className={`${styles.stepNavItem} ${step === 3 ? styles.stepNavActive : ''} ${step > 3 ? styles.stepNavDone : ''}`}
               onClick={() => setStep(3)}
             >
-              <span className={styles.stepNumber}>3</span>
-              <span>Verify Logic</span>
-            </div>
+              <span className={styles.stepNumber}>{step > 3 ? '✓' : '3'}</span>
+              <span className={styles.stepLabelFull}>Verify Logic</span>
+              <span className={styles.stepLabelShort}>Logic</span>
+            </button>
             <div className={styles.stepNavSeparator} />
-            <div 
+            <button 
+              type="button"
               className={`${styles.stepNavItem} ${step === 4 ? styles.stepNavActive : ''} ${step > 4 ? styles.stepNavDone : ''}`}
               onClick={() => setStep(4)}
             >
-              <span className={styles.stepNumber}>4</span>
-              <span>Code Solution</span>
-            </div>
+              <span className={styles.stepNumber}>{step > 4 ? '✓' : '4'}</span>
+              <span className={styles.stepLabelFull}>Code Solution</span>
+              <span className={styles.stepLabelShort}>Code</span>
+            </button>
           </div>
 
           {/* Scrollable Step Content */}
@@ -1750,7 +1758,7 @@ ${codeText}
                   </div>
 
                   {/* Helper buttons row: AI Solution + Give Full Solution */}
-                  <div style={{ marginTop: '8px', display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  <div className={styles.helperButtonsRow} style={{ marginTop: '8px', display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                     {/* AI Solution Based on My Logic */}
                     {isGeneratingAiSolution ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#7c3aed' }}>
