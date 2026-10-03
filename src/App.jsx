@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Code2, TerminalSquare, Bug, Clock, BarChart2, BookOpen, UserCircle, LogIn } from 'lucide-react';
 import Header from './components/Header.jsx';
 import EditorPanel from './components/EditorPanel.jsx';
 import DragDivider from './components/DragDivider.jsx';
@@ -140,6 +141,12 @@ export default function App() {
   const [adminDashboardOpen, setAdminDashboardOpen] = useState(false);
   const handleAdminToggle = useCallback(() => {
     setAdminDashboardOpen(prev => !prev);
+  }, []);
+
+  // ── Mobile Account sheet ─────────────────────────────────────────
+  const [mobileAccountSheetOpen, setMobileAccountSheetOpen] = useState(false);
+  const onMobileAccountClick = useCallback(() => {
+    setMobileAccountSheetOpen(true);
   }, []);
 
   // ── Is-admin check (server-side, no emails in frontend bundle) ──────────
@@ -542,6 +549,7 @@ export default function App() {
 
       {/* ── Mobile Bottom Tab Bar ─────────────────────────────────────────── */}
       <nav className={styles.mobileTabs} aria-label="Panel navigation">
+
         {/* Editor tab */}
         <button
           className={`${styles.mobileTab} ${mobilePanelTab === 'editor' ? styles.mobileTabActive : ''}`}
@@ -549,9 +557,7 @@ export default function App() {
           aria-label="Code Editor"
           id="mobile-tab-editor"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-          </svg>
+          <Code2 size={20} aria-hidden="true" />
           Editor
         </button>
 
@@ -562,54 +568,73 @@ export default function App() {
           aria-label="Console"
           id="mobile-tab-console"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
-          </svg>
+          <TerminalSquare size={20} aria-hidden="true" />
           Console
         </button>
 
-        {/* AI tab */}
+        {/* Bug Tracker tab */}
         <button
-          className={`${styles.mobileTab} ${mobilePanelTab === 'ai' ? styles.mobileTabActive : ''}`}
-          onClick={() => { setMobilePanelTab('ai'); setActiveTab('ai'); }}
-          aria-label="AI Explanation"
-          id="mobile-tab-ai"
+          className={`${styles.mobileTab}`}
+          onClick={() => setBugPanelOpen(true)}
+          aria-label="Bug Tracker"
+          id="mobile-tab-bugs"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 2a10 10 0 1 0 10 10"/>
-            <path d="M12 8v4l2 2"/>
-            <circle cx="18" cy="6" r="3" fill="currentColor"/>
-          </svg>
-          AI
+          {bugErrorCount > 0 && <span className={styles.mobileTabBadge}>{bugErrorCount > 9 ? '9+' : bugErrorCount}</span>}
+          <Bug size={20} aria-hidden="true" />
+          Bugs
         </button>
 
-        {/* Tools (opens history/analytics/bugs) */}
+        {/* History tab */}
         <button
           className={`${styles.mobileTab}`}
           onClick={() => setHistoryPanelOpen(true)}
-          aria-label="Tools"
-          id="mobile-tab-tools"
+          aria-label="Compilation History"
+          id="mobile-tab-history"
         >
-          {bugErrorCount > 0 && <span className={styles.mobileTabBadge}>{bugErrorCount > 9 ? '9+' : bugErrorCount}</span>}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-          </svg>
+          {historyCount > 0 && <span className={styles.mobileTabBadge}>{historyCount > 9 ? '9+' : historyCount}</span>}
+          <Clock size={20} aria-hidden="true" />
           History
         </button>
+
+        {/* Analytics tab */}
+        <button
+          className={`${styles.mobileTab} ${analyticsPanelOpen ? styles.mobileTabActive : ''}`}
+          onClick={handleAnalyticsToggle}
+          aria-label="Analytics"
+          id="mobile-tab-analytics"
+        >
+          <BarChart2 size={20} aria-hidden="true" />
+          Analytics
+        </button>
+
+        {/* AI Tutor tab */}
+        <button
+          className={`${styles.mobileTab} ${aiTutorOpen ? styles.mobileTabActive : ''}`}
+          onClick={handleAiTutorToggle}
+          aria-label="AI Tutor"
+          id="mobile-tab-ai-tutor"
+        >
+          <BookOpen size={20} aria-hidden="true" />
+          AI Tutor
+        </button>
+
+        {/* Account tab */}
+        <button
+          className={`${styles.mobileTab}`}
+          onClick={user ? onMobileAccountClick : signInWithGoogle}
+          aria-label="Account"
+          id="mobile-tab-account"
+        >
+          {user && user.user_metadata?.avatar_url
+            ? <img src={user.user_metadata.avatar_url} alt="" className={styles.mobileTabAvatar} />
+            : <UserCircle size={20} aria-hidden="true" />
+          }
+          {user ? 'Account' : 'Sign In'}
+        </button>
+
       </nav>
 
-      {/* ── Mobile Run FAB ────────────────────────────────────────────────── */}
-      {isMobile && (
-        <button
-          id="mobile-run-fab"
-          className={`${styles.mobileRunFab} ${isRunning ? styles.mobileRunFabRunning : ''}`}
-          onClick={isRunning ? handleKill : handleRun}
-          aria-label={isRunning ? 'Stop program' : 'Run program'}
-          title={isRunning ? 'Stop' : 'Run'}
-        >
-          {isRunning ? '■' : '▶'}
-        </button>
-      )}
+      {/* Mobile FAB removed — Run is accessible from the EditorPanel toolbar */}
 
       {/* Language Detector Popup — rendered outside the split layout */}
       {showLangPopup && langDetect && (
@@ -651,6 +676,42 @@ export default function App() {
       {/* Admin Dashboard — only rendered for admin email, modal overlay */}
       {adminDashboardOpen && (
         <AdminDashboard onClose={() => setAdminDashboardOpen(false)} />
+      )}
+
+      {/* Mobile Account Sheet */}
+      {mobileAccountSheetOpen && (
+        <>
+          <div
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:8000 }}
+            onClick={() => setMobileAccountSheetOpen(false)}
+          />
+          <div className={styles.mobileAccountSheet}>
+            <div className={styles.mobileAccountSheetHandle} />
+            {user ? (
+              <>
+                <div className={styles.mobileAccountInfo}>
+                  {user.user_metadata?.avatar_url
+                    ? <img src={user.user_metadata.avatar_url} alt="" className={styles.mobileAccountAvatar} />
+                    : <UserCircle size={48} style={{ color:'#64748b' }} />
+                  }
+                  <div>
+                    <div className={styles.mobileAccountName}>{user.user_metadata?.full_name || 'User'}</div>
+                    <div className={styles.mobileAccountEmail}>{user.email}</div>
+                  </div>
+                </div>
+                <button
+                  className={styles.mobileAccountSignOut}
+                  onClick={() => { signOut(); setMobileAccountSheetOpen(false); }}
+                >Sign Out</button>
+              </>
+            ) : (
+              <button
+                className={styles.mobileAccountSignIn}
+                onClick={() => { signInWithGoogle(); setMobileAccountSheetOpen(false); }}
+              >Sign In with Google</button>
+            )}
+          </div>
+        </>
       )}
 
       {/* OCR/Upload Overlay */}
