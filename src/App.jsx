@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Code2, TerminalSquare, Bug, Clock, BarChart2, BookOpen, UserCircle, LogIn } from 'lucide-react';
+import { Code2, TerminalSquare, Bug, Clock, BarChart2, BookOpen } from 'lucide-react';
 import Header from './components/Header.jsx';
 import EditorPanel from './components/EditorPanel.jsx';
 import DragDivider from './components/DragDivider.jsx';
@@ -495,6 +495,7 @@ export default function App() {
         user={user}
         onSignIn={signInWithGoogle}
         onSignOut={signOut}
+        onMobileAccountClick={onMobileAccountClick}
       />
 
       <div className={styles.workspace} ref={containerRef}>
@@ -616,20 +617,6 @@ export default function App() {
         >
           <BookOpen size={20} aria-hidden="true" />
           AI Tutor
-        </button>
-
-        {/* Account tab */}
-        <button
-          className={`${styles.mobileTab}`}
-          onClick={user ? onMobileAccountClick : signInWithGoogle}
-          aria-label="Account"
-          id="mobile-tab-account"
-        >
-          {user && user.user_metadata?.avatar_url
-            ? <img src={user.user_metadata.avatar_url} alt="" className={styles.mobileTabAvatar} />
-            : <UserCircle size={20} aria-hidden="true" />
-          }
-          {user ? 'Account' : 'Sign In'}
         </button>
 
       </nav>

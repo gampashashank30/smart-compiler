@@ -27,10 +27,11 @@ export default function Header({
   aiTutorOpen = false,
   onAdminToggle,
   adminDashboardOpen = false,
-  isAdmin = false,        // ← resolved server-side via /api/admin/is-admin
+  isAdmin = false,
   user = null,
   onSignIn,
-  onSignOut
+  onSignOut,
+  onMobileAccountClick,   // ← new: opens account sheet on mobile
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -195,13 +196,20 @@ export default function Header({
 
         {/* ── MOBILE: Compact right side with avatar + hamburger ────── */}
         <div className={styles.mobileRight}>
-          {/* Show user avatar on mobile */}
+          {/* Account button — tapping opens account sheet from top-right */}
           {user ? (
-            <img
-              src={user.user_metadata?.avatar_url || 'https://via.placeholder.com/150'}
-              alt={user.user_metadata?.full_name || 'User'}
-              className={styles.mobileAvatar}
-            />
+            <button
+              className={styles.mobileAvatarBtn}
+              onClick={onMobileAccountClick}
+              aria-label="Account"
+            >
+              <img
+                src={user.user_metadata?.avatar_url || ''}
+                alt={user.user_metadata?.full_name || 'User'}
+                className={styles.mobileAvatar}
+                onError={e => { e.target.style.display='none'; }}
+              />
+            </button>
           ) : (
             <button className={styles.mobileSignInBtn} onClick={onSignIn} aria-label="Sign In">
               <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">

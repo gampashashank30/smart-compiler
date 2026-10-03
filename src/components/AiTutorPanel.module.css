@@ -1458,45 +1458,338 @@
 
 /* ================================================================
    AI TUTOR PANEL — MOBILE RESPONSIVE (≤768px)
-   Desktop layout is UNCHANGED. On mobile:
-   - Panel goes full-screen edge-to-edge (inset: 0)
-   - Sidebar becomes a bottom sheet (slides up from bottom)
-   - Main content gets full width
+   Two-screen native-app-style flow:
+     Screen 1: Topic picker (sidebar full-screen)
+     Screen 2: Learning steps (mainContent full-screen)
+   Desktop is COMPLETELY UNCHANGED above this breakpoint.
    ================================================================ */
 @media (max-width: 768px) {
+  /* Full-screen overlay — edge-to-edge */
   .tutorContainer {
     inset: 0;
     border-radius: 0;
     flex-direction: column;
+    overflow: hidden;
   }
 
-  /* On mobile, sidebar becomes a hidden bottom panel unless toggled */
+  /* ── Screen 1: Topic Picker ─────────────────────────────────── */
+  /* Sidebar becomes the full topic-picker screen */
   .sidebar {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: 0;
     width: 100%;
-    max-height: 70vh;
+    height: 100%;
+    max-height: none;
     border-right: none;
-    border-top: 1px solid #e2e8f0;
-    border-radius: 20px 20px 0 0;
-    z-index: 10;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 2;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.22s ease;
   }
 
-  /* When sidebar is open on mobile, slide it into view */
-  .sidebarOpen {
-    transform: translateY(0) !important;
+  /* Hide sidebar when on steps view */
+  .sidebar[data-mobile-hidden="true"] {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .sidebar[data-mobile-hidden="false"] {
+    transform: translateX(0);
+    opacity: 1;
   }
 
-  /* The main content fills the entire panel width */
+  /* Mobile-only header for topic picker */
+  .mobileSidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    min-height: 52px;
+  }
+
+  .mobileSidebarTitle {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+  }
+
+  .mobileSidebarClose {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Hide the desktop sidebarHeader title on mobile (we have our own) */
+  .sidebarHeader {
+    display: none;
+  }
+
+  /* Make level tabs scrollable horizontal row */
+  .levelTabs {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 10px 12px;
+    gap: 8px;
+    scrollbar-width: none;
+    flex-shrink: 0;
+  }
+  .levelTabs::-webkit-scrollbar { display: none; }
+
+  .levelTab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 20px;
+  }
+
+  /* Topic list scrollable */
+  .topicList {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 0 env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Larger tap targets on topic cards */
+  .topicCard {
+    padding: 14px 16px;
+    margin: 0 12px 6px;
+    border-radius: 12px;
+    min-height: 60px;
+  }
+
+  .topicTitle {
+    font-size: 14px;
+  }
+
+  .topicSub {
+    font-size: 11px;
+  }
+
+  /* Show chevron on mobile to signal tappability */
+  .topicChevron {
+    display: block;
+    font-size: 20px;
+    color: #94a3b8;
+    margin-left: auto;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  /* ── Screen 2: Learning Steps ───────────────────────────────── */
   .mainContent {
-    flex: 1 !important;
+    position: absolute;
+    inset: 0;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 2;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.22s ease;
+  }
+
+  /* Hide main content when on topics view */
+  .mainContent[data-mobile-hidden="true"] {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .mainContent[data-mobile-hidden="false"] {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  /* Mobile steps header — sticky back + title + close */
+  .mobileStepsHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    min-height: 52px;
+  }
+
+  .mobileBackBtn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #4f46e5;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .mobileStepsTitle {
+    flex: 1;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .mobileStepsClose {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Hide the desktop mainHeader title/voice area (keep step nav + body) */
+  .mainHeader {
+    display: none;
+  }
+
+  /* Step nav — scrollable horizontal pills on mobile */
+  .stepNav {
+    flex-shrink: 0;
+    padding: 10px 12px;
+    overflow-x: auto;
+    gap: 4px;
+    scrollbar-width: none;
+    background: #fff;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .stepNav::-webkit-scrollbar { display: none; }
+
+  .stepNavItem {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    font-size: 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .stepNavSeparator {
+    display: none;
+  }
+
+  /* Step body fills remaining screen space, scrollable */
+  .stepBody {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 14px env(safe-area-inset-bottom, 16px);
+  }
+
+  /* Readable section font sizes on mobile */
+  .sectionTitle {
+    font-size: 14px;
+  }
+
+  .sectionContent {
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+
+  /* Hide voice gear settings on mobile to reduce clutter */
+  .voicePanelWrapper {
+    display: none;
+  }
+
+  /* Compact playback controls on mobile */
+  .playbackControls {
+    gap: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .readAllBtn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  /* Code editor area */
+  .codeEditorWrapper {
+    height: 200px;
+    min-height: 160px;
+  }
+
+  /* Terminal output */
+  .terminalOutput {
+    height: 120px;
+    min-height: 100px;
+    font-size: 12px;
+  }
+
+  /* Make action buttons full-width on mobile */
+  .runBtn,
+  .verifyBtn,
+  .validateBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 13px;
+    font-size: 14px;
+  }
+
+  /* Step footer nav buttons */
+  .stepFooter {
+    padding: 12px 14px;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .stepFooterBtn {
+    flex: 1;
+    padding: 12px;
+    font-size: 13px;
+    text-align: center;
+    justify-content: center;
   }
 }
+
+/* Hide mobile-only elements on desktop */
+.mobileSidebarHeader,
+.mobileStepsHeader {
+  display: none;
+}
+
+/* Hide desktop chevron on topic cards */
+.topicChevron {
+  display: none;
+}

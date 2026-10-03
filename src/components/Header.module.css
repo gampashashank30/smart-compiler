@@ -686,6 +686,19 @@
   display: none;
 }
 
+/* ── Mobile Avatar Button (wrapper to make avatar tappable) ──── */
+.mobileAvatarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ── Mobile Avatar (small, beside hamburger) ─────────────────── */
 .mobileAvatar {
   width: 30px;

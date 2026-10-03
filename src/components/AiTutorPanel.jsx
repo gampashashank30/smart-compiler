@@ -45,6 +45,9 @@ export default function AiTutorPanel({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState(0); // 0 = All Levels
 
+  // Mobile two-screen flow: 'topics' = topic picker, 'steps' = learning steps
+  const [mobileTutorView, setMobileTutorView] = useState('topics');
+
   // Step 2: Quiz State
   const [quizAnswers, setQuizAnswers] = useState({}); // { questionId: selectedIndex }
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -462,6 +465,8 @@ export default function AiTutorPanel({ onClose }) {
     } else {
       setCodeText('#include <stdio.h>\n\nint main() {\n    \n    return 0;\n}');
     }
+    // On mobile: automatically go to the steps view after topic selection
+    setMobileTutorView('steps');
   };
 
   // Handle Search & Level Filtering
@@ -741,10 +746,17 @@ ${codeText}
   return (
     <>
       <div className={styles.backdrop} onClick={onClose} />
-      <div className={styles.tutorContainer}>
+      <div className={styles.tutorContainer} data-mobile-view={mobileTutorView}>
         
-        {/* ─── Sidebar ─── */}
-        <div className={styles.sidebar}>
+        {/* ─── Sidebar (Topic Picker) ─── */}
+        <div className={styles.sidebar} data-mobile-hidden={mobileTutorView === 'steps' ? 'true' : 'false'}>
+
+          {/* Mobile-only header bar for topic picker screen */}
+          <div className={styles.mobileSidebarHeader}>
+            <span className={styles.mobileSidebarTitle}>📚 AI Study Tutor</span>
+            <button className={styles.mobileSidebarClose} onClick={onClose} aria-label="Close">✕</button>
+          </div>
+
           <div className={styles.sidebarHeader}>
             <div className={styles.sidebarTitle}>
               <span>AI Study Tutor</span>
@@ -813,6 +825,8 @@ ${codeText}
                       </div>
                     </div>
                     {isDone && <span className={styles.topicCheck}>✓</span>}
+                    {/* Mobile chevron — signals tap to navigate */}
+                    <span className={styles.topicChevron} aria-hidden="true">›</span>
                   </div>
                 );
               })
@@ -821,8 +835,25 @@ ${codeText}
         </div>
 
         {/* ─── Main Panel Content ─── */}
-        <div className={styles.mainContent}>
+        <div className={styles.mainContent} data-mobile-hidden={mobileTutorView === 'topics' ? 'true' : 'false'}>
           
+          {/* Mobile-only top navigation bar for steps view */}
+          <div className={styles.mobileStepsHeader}>
+            <button
+              className={styles.mobileBackBtn}
+              onClick={() => setMobileTutorView('topics')}
+              aria-label="Back to topics"
+            >
+              ‹ Topics
+            </button>
+            <span className={styles.mobileStepsTitle}>{currentTopic.icon} {currentTopic.title}</span>
+            <button
+              className={styles.mobileStepsClose}
+              onClick={() => { handleStopSpeech(); onClose(); }}
+              aria-label="Close"
+            >✕</button>
+          </div>
+
           {/* Header */}
           <div className={styles.mainHeader}>
             <div className={styles.headerLeft}>
