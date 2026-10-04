@@ -297,7 +297,10 @@
   background: transparent;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
   font-size: 13.5px;
-  line-height: 1.65;
+  /* CRITICAL: use the exact same pixel value as .highlight/.textarea below.
+     Fractional multipliers (e.g. 1.65) round differently per browser/element;
+     a pixel value is computed identically for every element, eliminating drift. */
+  line-height: 22px;
   white-space: pre;
   color: #3d444d;
   text-align: right;
@@ -313,23 +316,32 @@
 }
 
 /* ─── Shared font properties for BOTH layers ─────────────── */
+/* ALIGNMENT CONTRACT: every property here MUST be pixel-identical on both
+   the <pre> highlight layer and the <textarea> input layer. Even one pixel
+   of difference compounds into visible cursor drift at higher line counts.
+   Rules:
+     • box-sizing: border-box  — same box model, same scrollWidth/Height
+     • line-height in px       — fractional multipliers round differently
+                                  per element and per browser; px is exact
+     • identical padding/font  — any asymmetry shifts internal text origin */
 .highlight,
 .textarea {
   position: absolute;
   inset: 0;
   margin: 0;
   padding: 16px 20px;
+  box-sizing: border-box;        /* ensures width/height include padding */
 
   /* MUST be identical on both */
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
   font-size: 13.5px;
-  line-height: 1.65;
+  line-height: 22px;             /* px, not multiplier — no sub-pixel drift */
   tab-size: 4;
   -moz-tab-size: 4;
   white-space: pre;
   word-break: normal;
   overflow-wrap: normal;
-  font-variant-ligatures: none; /* disable ligatures so == stays as == */
+  font-variant-ligatures: none;  /* disable ligatures so == stays as == */
 }
 
 /* ─── Highlight layer (pre) ─────────────────────────────── */
@@ -599,26 +611,25 @@
     letter-spacing: 0.06em;
   }
 
-  /* Slightly smaller mono font in editor on narrow screens.
-     CRITICAL: font-size must be >= 16px on the <textarea> to prevent
-     iOS Safari from auto-zooming the viewport when the field is focused.
-     We raise the <pre> highlight layer to match so both layers stay aligned. */
+  /* CRITICAL: font-size must be >= 16px on the <textarea> to prevent iOS
+     Safari auto-zooming the viewport when the field is focused.
+     line-height MUST be the same pixel value on ALL three elements
+     (.textarea, .highlight, .lineNumbers) — fractional multipliers round
+     differently per element causing cursor/highlight drift at high line counts. */
   .textarea,
   .highlight {
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 26px;   /* px — identical to .lineNumbers below */
   }
 
-  /* Gutter line numbers must share the same font metrics as the
-     textarea / highlight layer so per-line pixel heights stay in sync. */
   .lineNumbers {
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 26px;   /* px — must equal .textarea/.highlight above */
   }
 
-  /* Gutter width — remove the legacy font-size cascade that was a no-op
-     because .lineNumbers has its own explicit font-size. */
+  /* No font-size or line-height needed on .gutter — those live on
+     .lineNumbers which is the actual text element inside the gutter. */
   .gutter {
-    /* font-size no longer needed here; controlled by .lineNumbers above */
+    /* intentionally empty — font metrics are on .lineNumbers */
   }
 }
