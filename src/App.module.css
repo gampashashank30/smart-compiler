@@ -2,7 +2,11 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  height: 100dvh; /* handles virtual keyboard on mobile */
+  /* --app-height is written by the visualViewport resize listener in App.jsx.
+     It accurately tracks the visible area when the virtual keyboard is open on
+     BOTH iOS Safari (where 100dvh already works) and Android Chrome (where it
+     doesn't). Falls back to 100dvh for browsers without visualViewport. */
+  height: var(--app-height, 100dvh);
   width: 100vw;
   overflow: hidden;
   background: #f8f8f5;

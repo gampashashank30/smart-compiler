@@ -21,6 +21,7 @@ export default function EditorPanel({
   code, onChange, onRun, onKill, onClear,
   isRunning = false,
   runStatus = 'idle',  // 'idle' | 'compiling' | 'running'
+  isMobile  = false,
   // Multi-tab props
   tabs        = [],
   activeTabId = null,
@@ -30,10 +31,14 @@ export default function EditorPanel({
   onTabRename,
   onFileUpload,
 }) {
-  const textareaRef   = useRef(null);
-  const preRef        = useRef(null);
-  const gutterRef     = useRef(null);
+  const textareaRef    = useRef(null);
+  const preRef         = useRef(null);
+  const gutterRef      = useRef(null);
   const renameInputRef = useRef(null);
+  // Tracks whether the browser's IME (Android Gboard, etc.) is composing a
+  // character. During composition e.key is often 'Unidentified', so we must
+  // skip all smart-edit logic and let the IME handle keystrokes natively.
+  const isComposingRef = useRef(false);
 
   // ── Undo / Redo history stack ─────────────────────────────────────────
   // Each entry: { code, start, end }
@@ -160,6 +165,16 @@ export default function EditorPanel({
     const start = ta.selectionStart;
     const end   = ta.selectionEnd;
     const key   = e.key;
+
+    // ── IME / Android virtual-keyboard guard ─────────────────────────────────
+    // Android Gboard (and other IMEs) fire keydown with key='Unidentified' or
+    // key='Process' during multi-step character composition. Our smart-edit
+    // logic must not intercept these events — doing so (especially calling
+    // e.preventDefault()) corrupts the IME state and duplicates / drops chars.
+    // Ctrl/Meta shortcuts always pass through so Ctrl+Z etc. still work.
+    if (!e.ctrlKey && !e.metaKey) {
+      if (isComposingRef.current || key === 'Unidentified' || key === 'Process') return;
+    }
 
     // ── Ctrl+Z → Undo ────────────────────────────────────────────────────────
     if ((e.ctrlKey || e.metaKey) && key === 'z' && !e.shiftKey) {
@@ -586,6 +601,9 @@ export default function EditorPanel({
             }}
             onScroll={syncScroll}
             onKeyDown={handleKeyDown}
+            // IME composition tracking — see isComposingRef and handleKeyDown guard
+            onCompositionStart={() => { isComposingRef.current = true;  }}
+            onCompositionEnd={()   => { isComposingRef.current = false; }}
             spellCheck={false}
             autoComplete="off"
             autoCorrect="off"

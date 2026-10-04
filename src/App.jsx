@@ -209,6 +209,23 @@ export default function App() {
 
   // ── Mobile state ─────────────────────────────────────────────────────────
   const isMobile = useIsMobile();
+
+  // Sync the --app-height CSS custom property with the visual viewport.
+  // This is the reliable cross-platform way to shrink the app shell when
+  // the virtual keyboard opens:
+  //   • 100dvh  — shrinks on iOS Safari but NOT on Android Chrome
+  //   • visualViewport.height — shrinks on BOTH iOS Safari and Android Chrome
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      document.documentElement.style.setProperty('--app-height', `${vv.height}px`);
+    };
+    vv.addEventListener('resize', update);
+    update(); // set immediately
+    return () => vv.removeEventListener('resize', update);
+  }, []);
+
   // 'editor' | 'console' | 'ai'
   const [mobilePanelTab, setMobilePanelTab] = useState('editor');
 
@@ -520,6 +537,7 @@ export default function App() {
             onClear={handleClear}
             isRunning={isRunning}
             runStatus={runStatus}
+            isMobile={isMobile}
           />
         </div>
 

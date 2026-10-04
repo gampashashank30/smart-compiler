@@ -282,6 +282,9 @@
   background: #0d1117;
   border-right: 1px solid #161b22;
   user-select: none;
+  /* GPU-promote so JS-driven scroll sync doesn't repaint during
+     inertial touch scroll, eliminating gutter rubber-band lag */
+  will-change: scroll-position;
 }
 
 /* Single pre element for line numbers — MUST mirror .highlight/.textarea
@@ -337,6 +340,8 @@
   overflow: hidden;         /* scroll is driven by textarea via JS */
   pointer-events: none;
   z-index: 0;
+  /* GPU-composited layer so synchronized scrolling from JS is smooth */
+  will-change: scroll-position;
 }
 
 /* ─── Textarea (input layer) ─────────────────────────────── */
@@ -349,6 +354,10 @@
   resize: none;
   overflow: auto;           /* textarea drives scrolling */
   z-index: 1;
+  /* Allow the browser to handle vertical touch scrolling natively.
+     Without this the browser must decide between scroll and text-selection
+     drag before firing, adding ~300 ms of unnecessary lag on mobile. */
+  touch-action: pan-y;
 }
 
 /* Thin scrollbar styled to match the theme */
@@ -590,15 +599,26 @@
     letter-spacing: 0.06em;
   }
 
-  /* Slightly smaller mono font in editor on narrow screens */
+  /* Slightly smaller mono font in editor on narrow screens.
+     CRITICAL: font-size must be >= 16px on the <textarea> to prevent
+     iOS Safari from auto-zooming the viewport when the field is focused.
+     We raise the <pre> highlight layer to match so both layers stay aligned. */
   .textarea,
   .highlight {
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1.6;
   }
 
-  /* Gutter line numbers */
+  /* Gutter line numbers must share the same font metrics as the
+     textarea / highlight layer so per-line pixel heights stay in sync. */
+  .lineNumbers {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Gutter width — remove the legacy font-size cascade that was a no-op
+     because .lineNumbers has its own explicit font-size. */
   .gutter {
-    font-size: 11px;
+    /* font-size no longer needed here; controlled by .lineNumbers above */
   }
 }
