@@ -34,3 +34,6 @@ scratch/
 
 # Local node binary distributions
 node-dist/
+
+# Playwright test results
+playwright-mobile-results/

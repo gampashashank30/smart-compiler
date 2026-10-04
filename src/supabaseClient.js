@@ -6,8 +6,14 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
 
-// Check if we are running locally with dummy variables
-const isDummy = supabaseUrl.includes('dummy');
+// Check if we are running locally with dummy/placeholder variables
+let isValidUrl = false;
+try {
+  const parsed = new URL(supabaseUrl);
+  isValidUrl = parsed.protocol === 'http:' || parsed.protocol === 'https:';
+} catch {}
+
+const isDummy = !isValidUrl || supabaseUrl.includes('dummy') || supabaseUrl.includes('<your-project-ref>');
 
 const mockSupabase = {
   isDummy: true,

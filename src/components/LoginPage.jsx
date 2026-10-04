@@ -88,6 +88,9 @@ export default function LoginPage() {
 
   // Graceful guest mode bypass if Supabase credentials are not set
   const handleGuestBypass = () => {
+    const mockUser = { id: 'guest-user-id', email: 'guest@example.com' };
+    const mockSession = { user: mockUser, access_token: 'dummy-access-token' };
+    localStorage.setItem('supabase-mock-session', JSON.stringify(mockSession));
     window.location.href = '/app.html';
   };
 

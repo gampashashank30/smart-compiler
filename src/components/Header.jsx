@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import styles from './Header.module.css';
-import { BookOpen, Presentation, BarChart2, Clock, Bug, X, Menu } from 'lucide-react';
+import { BookOpen, Presentation, BarChart2, Clock, Bug, X, Menu, User } from 'lucide-react';
 
 /**
  * SmartCompiler Header
@@ -203,12 +203,18 @@ export default function Header({
               onClick={onMobileAccountClick}
               aria-label="Account"
             >
-              <img
-                src={user.user_metadata?.avatar_url || ''}
-                alt={user.user_metadata?.full_name || 'User'}
-                className={styles.mobileAvatar}
-                onError={e => { e.target.style.display='none'; }}
-              />
+              {user.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt={user.user_metadata?.full_name || 'User'}
+                  className={styles.mobileAvatar}
+                  onError={e => { e.target.style.display='none'; }}
+                />
+              ) : (
+                <div className={styles.mobileAvatarFallback}>
+                  <User size={18} />
+                </div>
+              )}
             </button>
           ) : (
             <button className={styles.mobileSignInBtn} onClick={onSignIn} aria-label="Sign In">

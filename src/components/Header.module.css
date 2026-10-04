@@ -640,6 +640,11 @@
    All classes below are mobile-only additions.
    ================================================================ */
 
+/* By default (desktop), hide the mobile right section */
+.mobileRight {
+  display: none;
+}
+
 /* Hide desktop right-section on mobile */
 @media (max-width: 768px) {
   .header {
@@ -681,11 +686,6 @@
   }
 }
 
-/* On desktop, hide the mobile right section */
-.mobileRight {
-  display: none;
-}
-
 /* ── Mobile Avatar Button (wrapper to make avatar tappable) ──── */
 .mobileAvatarBtn {
   display: flex;
@@ -706,6 +706,18 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #10b981;
+}
+
+.mobileAvatarFallback {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: #059669;
+  border: 2px solid #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ── Mobile Sign-In Button (icon only) ───────────────────────── */
