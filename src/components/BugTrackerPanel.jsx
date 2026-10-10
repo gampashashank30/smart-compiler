@@ -235,22 +235,6 @@ function MistakeCard({ type, count, rank, maxCount, isSelected, onSelect, animDe
       <div className={styles.mistakeFreqRow}>
         <span className={styles.mistakeFreqLabel}>Frequency</span>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {improvementPct !== null && improvementPct > 0 && (
-            <span
-              style={{
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                color: '#059669',
-                background: '#ecfdf5',
-                padding: '2px 6px',
-                borderRadius: 999,
-                border: '1px solid #a7f3d0',
-              }}
-              title={`Error frequency dropped by ${improvementPct}% in recent runs!`}
-            >
-              ↓ {improvementPct}%
-            </span>
-          )}
           <span
             className={styles.mistakeFreqPill}
             style={{ background: isSelected ? meta.color : meta.bg, color: isSelected ? '#fff' : meta.color }}
