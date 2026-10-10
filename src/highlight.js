@@ -1,4 +1,4 @@
-// src/highlight.js — Pure JS C syntax highlighter (no dependencies)
+// src/highlight.js — Pure JS C, Python, and Java syntax highlighter (no dependencies)
 //
 // SECURITY: Every character of user-supplied code is passed through esc() before
 // being placed in an HTML string.  esc() HTML-encodes &, <, >, ", ', and /,
@@ -10,6 +10,25 @@ const C_KEYWORDS = new Set([
   'double', 'else', 'enum', 'extern', 'float', 'for', 'goto', 'if', 'int',
   'long', 'register', 'return', 'short', 'signed', 'sizeof', 'static',
   'struct', 'switch', 'typedef', 'union', 'unsigned', 'void', 'volatile', 'while'
+]);
+
+const PYTHON_KEYWORDS = new Set([
+  'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue',
+  'def', 'del', 'elif', 'else', 'except', 'False', 'finally', 'for', 'from',
+  'global', 'if', 'import', 'in', 'is', 'lambda', 'None', 'nonlocal', 'not',
+  'or', 'pass', 'raise', 'return', 'True', 'try', 'while', 'with', 'yield',
+  'self', 'print', 'range', 'len', 'int', 'str', 'float', 'list', 'dict', 'set', 'bool'
+]);
+
+const JAVA_KEYWORDS = new Set([
+  'abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char',
+  'class', 'const', 'continue', 'default', 'do', 'double', 'else', 'enum',
+  'extends', 'final', 'finally', 'float', 'for', 'goto', 'if', 'implements',
+  'import', 'instanceof', 'int', 'interface', 'long', 'native', 'new',
+  'package', 'private', 'protected', 'public', 'return', 'short', 'static',
+  'strictfp', 'super', 'switch', 'synchronized', 'this', 'throw', 'throws',
+  'transient', 'try', 'void', 'volatile', 'while', 'true', 'false', 'null',
+  'String', 'System', 'out', 'println', 'print', 'Scanner'
 ]);
 
 function esc(s) {
@@ -28,17 +47,34 @@ function span(cls, s) {
 }
 
 /**
- * Tokenize and highlight C source code.
+ * Tokenize and highlight code for a given language ('c', 'python', 'java').
  * Returns an HTML string safe to inject via dangerouslySetInnerHTML.
  */
-export function highlightC(code) {
+export function highlightCode(code, lang = 'c') {
+  if (!code) return '';
+  const normalizedLang = (lang || 'c').toLowerCase();
+
+  const isPython = normalizedLang === 'python';
+  const isJava = normalizedLang === 'java';
+  const keywords = isPython ? PYTHON_KEYWORDS : isJava ? JAVA_KEYWORDS : C_KEYWORDS;
+
   let result = '';
   let i = 0;
   const len = code.length;
 
   while (i < len) {
-    // ── Line comment ──────────────────────────────────────────────────────────
-    if (code[i] === '/' && code[i + 1] === '/') {
+    // ── Python triple quotes ──────────────────────────────────────────────────
+    if (isPython && (code.slice(i, i + 3) === '"""' || code.slice(i, i + 3) === "'''")) {
+      const q = code.slice(i, i + 3);
+      const end = code.indexOf(q, i + 3);
+      const tok = end === -1 ? code.slice(i) : code.slice(i, end + 3);
+      result += span('string', tok);
+      i += tok.length;
+      continue;
+    }
+
+    // ── Python line comments (# ...) ──────────────────────────────────────────
+    if (isPython && code[i] === '#') {
       const end = code.indexOf('\n', i);
       const tok = end === -1 ? code.slice(i) : code.slice(i, end);
       result += span('comment', tok);
@@ -46,8 +82,17 @@ export function highlightC(code) {
       continue;
     }
 
-    // ── Block comment ─────────────────────────────────────────────────────────
-    if (code[i] === '/' && code[i + 1] === '*') {
+    // ── C / Java Line comment ─────────────────────────────────────────────────
+    if (!isPython && code[i] === '/' && code[i + 1] === '/') {
+      const end = code.indexOf('\n', i);
+      const tok = end === -1 ? code.slice(i) : code.slice(i, end);
+      result += span('comment', tok);
+      i += tok.length;
+      continue;
+    }
+
+    // ── C / Java Block comment ────────────────────────────────────────────────
+    if (!isPython && code[i] === '/' && code[i + 1] === '*') {
       const end = code.indexOf('*/', i + 2);
       const tok = end === -1 ? code.slice(i) : code.slice(i, end + 2);
       result += span('comment', tok);
@@ -55,11 +100,10 @@ export function highlightC(code) {
       continue;
     }
 
-    // ── Preprocessor (#include, #define …) ───────────────────────────────────
-    if (code[i] === '#') {
+    // ── C Preprocessor (#include, #define …) ──────────────────────────────────
+    if (!isPython && code[i] === '#') {
       const end = code.indexOf('\n', i);
       const tok = end === -1 ? code.slice(i) : code.slice(i, end);
-      // Color the directive itself, then the file/value slightly differently
       const match = tok.match(/^(#\s*\w+)(\s+)?(.*)?$/);
       if (match) {
         result += span('preproc', match[1]);
@@ -85,7 +129,7 @@ export function highlightC(code) {
       continue;
     }
 
-    // ── Char literal ──────────────────────────────────────────────────────────
+    // ── Char / Single-quote literal ───────────────────────────────────────────
     if (code[i] === "'") {
       let j = i + 1;
       while (j < len && code[j] !== "'") {
@@ -115,12 +159,11 @@ export function highlightC(code) {
       const m = code.slice(i).match(/^[a-zA-Z_]\w*/);
       if (m) {
         const word = m[0];
-        // Look past whitespace to see if '(' follows → function call
         let j = i + word.length;
         while (j < len && (code[j] === ' ' || code[j] === '\t')) j++;
         const isCall = code[j] === '(';
 
-        if (C_KEYWORDS.has(word)) {
+        if (keywords.has(word)) {
           result += span('keyword', word);
         } else if (isCall) {
           result += span('function', word);
@@ -136,7 +179,7 @@ export function highlightC(code) {
     const two = code.slice(i, i + 2);
     if ([
       '==', '!=', '<=', '>=', '&&', '||', '++', '--', '->',
-      '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<', '>>'
+      '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<', '>>', '**', '//'
     ].includes(two)) {
       result += span('operator', two);
       i += 2;
@@ -163,4 +206,11 @@ export function highlightC(code) {
   }
 
   return result;
+}
+
+/**
+ * Tokenize and highlight C source code (backwards-compatible alias).
+ */
+export function highlightC(code) {
+  return highlightCode(code, 'c');
 }

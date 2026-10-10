@@ -12,7 +12,15 @@ import AiTutorPanel from './components/AiTutorPanel.jsx';
 import AdminDashboard from './components/AdminDashboard.jsx';
 import { bugTrackerStore } from './bugTracker.js';
 import { compilationHistoryStore } from './compilationHistory.js';
-import { STARTER_CODE, LANG_TO_C_PROMPT } from './constants.js';
+import {
+  STARTER_CODE,
+  STARTER_CODE_C,
+  STARTER_CODE_PYTHON,
+  STARTER_CODE_JAVA,
+  LANG_TO_C_PROMPT,
+  CONVERT_CODE_PROMPT,
+  LANGUAGE_META
+} from './constants.js';
 import { detectLanguage } from './languageDetector.js';
 import { callClaude, parseJSON } from './api.js';
 import { readUploadedFile } from './fileUploader.js';
@@ -45,29 +53,66 @@ async function buildWsUrl() {
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const base  = `${proto}//${window.location.host}/ws/run`;
 
-  if (!token) return base; // unauthenticated — server will reject anyway
-
   try {
     // Exchange JWT for a 30-second single-use ticket
     const resp = await fetch('/api/ws-ticket', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
     });
     if (resp.ok) {
       const { ticket } = await resp.json();
       return `${base}?ticket=${encodeURIComponent(ticket)}`;
     }
-  } catch {
-    // Network error — fall back to token param (old behaviour, still auth'd)
-    console.warn('[buildWsUrl] Could not get WS ticket — falling back to token param');
+  } catch (err) {
+    console.warn('[buildWsUrl] Could not get WS ticket:', err.message);
   }
 
-  // Fallback: if ticket endpoint failed, use token directly (still secure, just logged)
-  return `${base}?ticket=invalid`; // server will reject with clear message
+  // Local development fallback
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return `${base}?ticket=dev-local`;
+  }
+
+  return `${base}?ticket=invalid`;
 }
 
 // Minimum confidence (0-100) required before we show the popup
 const DETECT_CONFIDENCE_THRESHOLD = 28;
+
+const DEFAULT_WORKSPACE_TABS = {
+  c:      [{ id: 1, name: 'main.c', code: STARTER_CODE_C }],
+  python: [{ id: 101, name: 'main.py', code: STARTER_CODE_PYTHON }],
+  java:   [{ id: 201, name: 'Main.java', code: STARTER_CODE_JAVA }],
+};
+
+function getInitialWorkspaceTabs() {
+  try {
+    const raw = localStorage.getItem('sc_workspace_tabs');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        c: parsed.c?.length ? parsed.c : DEFAULT_WORKSPACE_TABS.c,
+        python: parsed.python?.length ? parsed.python : DEFAULT_WORKSPACE_TABS.python,
+        java: parsed.java?.length ? parsed.java : DEFAULT_WORKSPACE_TABS.java,
+      };
+    }
+  } catch {}
+  return DEFAULT_WORKSPACE_TABS;
+}
+
+function getInitialActiveTabIds() {
+  try {
+    const raw = localStorage.getItem('sc_active_tab_ids');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        c: parsed.c || 1,
+        python: parsed.python || 101,
+        java: parsed.java || 201,
+      };
+    }
+  } catch {}
+  return { c: 1, python: 101, java: 201 };
+}
 
 
 
@@ -187,18 +232,69 @@ export default function App() {
     setBugPanelOpen(prev => !prev);
   }, []);
 
-  // ── Multi-tab state ────────────────────────────────────────────────────────
-  const [tabs, setTabs]               = useState([{ id: 1, name: 'main.c', code: STARTER_CODE }]);
-  const [activeTabId, setActiveTabId] = useState(1);
+  // ── Selected Language state (C / Python / Java) ──────────────────────────
+  const [selectedLanguage, setSelectedLanguage] = useState(() => {
+    try {
+      return localStorage.getItem('sc_active_language') || 'c';
+    } catch {
+      return 'c';
+    }
+  });
+
+  // ── Multi-tab state (isolated per language) ───────────────────────────────
+  const [workspaceTabs, setWorkspaceTabs] = useState(getInitialWorkspaceTabs);
+  const [activeTabIds, setActiveTabIds] = useState(getInitialActiveTabIds);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Derived: always the active tab's code
+  // Sync workspace tabs and active tab IDs to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('sc_workspace_tabs', JSON.stringify(workspaceTabs));
+    } catch {}
+  }, [workspaceTabs]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sc_active_tab_ids', JSON.stringify(activeTabIds));
+    } catch {}
+  }, [activeTabIds]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sc_active_language', selectedLanguage);
+    } catch {}
+    bugTrackerStore.setActiveLanguage(selectedLanguage);
+    compilationHistoryStore.setActiveLanguage(selectedLanguage);
+    analyticsStore.setActiveLanguage(selectedLanguage);
+    setHistoryCount(compilationHistoryStore.getAll(selectedLanguage).length);
+    setBugErrorCount(bugTrackerStore.getStats(selectedLanguage).errors);
+  }, [selectedLanguage]);
+
+  // Derived: current language's tabs and active tab
+  const tabs = workspaceTabs[selectedLanguage] || DEFAULT_WORKSPACE_TABS[selectedLanguage] || DEFAULT_WORKSPACE_TABS.c;
+  const activeTabId = activeTabIds[selectedLanguage] ?? tabs[0]?.id ?? 1;
+
   const activeProgramTab = tabs.find(t => t.id === activeTabId) ?? tabs[0];
-  const code             = activeProgramTab.code;
-  const setCode          = useCallback(
-    (newCode) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, code: newCode } : t)),
-    [activeTabId]
-  );
+  const code = activeProgramTab?.code ?? '';
+
+  const setCode = useCallback((newCode) => {
+    setWorkspaceTabs(prev => ({
+      ...prev,
+      [selectedLanguage]: (prev[selectedLanguage] || []).map(t =>
+        t.id === activeTabId ? { ...t, code: newCode } : t
+      ),
+    }));
+  }, [selectedLanguage, activeTabId]);
+
+  const handleLanguageChange = useCallback((newLang) => {
+    if (newLang === selectedLanguage) return;
+    setSelectedLanguage(newLang);
+    bugTrackerStore.setActiveLanguage(newLang);
+    compilationHistoryStore.setActiveLanguage(newLang);
+    analyticsStore.setActiveLanguage(newLang);
+    dismissedCodeRef.current = null;
+    setShowLangPopup(false);
+  }, [selectedLanguage]);
 
   // Load code from history into the active editor tab (defined after setCode)
   const handleLoadFromHistory = useCallback((historyCode) => {
@@ -256,40 +352,52 @@ export default function App() {
   // ── Tab management ───────────────────────────────────────────────────────────
   const handleTabAdd = useCallback(() => {
     const id = Date.now();
-    setTabs(prev => {
-      const num = prev.length + 1;
-      return [...prev, { id, name: `program${num}.c`, code: '' }];
+    const meta = LANGUAGE_META[selectedLanguage] || LANGUAGE_META.c;
+    const baseName = selectedLanguage === 'java' ? 'Program' : 'program';
+    setWorkspaceTabs(prev => {
+      const curTabs = prev[selectedLanguage] || [];
+      const num = curTabs.length + 1;
+      return {
+        ...prev,
+        [selectedLanguage]: [...curTabs, { id, name: `${baseName}${num}${meta.ext}`, code: '' }],
+      };
     });
-    setActiveTabId(id);
+    setActiveTabIds(prev => ({ ...prev, [selectedLanguage]: id }));
     dismissedCodeRef.current = null;
     setShowLangPopup(false);
-  }, []);
+  }, [selectedLanguage]);
 
   const handleTabClose = useCallback((closingId) => {
-    setTabs(prev => {
-      if (prev.length === 1) return prev; // never close the last tab
-      const closingIdx = prev.findIndex(t => t.id === closingId);
-      const next       = prev.filter(t => t.id !== closingId);
+    setWorkspaceTabs(prev => {
+      const curTabs = prev[selectedLanguage] || [];
+      if (curTabs.length <= 1) return prev; // never close the last tab
+      const closingIdx = curTabs.findIndex(t => t.id === closingId);
+      const nextTabs   = curTabs.filter(t => t.id !== closingId);
       if (activeTabId === closingId) {
-        const newActive = next[Math.min(closingIdx, next.length - 1)];
-        setActiveTabId(newActive.id);
+        const newActive = nextTabs[Math.min(closingIdx, nextTabs.length - 1)];
+        setActiveTabIds(prevIds => ({ ...prevIds, [selectedLanguage]: newActive.id }));
         dismissedCodeRef.current = null;
         setShowLangPopup(false);
       }
-      return next;
+      return { ...prev, [selectedLanguage]: nextTabs };
     });
-  }, [activeTabId]);
+  }, [selectedLanguage, activeTabId]);
 
   const handleTabSwitch = useCallback((id) => {
     if (id === activeTabId) return;
-    setActiveTabId(id);
+    setActiveTabIds(prev => ({ ...prev, [selectedLanguage]: id }));
     dismissedCodeRef.current = null;
     setShowLangPopup(false);
-  }, [activeTabId]);
+  }, [selectedLanguage, activeTabId]);
 
   const handleTabRename = useCallback((id, name) => {
-    setTabs(prev => prev.map(t => t.id === id ? { ...t, name: name.trim() || t.name } : t));
-  }, []);
+    setWorkspaceTabs(prev => ({
+      ...prev,
+      [selectedLanguage]: (prev[selectedLanguage] || []).map(t =>
+        t.id === id ? { ...t, name: name.trim() || t.name } : t
+      ),
+    }));
+  }, [selectedLanguage]);
 
   // ── File upload handler ─────────────────────────────────────────────────────
   const handleFileUpload = useCallback(async (file) => {
@@ -297,8 +405,11 @@ export default function App() {
     try {
       const { content, filename } = await readUploadedFile(file);
       const id = Date.now();
-      setTabs(prev => [...prev, { id, name: filename, code: content }]);
-      setActiveTabId(id);
+      setWorkspaceTabs(prev => ({
+        ...prev,
+        [selectedLanguage]: [...(prev[selectedLanguage] || []), { id, name: filename, code: content }],
+      }));
+      setActiveTabIds(prev => ({ ...prev, [selectedLanguage]: id }));
       dismissedCodeRef.current = null;
       setShowLangPopup(false);
     } catch (err) {
@@ -306,7 +417,7 @@ export default function App() {
     } finally {
       setIsUploading(false);
     }
-  }, []);
+  }, [selectedLanguage]);
 
   // Vertical drag divider
   const onDividerMouseDown = useCallback((e) => {
@@ -344,9 +455,10 @@ export default function App() {
   }, [code]);
 
   // ── Convert to C via AI ───────────────────────────────────────────────────
+  // ── Convert code via AI ───────────────────────────────────────────────────
   const handleConvertToC = useCallback(async () => {
     if (!langDetect) return;
-    const stats = analyticsStore.getStats();
+    const stats = analyticsStore.getStats(selectedLanguage);
     if (analyticsStore.isLimitReached()) {
       alert(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
       setShowLangPopup(false);
@@ -354,32 +466,38 @@ export default function App() {
     }
     setConverting(true);
     try {
-      const userMessage = `The following is ${langDetect.language} code. Please translate it to C:\n\n${code}`;
-      const raw = await callClaude(LANG_TO_C_PROMPT, userMessage);
+      const targetLangName = LANGUAGE_META[selectedLanguage]?.label || 'C';
+      const prompt = selectedLanguage === 'c'
+        ? LANG_TO_C_PROMPT
+        : CONVERT_CODE_PROMPT(langDetect.language, targetLangName);
+      const userMessage = `The following is ${langDetect.language} code. Please translate it to ${targetLangName}:\n\n${code}`;
+      const raw = await callClaude(prompt, userMessage);
       console.log('RAW AI RESPONSE:', raw);
       const parsed = parseJSON(raw);
       console.log('PARSED JSON:', parsed);
-      if (parsed?.c_code) {
+      const converted = parsed?.converted_code || parsed?.c_code || parsed?.code;
+      if (converted) {
         // sanitizeAiCode strips markdown fences and fixes double-escaped
-        // structural newlines while preserving C string escapes.
-        const cCode = sanitizeAiCode(parsed.c_code);
-        // 1. Load converted C code into the editor and close the popup.
-        setCode(cCode);
+        // structural newlines while preserving string escapes.
+        const cleanCode = sanitizeAiCode(converted);
+        // 1. Load converted code into the editor and close the popup.
+        setCode(cleanCode);
         setShowLangPopup(false);
-        dismissedCodeRef.current = cCode; // mark as C so next Run skips popup
+        dismissedCodeRef.current = cleanCode; // mark so next Run skips popup
         // 2. The editor is always on the left — show a success toast so the
         //    user knows the code has been loaded and they can click Run.
-        setConversionToast(`✓ Converted to C! Click Run ▶ to execute.`);
+        setConversionToast(`✓ Converted to ${targetLangName}! Click Run ▶ to execute.`);
         setTimeout(() => setConversionToast(null), 5000);
       } else {
-        // AI responded but returned no c_code field — show useful error
+        // AI responded but returned no code field — show useful error
         const preview = raw ? raw.slice(0, 200) : '(empty response)';
-        alert(`Conversion failed: The AI did not return valid C code.\n\nAI response preview:\n${preview}`);
+        alert(`Conversion failed: The AI did not return valid ${targetLangName} code.\n\nAI response preview:\n${preview}`);
         setShowLangPopup(false);
       }
     } catch (err) {
       console.error('[LangDetect] Conversion failed:', err);
       if (err.message.includes('Limit Reached') || err.message.includes('limit reached') || analyticsStore.isLimitReached()) {
+        const stats = analyticsStore.getStats(selectedLanguage);
         alert(`You have used ${stats.ai_tokens_used}/${stats.token_limit} tokens according to your limit for AI analysis.`);
       } else {
         alert(`Failed to convert code: ${err.message || 'Unknown error'}`);
@@ -389,7 +507,7 @@ export default function App() {
     } finally {
       setConverting(false);
     }
-  }, [code, langDetect, setCode]);
+  }, [code, langDetect, selectedLanguage, setCode]);
 
   // ── Run — connect WebSocket and send code for interactive execution ─────
   const handleRun = useCallback(() => {
@@ -400,24 +518,24 @@ export default function App() {
     if (runStatus === 'compiling' || runStatus === 'running') return;
 
     // ── Detect language immediately on Run (no debounce) ──────────────────
-    // Skip if user already dismissed for this exact code ("Keep as C")
+    // Skip if user already dismissed for this exact code
     if (dismissedCodeRef.current === code) {
       setActiveTab('terminal');
       setMobilePanelTab('console');
-      buildWsUrl().then(wsUrl => terminalRef.current?.connect(wsUrl, code));
-      analyticsStore.recordRun();
+      buildWsUrl().then(wsUrl => terminalRef.current?.connect(wsUrl, code, selectedLanguage));
+      analyticsStore.recordRun(selectedLanguage);
       return;
     }
 
     const result = detectLanguage(code);
+    // Only show popup if detected language differs from currently selected language
     if (
-      result.language !== 'c' &&
+      result.language !== selectedLanguage &&
       result.language !== 'unknown' &&
       result.confidence >= DETECT_CONFIDENCE_THRESHOLD
     ) {
       setLangDetect(result);
       setShowLangPopup(true);
-      // Don't connect the WebSocket yet — let the user decide
       return;
     }
 
@@ -428,10 +546,10 @@ export default function App() {
 
     // Build WS URL with JWT token, then connect
     buildWsUrl().then(wsUrl => {
-      terminalRef.current?.connect(wsUrl, code);
+      terminalRef.current?.connect(wsUrl, code, selectedLanguage);
     });
-    analyticsStore.recordRun();
-  }, [code, runStatus]);
+    analyticsStore.recordRun(selectedLanguage);
+  }, [code, runStatus, selectedLanguage]);
 
   // ── Kill running program ──────────────────────────────────────────────────
   const handleKill = useCallback(() => {
@@ -498,6 +616,8 @@ export default function App() {
   return (
     <div className={styles.appShell}>
       <Header
+        selectedLanguage={selectedLanguage}
+        onLanguageChange={handleLanguageChange}
         onBugTrackerToggle={handleBugTrackerToggle}
         bugTrackerErrorCount={bugErrorCount}
         onHistoryToggle={handleHistoryToggle}
@@ -538,6 +658,7 @@ export default function App() {
             isRunning={isRunning}
             runStatus={runStatus}
             isMobile={isMobile}
+            selectedLanguage={selectedLanguage}
           />
         </div>
 
@@ -562,6 +683,8 @@ export default function App() {
             isRunning={runStatus}
             onStatusChange={handleStatusChange}
             onDone={handleDone}
+            selectedLanguage={selectedLanguage}
+            activeFileName={activeProgramTab?.name}
           />
         </div>
       </div>
@@ -649,6 +772,7 @@ export default function App() {
           signals={langDetect.signals}
           scores={langDetect.scores}
           signalsMap={langDetect.signalsMap ?? {}}
+          targetLang={selectedLanguage}
           onConfirm={handleConvertToC}
           onDismiss={handleDismissPopup}
           converting={converting}
@@ -657,12 +781,12 @@ export default function App() {
 
       {/* Analytics Panel — slides in from right */}
       {analyticsPanelOpen && (
-        <AnalyticsPanel onClose={() => setAnalyticsPanelOpen(false)} />
+        <AnalyticsPanel onClose={() => setAnalyticsPanelOpen(false)} selectedLanguage={selectedLanguage} />
       )}
 
       {/* Bug Tracker Panel — slides in from right */}
       {bugPanelOpen && (
-        <BugTrackerPanel onClose={() => setBugPanelOpen(false)} />
+        <BugTrackerPanel onClose={() => setBugPanelOpen(false)} selectedLanguage={selectedLanguage} />
       )}
 
       {/* Compilation History Panel — slides in from right */}
@@ -670,6 +794,7 @@ export default function App() {
         <CompilationHistoryPanel
           onClose={() => setHistoryPanelOpen(false)}
           onLoadInEditor={handleLoadFromHistory}
+          selectedLanguage={selectedLanguage}
         />
       )}
 

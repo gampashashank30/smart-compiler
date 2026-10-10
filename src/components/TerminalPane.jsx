@@ -3,8 +3,9 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import styles from './TerminalPane.module.css';
-import { classifyCompileError, extractLineHint } from '../bugTracker.js';
+import { classifyCompileError, extractLineHint, classifyError, classifyErrorDetails, extractRawMessage, extractLineHintForLanguage } from '../bugTracker.js';
 import { compilationHistoryStore } from '../compilationHistory.js';
+import { LANGUAGE_META } from '../constants.js';
 
 /** Dispatch a bugtracker:record custom event — handled by App.jsx → bugTrackerStore */
 function dispatchBugEvent(payload) {
@@ -53,7 +54,7 @@ function stripAnsi(str) {
  *   .focus()                      — focus the terminal
  */
 const TerminalPane = forwardRef(function TerminalPane(
-  { onStatusChange, onDone },
+  { onStatusChange, onDone, selectedLanguage = 'c', activeFileName = '' },
   ref
 ) {
   const containerRef = useRef(null);
@@ -174,9 +175,11 @@ const TerminalPane = forwardRef(function TerminalPane(
   }, []);
 
   // ── Connect to WebSocket and run code ────────────────────────────────────────
-  const connect = useCallback((wsUrl, code) => {
+  const connect = useCallback((wsUrl, code, runLanguage = null) => {
     const term = termRef.current;
     if (!term) return;
+
+    const lang = runLanguage || selectedLanguage || 'c';
 
     // Close any existing connection
     if (wsRef.current) {
@@ -193,7 +196,8 @@ const TerminalPane = forwardRef(function TerminalPane(
     // Reset terminal and show compile banner
     term.write('\x1bc');
     term.writeln('\x1b[38;5;240m# ─────────────────────────────────────────────\x1b[0m');
-    term.writeln('\x1b[38;5;33m# Compiling...\x1b[0m');
+    const langLabel = LANGUAGE_META[lang]?.label || lang.toUpperCase();
+    term.writeln(`\x1b[38;5;33m# Preparing & running ${langLabel}...\x1b[0m`);
     term.writeln('');
     onStatusChange?.('compiling');
 
@@ -206,6 +210,7 @@ const TerminalPane = forwardRef(function TerminalPane(
       ws.send(JSON.stringify({
         type: 'run',
         code,
+        language: lang,
         cols: term.cols,
         rows: term.rows,
       }));
@@ -286,18 +291,23 @@ const TerminalPane = forwardRef(function TerminalPane(
           onStatusChange?.('idle');
           onDone?.({ success: false, compileError: true });
           // ── Bug tracker ──
+          const compileDetails = classifyErrorDetails(msg.data, lang);
           dispatchBugEvent({
             type:      'compile-error',
-            subtype:   classifyCompileError(msg.data),
+            subtype:   compileDetails.subtype,
+            rawMessage: compileDetails.rawMessage,
             timestamp: Date.now(),
             timeMs:    null,
             exitCode:  null,
-            lineHint:  extractLineHint(msg.data),
+            lineHint:  extractLineHintForLanguage(msg.data, lang),
             stderr:    msg.data ?? '',
+            language:  lang,
           });
           // ── Compilation history ──
           compilationHistoryStore.record({
             code,
+            filename:  activeFileName || (lang === 'java' ? 'Main.java' : lang === 'python' ? 'main.py' : 'main.c'),
+            language:  lang,
             status:    'error',
             exitCode:  null,
             timeMs:    null,
@@ -343,30 +353,60 @@ const TerminalPane = forwardRef(function TerminalPane(
           onDone?.({ success: exitCode === 0 && !killed, exitCode, timeMs, killed });
 
           // ── Bug tracker ──
+          // IMPORTANT: Check success FIRST — a slow interactive program that finishes
+          // cleanly (exitCode 0, not killed) must never be recorded as TLE.
           let runtimeSubtype;
-          if (killed || timeMs > 9500) {
-            runtimeSubtype = 'Infinite Loop / TLE';
-          } else if (exitCode !== 0) {
-            runtimeSubtype = (msg.stderr ?? '').includes('Segmentation fault')
-              ? 'Segmentation Fault'
-              : 'Runtime Crash';
-          } else {
+          let rtRawMsg = extractRawMessage(msg.stderr || capturedStdout);
+          if (exitCode === 0 && !killed) {
+            // Program succeeded — regardless of how long it took
             runtimeSubtype = 'Successful Run';
+            rtRawMsg = '';
+          } else if (killed) {
+            // Server explicitly killed the process (kill signal or timer)
+            runtimeSubtype = 'Infinite Loop / TLE';
+            rtRawMsg = 'Time Limit Exceeded';
+          } else if (exitCode !== 0) {
+            if (lang === 'python') {
+              const det = classifyErrorDetails(msg.stderr || capturedStdout, 'python');
+              runtimeSubtype = det.subtype;
+              rtRawMsg = det.rawMessage || rtRawMsg;
+            } else if (lang === 'java') {
+              const det = classifyErrorDetails(msg.stderr || capturedStdout, 'java');
+              runtimeSubtype = det.subtype;
+              rtRawMsg = det.rawMessage || rtRawMsg;
+            } else {
+              runtimeSubtype = (
+                  (msg.stderr ?? '').includes('Segmentation fault') ||
+                  capturedStdout.includes('Segmentation fault') ||
+                  exitCode === 139 ||
+                  msg.signal === 'SIGSEGV'
+                )
+                ? 'Segmentation Fault'
+                : 'Runtime Crash';
+            }
+          } else {
+            // Fallback (killed without exitCode, etc.)
+            runtimeSubtype = 'Infinite Loop / TLE';
+            rtRawMsg = 'Time Limit Exceeded';
           }
           dispatchBugEvent({
             type:      'runtime',
             subtype:   runtimeSubtype,
+            rawMessage: rtRawMsg,
             timestamp: Date.now(),
             timeMs:    timeMs ?? null,
             exitCode:  exitCode ?? null,
-            lineHint:  null,
+            lineHint:  extractLineHintForLanguage(msg.stderr || capturedStdout, lang),
             stderr:    msg.stderr ?? '',
+            language:  lang,
           });
 
           // ── Compilation history — pass real stdout ──
           const isSuccess = exitCode === 0 && !killed;
           compilationHistoryStore.record({
             code,
+            filename:  activeFileName || (lang === 'java' ? 'Main.java' : lang === 'python' ? 'main.py' : 'main.c'),
+            language:  lang,
             status:    isSuccess ? 'success' : 'error',
             exitCode:  exitCode ?? null,
             timeMs:    timeMs ?? null,

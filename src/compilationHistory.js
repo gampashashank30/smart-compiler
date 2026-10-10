@@ -2,28 +2,33 @@
  * compilationHistory.js
  *
  * Lightweight reactive store that persists each compile attempt to
- * localStorage so the user can review past runs across page refreshes.
+ * localStorage per-language so the user can review past runs across page refreshes.
+ *
+ * Separate storage keys:
+ *   - sc_history_c
+ *   - sc_history_python
+ *   - sc_history_java
  *
  * Each entry:
  * {
  *   id        : string   — unique id
  *   timestamp : number   — Date.now()
+ *   language  : 'c' | 'python' | 'java'
  *   code      : string   — source code that was compiled
  *   status    : 'success' | 'error'
  *   exitCode  : number | null
  *   timeMs    : number | null   — elapsed ms (null for compile errors)
  *   output    : string   — human-readable output/error text
+ *   stdout    : string   — captured program stdout
  *   errorType : string | null   — 'compile-error' | 'runtime' | null
  * }
- *
- * Note: Supabase sync is disabled. All data lives in localStorage only.
- * To re-enable cloud sync, restore supabase calls from git history.
  */
 
-const STORAGE_KEY = 'sc_compilation_history';
+const STORAGE_KEY_PREFIX = 'sc_history_';
+const LEGACY_STORAGE_KEY = 'sc_compilation_history';
 
 /**
- * Maximum local entries to keep in localStorage.
+ * Maximum local entries to keep in localStorage per language.
  * Exported so the UI can display the limit.
  */
 export const MAX_ENTRIES = 50;
@@ -42,9 +47,25 @@ function stripAnsi(str) {
     .replace(/\x1b/g, '');
 }
 
-function loadFromStorage() {
+function getStorageKey(lang = 'c') {
+  return `${STORAGE_KEY_PREFIX}${lang || 'c'}`;
+}
+
+function loadFromStorage(lang = 'c') {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const key = getStorageKey(lang);
+    let raw = localStorage.getItem(key);
+    if (!raw && lang === 'c') {
+      // Migrate legacy storage key if present
+      const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacyRaw) {
+        try {
+          const parsed = JSON.parse(legacyRaw);
+          saveToStorage(parsed, 'c');
+          return parsed;
+        } catch {}
+      }
+    }
     if (!raw) return [];
     return JSON.parse(raw);
   } catch {
@@ -52,9 +73,10 @@ function loadFromStorage() {
   }
 }
 
-function saveToStorage(entries) {
+function saveToStorage(entries, lang = 'c') {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    const key = getStorageKey(lang);
+    localStorage.setItem(key, JSON.stringify(entries));
   } catch {
     // quota exceeded — silent fail
   }
@@ -63,20 +85,47 @@ function saveToStorage(entries) {
 // ── Store ─────────────────────────────────────────────────────────────────────
 
 function createHistoryStore() {
-  let entries = loadFromStorage();
+  let activeLanguage = 'c';
+  const entriesByLang = {
+    c:      loadFromStorage('c'),
+    python: loadFromStorage('python'),
+    java:   loadFromStorage('java'),
+  };
   const listeners = new Set();
 
   function notify() {
-    const snapshot = [...entries];
-    listeners.forEach((fn) => fn(snapshot));
+    const current = [...(entriesByLang[activeLanguage] || [])];
+    listeners.forEach((fn) => {
+      try { fn(current); } catch {}
+    });
   }
 
   return {
+    /** Set current active language filter ('c' | 'python' | 'java') */
+    setActiveLanguage(lang) {
+      if (!lang || activeLanguage === lang) return;
+      activeLanguage = lang;
+      // Reload from storage in case it changed in another tab
+      if (!entriesByLang[lang]) {
+        entriesByLang[lang] = loadFromStorage(lang);
+      }
+      notify();
+    },
+
+    getActiveLanguage() {
+      return activeLanguage;
+    },
+
     /** Push a new compilation entry */
     record(entry) {
+      const lang = entry.language || activeLanguage || 'c';
+      if (!entriesByLang[lang]) entriesByLang[lang] = [];
+
       const newEntry = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         timestamp: Date.now(),
+        language: lang,
+        filename: entry.filename || (lang === 'java' ? 'Main.java' : lang === 'python' ? 'main.py' : 'main.c'),
         code: (entry.code ?? '').slice(0, 5000),
         status: entry.status ?? 'error',
         exitCode: entry.exitCode ?? null,
@@ -87,28 +136,39 @@ function createHistoryStore() {
         killed: entry.killed ?? false,
       };
 
-      entries = [newEntry, ...entries].slice(0, MAX_ENTRIES);
-      saveToStorage(entries);
+      entriesByLang[lang] = [newEntry, ...entriesByLang[lang]].slice(0, MAX_ENTRIES);
+      saveToStorage(entriesByLang[lang], lang);
       notify();
     },
 
     /** Delete a single entry by id */
-    delete(id) {
-      entries = entries.filter((e) => e.id !== id);
-      saveToStorage(entries);
+    delete(id, lang = null) {
+      const targetLang = lang || activeLanguage;
+      if (entriesByLang[targetLang]) {
+        entriesByLang[targetLang] = entriesByLang[targetLang].filter((e) => e.id !== id);
+        saveToStorage(entriesByLang[targetLang], targetLang);
+      } else {
+        // Search all languages if lang wasn't specified
+        for (const l of Object.keys(entriesByLang)) {
+          entriesByLang[l] = entriesByLang[l].filter((e) => e.id !== id);
+          saveToStorage(entriesByLang[l], l);
+        }
+      }
       notify();
     },
 
-    /** Clear all entries */
-    clearAll() {
-      entries = [];
-      saveToStorage(entries);
+    /** Clear all entries for a language (or current active language) */
+    clearAll(lang = null) {
+      const targetLang = lang || activeLanguage;
+      entriesByLang[targetLang] = [];
+      saveToStorage([], targetLang);
       notify();
     },
 
-    /** Get a snapshot of all entries (newest-first) */
-    getAll() {
-      return [...entries];
+    /** Get a snapshot of entries (newest-first) for a language */
+    getAll(lang = null) {
+      const targetLang = lang || activeLanguage;
+      return [...(entriesByLang[targetLang] || [])];
     },
 
     /** Subscribe to changes; returns unsubscribe fn */

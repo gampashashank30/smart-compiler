@@ -16,6 +16,8 @@ const RightPanel = forwardRef(function RightPanel(
     isRunning,
     onStatusChange,
     onDone,
+    selectedLanguage = 'c',
+    activeFileName = '',
   },
   terminalRef
 ) {
@@ -60,6 +62,8 @@ const RightPanel = forwardRef(function RightPanel(
             ref={terminalRef}
             onStatusChange={onStatusChange}
             onDone={onDone}
+            selectedLanguage={selectedLanguage}
+            activeFileName={activeFileName}
           />
         </div>
 
@@ -67,6 +71,7 @@ const RightPanel = forwardRef(function RightPanel(
           <AIExplanationTab
             code={code}
             onApplyFix={onApplyFix}
+            selectedLanguage={selectedLanguage}
           />
         )}
       </div>

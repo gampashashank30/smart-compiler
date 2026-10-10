@@ -537,7 +537,7 @@ ${logicText}
 """
 `;
 
-      const responseString = await callClaude(TUTOR_LOGIC_SYSTEM_PROMPT, userPrompt);
+      const responseString = await callClaude(TUTOR_LOGIC_SYSTEM_PROMPT('C'), userPrompt);
       const parsed = parseJSON(responseString);
       setLogicResult(parsed);
     } catch (err) {
@@ -609,7 +609,7 @@ Reference solution (do NOT reveal directly, but use it to understand the correct
 ${currentTopic.referenceSolution}
 """
 `;
-      const responseString = await callClaude(TUTOR_AI_SOLUTION_PROMPT, userPrompt);
+      const responseString = await callClaude(TUTOR_AI_SOLUTION_PROMPT('C'), userPrompt);
       const parsed = parseJSON(responseString);
       setAiSolution(parsed);
     } catch (err) {
@@ -697,7 +697,7 @@ ${codeText}
 """
 `;
 
-      const responseString = await callClaude(TUTOR_CODE_SYSTEM_PROMPT, userPrompt);
+      const responseString = await callClaude(TUTOR_CODE_SYSTEM_PROMPT('C'), userPrompt);
       const parsed = parseJSON(responseString);
       setCodeResult(parsed);
 

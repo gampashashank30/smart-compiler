@@ -1,22 +1,21 @@
 import { useState, useCallback } from 'react';
 import styles from './Header.module.css';
-import { BookOpen, Presentation, BarChart2, Clock, Bug, X, Menu, User } from 'lucide-react';
+import { BookOpen, Presentation, BarChart2, Clock, Bug, X, Menu, User, ChevronDown } from 'lucide-react';
+import { LANGUAGE_META } from '../constants.js';
 
 /**
  * SmartCompiler Header
  *
- * Logo design rationale (inspired by LeetCode, HackerRank, JetBrains):
- * - A rounded-square container with gradient fill (like JetBrains product logos)
- * - A lightning bolt as the mark — universally signals "fast execution / smart"
- * - Pure SVG paths only — NO SVG <text> nodes (avoids font-load flicker & overlap)
- * - Explicit gap between logoMark and wordmark divs to prevent merging
- *
  * Props:
+ *   selectedLanguage — current active language ('c' | 'python' | 'java')
+ *   onLanguageChange — callback when user switches language
  *   onBugTrackerToggle — called when the Bug Tracker button is clicked
  *   bugTrackerErrorCount — number to show in the red badge (0 = hide badge)
  */
 
 export default function Header({
+  selectedLanguage = 'c',
+  onLanguageChange,
   onBugTrackerToggle,
   bugTrackerErrorCount = 0,
   onHistoryToggle,
@@ -31,7 +30,7 @@ export default function Header({
   user = null,
   onSignIn,
   onSignOut,
-  onMobileAccountClick,   // ← new: opens account sheet on mobile
+  onMobileAccountClick,
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -84,8 +83,28 @@ export default function Header({
           </div>
         </a>
 
-        {/* ── RIGHT: AI Tutor + Analytics + History + Bug Tracker buttons ──── */}
+        {/* ── RIGHT: Language Select + AI Tutor + Analytics + History + Bug Tracker buttons ──── */}
         <div className={styles.rightSection}>
+
+          {/* Language Selector Dropdown */}
+          <div className={styles.langSelectWrap} title="Select Programming Language">
+            <span
+              className={styles.langDot}
+              style={{ backgroundColor: LANGUAGE_META[selectedLanguage]?.color || '#007ACC' }}
+            />
+            <select
+              id="header-language-select"
+              className={styles.langSelect}
+              value={selectedLanguage}
+              onChange={(e) => onLanguageChange?.(e.target.value)}
+              aria-label="Select Programming Language"
+            >
+              <option value="c">C (GCC)</option>
+              <option value="python">Python 3</option>
+              <option value="java">Java 21</option>
+            </select>
+            <ChevronDown size={14} className={styles.langSelectArrow} />
+          </div>
 
           {/* Admin Dashboard button — only visible to admin (resolved server-side) */}
           {isAdmin && (
@@ -284,6 +303,26 @@ export default function Header({
             Sign In with Google
           </button>
         )}
+
+        <div className={styles.drawerDivider} />
+
+        {/* Language selector in mobile drawer */}
+        <div className={styles.drawerLangSection}>
+          <span className={styles.drawerLangTitle}>Programming Language</span>
+          <div className={styles.drawerLangPills}>
+            {Object.entries(LANGUAGE_META).map(([langKey, meta]) => (
+              <button
+                key={langKey}
+                type="button"
+                className={`${styles.drawerLangPill} ${selectedLanguage === langKey ? styles.drawerLangPillActive : ''}`}
+                onClick={() => { onLanguageChange?.(langKey); closeDrawer(); }}
+              >
+                <span className={styles.langDot} style={{ backgroundColor: meta.color }} />
+                <span>{meta.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className={styles.drawerDivider} />
 

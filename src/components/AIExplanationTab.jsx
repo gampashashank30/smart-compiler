@@ -1,6 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { callClaude, parseJSON } from '../api.js';
-import { ANALYSIS_SYSTEM_PROMPT, CORRECTION_SYSTEM_PROMPT } from '../constants.js';
+import {
+  ANALYSIS_SYSTEM_PROMPT,
+  ANALYSIS_SYSTEM_PROMPT_C,
+  ANALYSIS_SYSTEM_PROMPT_PYTHON,
+  ANALYSIS_SYSTEM_PROMPT_JAVA,
+  CORRECTION_SYSTEM_PROMPT
+} from '../constants.js';
 import { sanitizeAiCode } from '../aiCodeUtils.js';
 import { analyticsStore } from '../analytics.js';
 import styles from './AIExplanationTab.module.css';
@@ -302,7 +308,7 @@ function ChatBubble({ msg }) {
 /* ══════════════════════════════════════════════════════════════
    MAIN TAB
    ══════════════════════════════════════════════════════════════ */
-export default function AIExplanationTab({ code, onApplyFix }) {
+export default function AIExplanationTab({ code, onApplyFix, selectedLanguage = 'c' }) {
   const [isAnalyzing, setIsAnalyzing]     = useState(false);
   const [issues, setIssues]               = useState(null);
   const [analysisError, setAnalysisError] = useState(null);
@@ -329,6 +335,17 @@ export default function AIExplanationTab({ code, onApplyFix }) {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isChatting]);
 
+  // Reset stale analysis state whenever the selected language changes.
+  // Without this, old C analysis results stay visible when the user switches to Python/Java.
+  useEffect(() => {
+    setIssues(null);
+    setAnalysisError(null);
+    setCorrectedCode(null);
+    setLearningNotes(null);
+    setApplied(false);
+    setShowAllNotes(false);
+  }, [selectedLanguage]);
+
   /* ── Analyze ── */
   const handleAnalyze = useCallback(async () => {
     const stats = analyticsStore.getStats();
@@ -346,7 +363,12 @@ export default function AIExplanationTab({ code, onApplyFix }) {
     try {
       // Prepend line numbers so the AI sees exact line positions
       const numberedCode = code.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n');
-      const raw    = await callClaude(ANALYSIS_SYSTEM_PROMPT, 'Code:\n' + numberedCode);
+      const sysPrompt = selectedLanguage === 'python'
+        ? ANALYSIS_SYSTEM_PROMPT_PYTHON
+        : selectedLanguage === 'java'
+        ? ANALYSIS_SYSTEM_PROMPT_JAVA
+        : ANALYSIS_SYSTEM_PROMPT_C;
+      const raw = await callClaude(sysPrompt, 'Code:\n' + numberedCode);
       let parsed = parseJSON(raw);
 
       if (parsed !== null && !Array.isArray(parsed) && typeof parsed === 'object') {
@@ -389,7 +411,7 @@ export default function AIExplanationTab({ code, onApplyFix }) {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [code]);
+  }, [code, selectedLanguage]); // selectedLanguage MUST be here — it selects the system prompt
 
   /* ── Generate corrected code ── */
   const handleGenerate = useCallback(async () => {
@@ -409,8 +431,9 @@ export default function AIExplanationTab({ code, onApplyFix }) {
         .filter(i => i.type !== 'clean')
         .map(i => `L${i.line ?? '?'} (${i.type}): ${i.description}`)
         .join('\n');
-      const raw    = await callClaude(CORRECTION_SYSTEM_PROMPT,
-        `Code:\n${code}\n\nIssues:\n${issuesSummary}`);
+      const langLabel = selectedLanguage === 'python' ? 'Python' : selectedLanguage === 'java' ? 'Java' : 'C';
+      const raw    = await callClaude(CORRECTION_SYSTEM_PROMPT(langLabel),
+        `${langLabel} Code:\n${code}\n\nIssues:\n${issuesSummary}`);
       const parsed = parseJSON(raw);
       const rawCode = parsed.corrected_code ?? '';
       const cleanCode = sanitizeAiCode(rawCode);
@@ -433,7 +456,8 @@ export default function AIExplanationTab({ code, onApplyFix }) {
     if (!code?.trim()) return;
     setIsExplaining(true);
     setChatError(null);
-    const explainPrompt = `You are an expert, encouraging programming tutor. Look at this student's C code carefully.
+    const langLabel = selectedLanguage === 'python' ? 'Python' : selectedLanguage === 'java' ? 'Java' : 'C';
+    const explainPrompt = `You are an expert, encouraging programming tutor. Look at this student's ${langLabel} code carefully.
 
 If the code is CORRECT (syntax is valid and logic is sound):
 - Explain what the code does in 2-3 short, clear, beginner-friendly paragraphs
@@ -448,9 +472,7 @@ If the code has BUGS, SYNTAX ERRORS, or LOGICAL ISSUES:
 Keep the explanation concise, warm, and helpful.`;
 
     try {
-      const reply = await callClaude(explainPrompt, `Here is my C code:
-
-${code}`, { model: selectedModel });
+      const reply = await callClaude(explainPrompt, `Here is my ${langLabel} code:\n\n${code}`, { model: selectedModel });
       setChatMessages(prev => [
         ...prev,
         { role: 'assistant', content: reply.trim() },
@@ -460,7 +482,7 @@ ${code}`, { model: selectedModel });
     } finally {
       setIsExplaining(false);
     }
-  }, [code, selectedModel]);
+  }, [code, selectedModel, selectedLanguage]);
 
   /* ── Send chat message ── */
   const handleSend = useCallback(async () => {
@@ -471,7 +493,8 @@ ${code}`, { model: selectedModel });
     const userMsg = { role: 'user', content: text };
     setChatMessages(prev => [...prev, userMsg]);
     setIsChatting(true);
-    const systemPrompt = `You are a helpful and intelligent C programming tutor. The student is working on this code in their editor:
+    const langLabel = selectedLanguage === 'python' ? 'Python' : selectedLanguage === 'java' ? 'Java' : 'C';
+    const systemPrompt = `You are a helpful and intelligent ${langLabel} programming tutor. The student is working on this code in their editor:
 
 ${code || '(empty editor)'}
 
@@ -485,7 +508,7 @@ Answer the student's question clearly, accurately, and concisely. If they have e
     } finally {
       setIsChatting(false);
     }
-  }, [chatInput, isChatting, chatMessages, code, selectedModel]);
+  }, [chatInput, isChatting, chatMessages, code, selectedModel, selectedLanguage]);
 
   function handleChatKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }

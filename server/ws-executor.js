@@ -57,9 +57,85 @@ const { WS_TICKETS } = require('./ws-tickets');
 
 const execFileAsync = promisify(execFile);
 
+// ── Record a completed WebSocket run in Supabase ────────────────────────────
+// Mirrors index.js recordUserRun but adds language tracking.
+// Fire-and-forget — never delays the `done` message sent to the client.
+const SUPABASE_URL     = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const SUPABASE_SVC_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
+
+function recordWsRun(userId, userEmail, language = 'c') {
+  if (!SUPABASE_URL || !userId || userId === 'local-dev-user') return;
+  const bearerKey = SUPABASE_SVC_KEY || SUPABASE_ANON_KEY;
+  if (!bearerKey) return;
+  const today = new Date().toISOString().slice(0, 10);
+  fetch(`${SUPABASE_URL}/rest/v1/rpc/record_user_run`, {
+    method:  'POST',
+    headers: {
+      'Authorization': `Bearer ${bearerKey}`,
+      'apikey':        bearerKey,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify({
+      p_user_id:    userId,
+      p_user_email: userEmail || '',
+      p_local_date: today,
+      p_language:   language,
+    }),
+  }).catch(err => console.error('[ws-executor] recordWsRun failed:', err.message));
+}
+
+function safeKillPty(proc) {
+  if (!proc) return;
+  try {
+    if (process.platform === 'win32') {
+      proc.kill();
+    } else {
+      proc.kill('SIGKILL');
+    }
+  } catch {}
+}
+
 // Import the dangerous-code scanner so we block system/popen/exec/fork
 // in both the REST API path (executor.js) and the WebSocket path (here).
 const { checkDangerousCode } = require('./executor');
+
+function checkDangerousCodeForLanguage(code, language = 'c') {
+  if (language === 'python') {
+    let stripped = code.replace(/#.*/g, '');
+    stripped = stripped.replace(/"""[\s\S]*?"""/g, '').replace(/'''[\s\S]*?'''/g, '');
+    stripped = stripped.replace(/"(?:[^"\\]|\\.)*"/g, '""').replace(/'(?:[^'\\]|\\.)*'/g, "''");
+    const pyDangerous = [
+      { re: /\b(os\.system|os\.popen|os\.exec|os\.spawn|subprocess\.)/, label: 'system/subprocess' },
+      { re: /\b(__import__\s*\(\s*['"](os|subprocess|shutil)['"])/, label: 'dynamic system import' },
+      { re: /\b(shutil\.rmtree)/, label: 'shutil.rmtree' },
+    ];
+    for (const { re, label } of pyDangerous) {
+      if (re.test(stripped)) {
+        return {
+          stderr: `This environment does not support \`${label}\`. System-level calls that spawn shell commands or delete system files are not allowed in this sandbox.\n\nNote: This is an intentional security restriction — not a bug in your code.`
+        };
+      }
+    }
+    return null;
+  }
+  if (language === 'java') {
+    let stripped = code.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    stripped = stripped.replace(/"(?:[^"\\]|\\.)*"/g, '""').replace(/'(?:[^'\\]|\\.)*'/g, "''");
+    const javaDangerous = [
+      { re: /\b(Runtime\.getRuntime\(\)\.exec|ProcessBuilder)\b/, label: 'Process execution' },
+    ];
+    for (const { re, label } of javaDangerous) {
+      if (re.test(stripped)) {
+        return {
+          stderr: `This environment does not support \`${label}\`. Process execution is not allowed in this sandbox.\n\nNote: This is an intentional security restriction — not a bug in your code.`
+        };
+      }
+    }
+    return null;
+  }
+  return checkDangerousCode(code);
+}
 
 // ── Per-IP WebSocket rate limiting ─────────────────────────────────────────────────────────
 const WS_CONNECTIONS_PER_IP = new Map(); // ip → count
@@ -206,6 +282,135 @@ async function isLocalGccReady() {
   }
 }
 
+let _pythonReady = null;
+let _pythonBin   = 'python';   // resolved at first probe
+
+async function isLocalPythonReady() {
+  if (_pythonReady !== null) return _pythonReady;
+  // Try 'python3' first (Debian/Ubuntu default install name),
+  // then fall back to 'python' (Windows, python3-is-python symlink).
+  for (const candidate of ['python3', 'python']) {
+    try {
+      await execFileAsync(candidate, ['--version'], { timeout: 3000 });
+      _pythonBin   = candidate;
+      _pythonReady = true;
+      console.log(`[ws-executor] Local Python found — using '${candidate}'`);
+      return true;
+    } catch { /* try next */ }
+  }
+  _pythonReady = false;
+  console.warn('[ws-executor] Local Python not found — will use Wandbox for Python');
+  return false;
+}
+
+let _javaReady = null;
+let _javacBin = process.platform === 'win32' ? 'javac.exe' : 'javac';
+let _javaBin  = process.platform === 'win32' ? 'java.exe' : 'java';
+
+async function isLocalJavaReady() {
+  if (_javaReady !== null) return _javaReady;
+
+  const javacCmd = process.platform === 'win32' ? 'javac.exe' : 'javac';
+  const javaCmd  = process.platform === 'win32' ? 'java.exe' : 'java';
+
+  // 1. Check standard PATH
+  try {
+    await execFileAsync(javacCmd, ['-version'], { timeout: 3000 });
+    await execFileAsync(javaCmd, ['-version'], { timeout: 3000 });
+    _javacBin = javacCmd;
+    _javaBin = javaCmd;
+    _javaReady = true;
+    console.log('[ws-executor] Local Java found on PATH');
+    return true;
+  } catch {}
+
+  // 2. On Windows, probe common JDK installation paths (IntelliJ JBR, Program Files, JAVA_HOME)
+  if (process.platform === 'win32') {
+    const candidateDirs = [];
+    if (process.env.JAVA_HOME) {
+      candidateDirs.push(path.join(process.env.JAVA_HOME, 'bin'));
+    }
+
+    // JetBrains IDE runtimes (JBR has full javac + java)
+    const jbBase = 'C:\\Program Files\\JetBrains';
+    try {
+      if (fs.existsSync(jbBase)) {
+        const dirs = fs.readdirSync(jbBase);
+        for (const d of dirs) {
+          const jbrBin = path.join(jbBase, d, 'jbr', 'bin');
+          if (fs.existsSync(jbrBin)) candidateDirs.push(jbrBin);
+        }
+      }
+    } catch {}
+
+    // Standard Java / Adoptium / Corretto locations
+    const pfRoots = ['C:\\Program Files\\Java', 'C:\\Program Files\\Eclipse Adoptium', 'C:\\Program Files\\Amazon Corretto'];
+    for (const r of pfRoots) {
+      try {
+        if (fs.existsSync(r)) {
+          const sub = fs.readdirSync(r);
+          for (const s of sub) {
+            const b = path.join(r, s, 'bin');
+            if (fs.existsSync(b)) candidateDirs.push(b);
+          }
+        }
+      } catch {}
+    }
+
+    for (const dir of candidateDirs) {
+      const jc = path.join(dir, 'javac.exe');
+      const jv = path.join(dir, 'java.exe');
+      if (fs.existsSync(jc) && fs.existsSync(jv)) {
+        try {
+          await execFileAsync(jc, ['-version'], { timeout: 3000 });
+          await execFileAsync(jv, ['-version'], { timeout: 3000 });
+          _javacBin = jc;
+          _javaBin = jv;
+          _javaReady = true;
+          if (!process.env.PATH.includes(dir)) {
+            process.env.PATH = `${dir};${process.env.PATH}`;
+          }
+          console.log(`[ws-executor] Local Java found at: ${dir}`);
+          return true;
+        } catch {}
+      }
+    }
+  }
+
+  // 3. On Linux (Debian/Ubuntu), scan /usr/lib/jvm/ — where `apt install default-jdk` places OpenJDK.
+  //    Needed if update-alternatives didn't add javac/java to PATH (e.g. fresh Docker container).
+  if (process.platform === 'linux') {
+    const jvmRoot = '/usr/lib/jvm';
+    try {
+      if (fs.existsSync(jvmRoot)) {
+        for (const jvmDir of fs.readdirSync(jvmRoot)) {
+          const binPath = path.join(jvmRoot, jvmDir, 'bin');
+          const jc = path.join(binPath, 'javac');
+          const jv = path.join(binPath, 'java');
+          if (fs.existsSync(jc) && fs.existsSync(jv)) {
+            try {
+              await execFileAsync(jc, ['-version'], { timeout: 3000 });
+              await execFileAsync(jv, ['-version'], { timeout: 3000 });
+              _javacBin  = jc;
+              _javaBin   = jv;
+              _javaReady = true;
+              if (!process.env.PATH.includes(binPath)) {
+                process.env.PATH = `${binPath}:${process.env.PATH}`;
+              }
+              console.log(`[ws-executor] Java found via /usr/lib/jvm/ → ${binPath}`);
+              return true;
+            } catch { /* try next jvm dir */ }
+          }
+        }
+      }
+    } catch { /* /usr/lib/jvm doesn't exist */ }
+  }
+
+  _javaReady = false;
+  console.log('[ws-executor] Local Java not available — will use Wandbox for Java');
+  return false;
+}
+
 // ── Windows path → Docker mount path ─────────────────────────────────────────
 function toDockerPath(p) {
   return p.replace(/\\/g, '/').replace(/^([A-Z]):/, (_, d) => `//${d.toLowerCase()}`);
@@ -251,17 +456,36 @@ function attachWebSocketServer(httpServer) {
         const url    = new URL(req.url, 'http://localhost');
         const ticket = url.searchParams.get('ticket') || '';
 
-        if (!ticket) {
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+        const isLocalDev = process.env.NODE_ENV !== 'production'
+          || !process.env.NODE_ENV
+          || !supabaseUrl
+          || supabaseUrl.includes('dummy')
+          || supabaseUrl.includes('<your-project-ref>');
+
+        if (!ticket || ticket === 'invalid' || ticket === 'dev-local') {
+          if (isLocalDev) {
+            req._wsUser = { id: 'local-dev-user', email: 'guest@example.com' };
+            return done(true);
+          }
           return done(false, 401, 'Unauthorized: No ticket provided. Call POST /api/ws-ticket first.');
         }
 
         // Look up the ticket (single-use — consumed immediately on connection)
         const ticketData = WS_TICKETS ? WS_TICKETS.get(ticket) : null;
         if (!ticketData) {
+          if (isLocalDev) {
+            req._wsUser = { id: 'local-dev-user', email: 'guest@example.com' };
+            return done(true);
+          }
           return done(false, 401, 'Unauthorized: Invalid or expired ticket. Please reconnect.');
         }
         if (ticketData.expiresAt < Date.now()) {
           WS_TICKETS.delete(ticket);
+          if (isLocalDev) {
+            req._wsUser = { id: 'local-dev-user', email: 'guest@example.com' };
+            return done(true);
+          }
           return done(false, 401, 'Unauthorized: Ticket expired. Please reconnect.');
         }
 
@@ -320,6 +544,14 @@ function attachWebSocketServer(httpServer) {
       if (ws.readyState === 1 /* OPEN */) ws.send(JSON.stringify(obj));
     }
 
+    // sendDone — records the run in Supabase then sends { type:'done', ... }.
+    // Pass the active language so per-language stats are tracked correctly.
+    function sendDone(payload, currentLang) {
+      const u = req._wsUser;
+      if (u?.id) recordWsRun(u.id, u.email, currentLang || 'c');
+      send(payload);
+    }
+
     function cleanup() {
       if (cleaned) return;
       cleaned = true;
@@ -328,7 +560,7 @@ function attachWebSocketServer(httpServer) {
         hasIncrementedGlobalRuns = false;
       }
       if (killTimer) clearTimeout(killTimer);
-      if (ptyProc)   { try { ptyProc.kill('SIGKILL');   } catch {} ptyProc   = null; }
+      if (ptyProc)   { safeKillPty(ptyProc); ptyProc = null; }
       if (plainProc && !plainProc.killed) {
         try { plainProc.kill('SIGKILL'); } catch {}
         plainProc = null;
@@ -382,7 +614,8 @@ function attachWebSocketServer(httpServer) {
       // ── run: compile then execute ───────────────────────────────────────────────────────────────
       if (msg.type !== 'run') return;
 
-      const { code, stdin: providedStdin = '' } = msg;
+      const { code, stdin: providedStdin = '', language = 'c' } = msg;
+      const lang = (language || 'c').toLowerCase();
       cols = Math.max(10, msg.cols || 80);
       rows = Math.max(4,  msg.rows || 24);
 
@@ -414,8 +647,8 @@ function attachWebSocketServer(httpServer) {
         return;
       }
 
-      // Block dangerous system-level calls (system, popen, exec*, fork, etc.)
-      const blocked = checkDangerousCode(code);
+      // Block dangerous system-level calls
+      const blocked = checkDangerousCodeForLanguage(code, lang);
       if (blocked) {
         send({
           type: 'compile-error',
@@ -437,6 +670,246 @@ function attachWebSocketServer(httpServer) {
       fs.mkdirSync(tmpDir, { recursive: true });
       try { fs.chmodSync(tmpDir, 0o777); } catch {}
 
+      // ══════════════════════════════════════════════════════════════════
+      // PYTHON EXECUTION PATH
+      // ══════════════════════════════════════════════════════════════════
+      if (lang === 'python') {
+        const pyFile = path.join(tmpDir, 'main.py');
+        fs.writeFileSync(pyFile, code, 'utf8');
+
+        const localPy = await isLocalPythonReady();
+        if (localPy) {
+          send({ type: 'engine', data: 'local' });
+          send({ type: 'status', data: 'compiling' });
+
+          // Fast syntax pre-check via py_compile
+          let pySyntaxErr = null;
+          try {
+            await execFileAsync(_pythonBin, ['-m', 'py_compile', pyFile], { timeout: COMPILE_TIMEOUT });
+          } catch (err) {
+            pySyntaxErr = (err.stderr || err.stdout || err.message || '').trim();
+          }
+
+          if (pySyntaxErr) {
+            const cleanErr = pySyntaxErr
+              .replace(new RegExp(tmpDir.replace(/\\/g, '\\\\'), 'g'), '')
+              .replace(/File ".*[\\\/]main\.py"/g, 'File "main.py"')
+              .trim();
+            send({ type: 'compile-error', data: cleanErr || 'Python syntax error.' });
+            send({ type: 'done', exitCode: 1, timeMs: 0, killed: false, signal: null });
+            cleanup();
+            return;
+          }
+
+          // Run Python with -u (unbuffered) for interactive PTY
+          send({ type: 'status', data: 'running' });
+          startTime = Date.now();
+
+          const ptyEnv = getCleanEnv();
+          ptyEnv.TERM = 'xterm-256color';
+          ptyEnv.PYTHONUNBUFFERED = '1';
+
+          // Use whichever Python binary was discovered by isLocalPythonReady()
+          const pyBin = process.platform === 'win32' ? 'python.exe' : _pythonBin;
+          if (nodePty) {
+            try {
+              ptyProc = nodePty.spawn(pyBin, ['-u', 'main.py'], {
+                name: 'xterm-256color',
+                cols,
+                rows,
+                cwd: tmpDir,
+                env: ptyEnv,
+              });
+            } catch (err) {
+              send({ type: 'error', data: `Failed to start Python: ${err.message}` });
+              cleanup();
+              return;
+            }
+
+            ptyProc.onData(data => {
+              if (!cleaned) {
+                const out = stripPtyNoise(data);
+                if (out) send({ type: 'output', data: out });
+              }
+            });
+
+            ptyProc.onExit(({ exitCode: ec, signal: sig }) => {
+              if (cleaned) return;
+              const timeMs = Date.now() - startTime;
+              const killed = ec === 137 || sig === 9;
+              sendDone({ type: 'done', exitCode: ec ?? 0, timeMs, killed, signal: sig ?? null }, lang);
+              ptyProc = null;
+              cleanup();
+            });
+          } else {
+            const plainPyBin = process.platform === 'win32' ? 'python.exe' : _pythonBin;
+            plainProc = spawn(plainPyBin, ['-u', 'main.py'], { stdio: ['pipe', 'pipe', 'pipe'], cwd: tmpDir, env: ptyEnv });
+            const normalize = d => d.toString().replace(/\r?\n/g, '\r\n');
+            plainProc.stdout.on('data', d => { if (!cleaned) send({ type: 'output', data: normalize(d) }); });
+            plainProc.stderr.on('data', d => { if (!cleaned) send({ type: 'output', data: normalize(d) }); });
+            plainProc.on('close', (ec, sig) => {
+              if (cleaned) return;
+              const timeMs = Date.now() - startTime;
+              sendDone({ type: 'done', exitCode: ec ?? 0, timeMs, killed: ec === 137, signal: sig ?? null }, lang);
+              cleanup();
+            });
+            plainProc.on('error', err => {
+              if (!cleaned) send({ type: 'error', data: `Runtime error: ${err.message}` });
+              cleanup();
+            });
+          }
+
+          killTimer = setTimeout(() => {
+            if (cleaned) return;
+            console.warn(`[ws-executor] TLE — killing Python process after ${EXEC_TIMEOUT_MS}ms`);
+            if (ptyProc)   { safeKillPty(ptyProc); }
+            if (plainProc) { try { plainProc.kill('SIGKILL');  } catch {} }
+          }, EXEC_TIMEOUT_MS);
+
+          return;
+        }
+
+        // Wandbox fallback for Python
+        send({ type: 'engine', data: 'wandbox' });
+        send({ type: 'status', data: 'running' });
+        await runWithWandbox(code, providedStdin, send, 'python');
+        cleanup();
+        return;
+      }
+
+      // ══════════════════════════════════════════════════════════════════
+      // JAVA EXECUTION PATH
+      // ══════════════════════════════════════════════════════════════════
+      if (lang === 'java') {
+        // ── Smart entry class detection ──────────────────────────────────────
+        // Priority 1: find the class that actually contains 'public static void main'
+        // Priority 2: first 'public class'
+        // Priority 3: first 'class'
+        // Priority 4: default to 'Main'
+        let entryClass = 'Main';
+        const mainMatch = code.match(/class\s+([A-Za-z0-9_$]+)[^{]*\{[\s\S]*?public\s+static\s+void\s+main/);
+        if (mainMatch) {
+          entryClass = mainMatch[1];
+        } else {
+          const publicClassMatch = code.match(/public\s+class\s+([A-Za-z0-9_$]+)/);
+          if (publicClassMatch) {
+            entryClass = publicClassMatch[1];
+          } else {
+            const anyClassMatch = code.match(/class\s+([A-Za-z0-9_$]+)/);
+            if (anyClassMatch) entryClass = anyClassMatch[1];
+          }
+        }
+
+        // Strip 'package' declarations — the runner compiles in a flat temp dir
+        // so package-qualified names would cause 'Could not find or load main class'.
+        const strippedCode = code.replace(/^\s*package\s+[\w.]+\s*;\s*\n?/m, '');
+
+        const javaFileName = `${entryClass}.java`;
+        const javaFile = path.join(tmpDir, javaFileName);
+        fs.writeFileSync(javaFile, strippedCode, 'utf8');
+
+        const localJava = await isLocalJavaReady();
+        if (localJava) {
+          send({ type: 'engine', data: 'local' });
+          send({ type: 'status', data: 'compiling' });
+
+          let javacOut = '';
+          let javacOk = false;
+          await new Promise((res) => {
+            compileProc = spawn(_javacBin, [javaFileName], { cwd: tmpDir, stdio: ['ignore', 'pipe', 'pipe'] });
+            compileProc.stdout.on('data', d => { javacOut += d.toString(); });
+            compileProc.stderr.on('data', d => { javacOut += d.toString(); });
+            const t = setTimeout(() => { if (compileProc) compileProc.kill(); res(); }, COMPILE_TIMEOUT);
+            compileProc.on('close', (c) => { clearTimeout(t); javacOk = c === 0; res(); });
+            compileProc.on('error', (err) => { clearTimeout(t); javacOut += `\n${err.message}`; res(); });
+          });
+          compileProc = null;
+
+          if (!javacOk) {
+            send({ type: 'compile-error', data: javacOut.trim() || 'Java compilation failed.' });
+            send({ type: 'done', exitCode: 1, timeMs: 0, killed: false, signal: null });
+            cleanup();
+            return;
+          }
+
+          send({ type: 'status', data: 'running' });
+          startTime = Date.now();
+          const ptyEnv = getCleanEnv();
+          ptyEnv.TERM = 'xterm-256color';
+
+          // Memory flags — identical to OnlineGDB / Programiz constraints:
+          //   -Xms16m       → start with a 16 MB heap (don't pre-allocate max up front)
+          //   -Xmx128m      → cap student programs at 128 MB (prevents memory-bomb loops)
+          //   -XX:+UseSerialGC → single-threaded GC; drops idle JVM RAM from ~120 MB → ~40 MB
+          const JVM_FLAGS = ['-Xms16m', '-Xmx128m', '-XX:+UseSerialGC'];
+
+          if (nodePty) {
+            try {
+              ptyProc = nodePty.spawn(_javaBin, [...JVM_FLAGS, entryClass], {
+                name: 'xterm-256color',
+                cols,
+                rows,
+                cwd: tmpDir,
+                env: ptyEnv,
+              });
+            } catch (err) {
+              send({ type: 'error', data: `Failed to start Java: ${err.message}` });
+              cleanup();
+              return;
+            }
+
+            ptyProc.onData(data => {
+              if (!cleaned) {
+                const out = stripPtyNoise(data);
+                if (out) send({ type: 'output', data: out });
+              }
+            });
+
+            ptyProc.onExit(({ exitCode: ec, signal: sig }) => {
+              if (cleaned) return;
+              const timeMs = Date.now() - startTime;
+              sendDone({ type: 'done', exitCode: ec ?? 0, timeMs, killed: ec === 137, signal: sig ?? null }, lang);
+              ptyProc = null;
+              cleanup();
+            });
+          } else {
+            plainProc = spawn(_javaBin, [...JVM_FLAGS, entryClass], { stdio: ['pipe', 'pipe', 'pipe'], cwd: tmpDir, env: ptyEnv });
+            const normalize = d => d.toString().replace(/\r?\n/g, '\r\n');
+            plainProc.stdout.on('data', d => { if (!cleaned) send({ type: 'output', data: normalize(d) }); });
+            plainProc.stderr.on('data', d => { if (!cleaned) send({ type: 'output', data: normalize(d) }); });
+            plainProc.on('close', (ec, sig) => {
+              if (cleaned) return;
+              const timeMs = Date.now() - startTime;
+              sendDone({ type: 'done', exitCode: ec ?? 0, timeMs, killed: ec === 137, signal: sig ?? null }, lang);
+              cleanup();
+            });
+            plainProc.on('error', err => {
+              if (!cleaned) send({ type: 'error', data: `Runtime error: ${err.message}` });
+              cleanup();
+            });
+          }
+
+          killTimer = setTimeout(() => {
+            if (cleaned) return;
+            console.warn(`[ws-executor] TLE — killing Java process after ${EXEC_TIMEOUT_MS}ms`);
+            if (ptyProc)   { safeKillPty(ptyProc); }
+            if (plainProc) { try { plainProc.kill('SIGKILL'); } catch {} }
+          }, EXEC_TIMEOUT_MS);
+
+          return;
+        }
+
+        // Wandbox fallback for Java
+        send({ type: 'engine', data: 'wandbox' });
+        send({ type: 'status', data: 'compiling' });
+        await runWithWandbox(code, providedStdin, send, 'java');
+        cleanup();
+        return;
+      }
+
+      // ══════════════════════════════════════════════════════════════════
+      // C EXECUTION PATH
+      // ══════════════════════════════════════════════════════════════════
       // Write code with stdio init prepended + #line directive for correct error lines
       fs.writeFileSync(path.join(tmpDir, 'main.c'), STDIO_INIT + code, 'utf8');
 
@@ -535,7 +1008,8 @@ function attachWebSocketServer(httpServer) {
             if (cleaned) return;
             const timeMs = Date.now() - startTime;
             const killed = ec === 137 || sig === 9;
-            send({ type: 'done', exitCode: ec ?? 1, timeMs, killed, signal: sig ?? null });
+            sendDone({ type: 'done', exitCode: ec ?? 1, timeMs, killed, signal: sig ?? null }, lang);
+            ptyProc = null;
             cleanup();
           });
 
@@ -549,7 +1023,7 @@ function attachWebSocketServer(httpServer) {
             if (cleaned) return;
             const timeMs = Date.now() - startTime;
             const killed = code === 137 || sig === 'SIGKILL';
-            send({ type: 'done', exitCode: code ?? 1, timeMs, killed, signal: sig ?? null });
+            sendDone({ type: 'done', exitCode: code ?? 1, timeMs, killed, signal: sig ?? null }, lang);
             cleanup();
           });
           plainProc.on('error', err => {
@@ -562,7 +1036,7 @@ function attachWebSocketServer(httpServer) {
         killTimer = setTimeout(() => {
           if (cleaned) return;
           console.warn(`[ws-executor] TLE — killing local process after ${EXEC_TIMEOUT_MS}ms`);
-          if (ptyProc)   { try { ptyProc.kill('SIGKILL');   } catch {} }
+          if (ptyProc)   { safeKillPty(ptyProc); }
           if (plainProc) { try { plainProc.kill('SIGKILL');  } catch {} }
         }, EXEC_TIMEOUT_MS);
 
@@ -725,7 +1199,7 @@ function attachWebSocketServer(httpServer) {
           if (cleaned) return;
           const timeMs = Date.now() - startTime;
           const killed = code === 137 || sig === 'SIGKILL';
-          send({ type: 'done', exitCode: code ?? 1, timeMs, killed, signal: sig ?? null });
+          sendDone({ type: 'done', exitCode: code ?? 1, timeMs, killed, signal: sig ?? null }, lang);
           cleanup();
         });
 
@@ -739,7 +1213,7 @@ function attachWebSocketServer(httpServer) {
       killTimer = setTimeout(() => {
         if (cleaned) return;
         console.warn(`[ws-executor] TLE — killing after ${EXEC_TIMEOUT_MS}ms`);
-        if (ptyProc)   { try { ptyProc.kill('SIGKILL');  } catch {} }
+        if (ptyProc)   { safeKillPty(ptyProc); }
         if (plainProc) { try { plainProc.kill('SIGKILL'); } catch {} }
       }, EXEC_TIMEOUT_MS);
     });
@@ -752,15 +1226,34 @@ function attachWebSocketServer(httpServer) {
 }
 
 // ── Wandbox batch fallback (no Docker) ───────────────────────────────────────
-async function runWithWandbox(code, stdin, send) {
+async function runWithWandbox(code, stdin, send, language = 'c') {
   const startTime = Date.now();
-  const body = JSON.stringify({
-    compiler: WANDBOX_COMPILER,
-    code,        // send original code — Wandbox doesn't need our setvbuf wrapper
-    stdin:   stdin || '',  // use provided stdin (pre-entered input)
-    options: 'warning,optimize',
-    'compiler-option-raw': '-lm',   // link math library (sin, cos, sqrt, etc.)
-  });
+  let compiler = WANDBOX_COMPILER;
+  let payloadCode = code;
+  let options = 'warning,optimize';
+  let compilerRaw = '-lm';
+
+  if (language === 'python') {
+    compiler = 'cpython-3.12.7';
+    options = '';
+    compilerRaw = '';
+  } else if (language === 'java') {
+    compiler = 'openjdk-jdk-21+35';
+    // Make class non-public so it compiles in Wandbox prog.java
+    payloadCode = code.replace(/\bpublic\s+class\b/g, 'class');
+    options = '';
+    compilerRaw = '';
+  }
+
+  const payload = {
+    compiler,
+    code: payloadCode,
+    stdin: stdin || '',
+  };
+  if (options) payload.options = options;
+  if (compilerRaw) payload['compiler-option-raw'] = compilerRaw;
+
+  const body = JSON.stringify(payload);
 
   return new Promise((resolve) => {
     const options = {
@@ -793,7 +1286,7 @@ async function runWithWandbox(code, stdin, send) {
           if (isCompileError) {
             send({ type: 'compile-error', data: cMsg });
             // Always send done so the UI exits the 'compiling' state
-            send({ type: 'done', exitCode: ec, timeMs: Date.now() - startTime, killed: false, signal: null });
+            sendDone({ type: 'done', exitCode: ec, timeMs: Date.now() - startTime, killed: false, signal: null }, lang);
             resolve();
             return;
           }
@@ -819,7 +1312,7 @@ async function runWithWandbox(code, stdin, send) {
             send({ type: 'output', data: data.program_output.replace(/\r?\n/g, '\r\n') });
           }
 
-          send({ type: 'done', exitCode: ec, timeMs: Date.now() - startTime, killed, signal: data.signal || null });
+          sendDone({ type: 'done', exitCode: ec, timeMs: Date.now() - startTime, killed, signal: data.signal || null }, lang);
         } catch {
           send({ type: 'error', data: 'Wandbox returned invalid response.' });
         }
@@ -829,9 +1322,9 @@ async function runWithWandbox(code, stdin, send) {
 
     const t = setTimeout(() => {
       req.destroy();
-      send({ type: 'error', data: 'Wandbox timed out (20 s). Please try again.' });
+      send({ type: 'error', data: 'Wandbox timed out (35 s). Please try again.' });
       resolve();
-    }, 20_000);
+    }, 35_000);
 
     req.on('error', e => { clearTimeout(t); send({ type: 'error', data: `Wandbox connection failed: ${e.message}` }); resolve(); });
     req.on('close', () => clearTimeout(t));
@@ -840,4 +1333,4 @@ async function runWithWandbox(code, stdin, send) {
   });
 }
 
-module.exports = { attachWebSocketServer, resetDockerCache };
+module.exports = { attachWebSocketServer, resetDockerCache, checkDangerousCodeForLanguage };

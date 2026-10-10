@@ -37,3 +37,4 @@ node-dist/
 
 # Playwright test results
 playwright-mobile-results/
+playwright-e2e-results/

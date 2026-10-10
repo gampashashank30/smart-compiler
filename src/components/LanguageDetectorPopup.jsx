@@ -154,6 +154,7 @@ export default function LanguageDetectorPopup({
   signals = [],
   scores = {},
   signalsMap = {},
+  targetLang = 'c',
   onConfirm,
   onDismiss,
   converting = false,
@@ -163,6 +164,7 @@ export default function LanguageDetectorPopup({
 
   const langColor = LANG_COLORS[detectedLang] ?? '#10b981';
   const langName  = LANG_NAMES[detectedLang]  ?? detectedLang;
+  const targetLangName = LANG_NAMES[targetLang] ?? (targetLang === 'python' ? 'Python' : targetLang === 'java' ? 'Java' : 'C');
   const theme     = LANG_THEME[detectedLang]  ?? LANG_THEME.unknown;
   const HeroLogo  = LANG_LOGOS[detectedLang]  ?? null;
   const heroEmoji = LANG_EMOJI[detectedLang]  ?? null;
@@ -350,7 +352,7 @@ export default function LanguageDetectorPopup({
             <p className={styles.questionText}>
               Is this{' '}
               <span className={styles.questionLang}>{langName}</span>
-              {' '}code? Convert it to C?
+              {' '}code? Convert it to {targetLangName}?
             </p>
           </div>
         </div>
@@ -362,10 +364,10 @@ export default function LanguageDetectorPopup({
             className={styles.wrongBtn}
             onClick={onDismiss}
             disabled={converting}
-            aria-label="Keep as C — do not convert"
+            aria-label={`Keep as ${langName} — do not convert`}
           >
             <span className={styles.wrongIcon}>✕</span>
-            <span>Keep as C</span>
+            <span>Keep as {langName}</span>
           </button>
 
           <button
@@ -373,7 +375,7 @@ export default function LanguageDetectorPopup({
             className={styles.correctBtn}
             onClick={onConfirm}
             disabled={converting}
-            aria-label="Yes, convert to C"
+            aria-label={`Yes, convert to ${targetLangName}`}
           >
             {converting ? (
               <>
@@ -383,7 +385,7 @@ export default function LanguageDetectorPopup({
             ) : (
               <>
                 <span className={styles.correctIcon}>✓</span>
-                <span>Yes, Convert to C</span>
+                <span>Yes, Convert to {targetLangName}</span>
               </>
             )}
           </button>

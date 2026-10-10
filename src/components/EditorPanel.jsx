@@ -1,5 +1,5 @@
 import { useRef, useCallback, useMemo, useState, useEffect } from 'react';
-import { highlightC } from '../highlight.js';
+import { highlightCode } from '../highlight.js';
 import { getAcceptString } from '../fileUploader.js';
 import styles from './EditorPanel.module.css';
 
@@ -30,6 +30,7 @@ export default function EditorPanel({
   onTabClose,
   onTabRename,
   onFileUpload,
+  selectedLanguage = 'c',
 }) {
   const textareaRef    = useRef(null);
   const preRef         = useRef(null);
@@ -143,8 +144,8 @@ export default function EditorPanel({
 
   const cancelRename = useCallback(() => setEditingTabId(null), []);
 
-  // Memoize the highlighted HTML so it only recomputes when code changes
-  const highlighted = useMemo(() => highlightC(code), [code]);
+  // Memoize the highlighted HTML so it only recomputes when code or language changes
+  const highlighted = useMemo(() => highlightCode(code, selectedLanguage), [code, selectedLanguage]);
 
   // Sync scroll between gutter, highlight layer, and textarea
   const syncScroll = useCallback(() => {
@@ -277,6 +278,23 @@ export default function EditorPanel({
         const outer = '\n' + indent;
         const next  = before + inner + outer + after;
         const pos   = start + inner.length;
+        pushHistory(next, pos, pos);
+        onChange(next);
+        requestAnimationFrame(() => {
+          ta.selectionStart = ta.selectionEnd = pos;
+        });
+        return;
+      }
+
+      // ── Python: auto-indent after colon (:) ─────────────────────────────────
+      // Lines ending with ':' (def, if, for, while, else, elif, class, try,
+      // except, with, finally) require an extra indent level in Python.
+      // Only applies when the current language is Python — C/Java are unaffected.
+      if (selectedLanguage === 'python' && charBefore === ':') {
+        e.preventDefault();
+        const insert = '\n' + indent + '    ';
+        const next   = before + insert + after;
+        const pos    = start + insert.length;
         pushHistory(next, pos, pos);
         onChange(next);
         requestAnimationFrame(() => {
@@ -550,7 +568,9 @@ export default function EditorPanel({
         {/* Right badge */}
         <div className={styles.tabRight}>
           <span className={styles.langDot} />
-          <span className={styles.tabMeta}>C Language</span>
+          <span className={styles.tabMeta}>
+            {selectedLanguage === 'python' ? 'Python' : selectedLanguage === 'java' ? 'Java' : 'C Language'}
+          </span>
         </div>
       </div>
 

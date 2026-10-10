@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Dockerfile.runner — Unified multi-language sandbox image
+#
+# Supports: C (GCC), Python 3, Java 17 (OpenJDK)
+#
+# Security hardening:
+#   - Alpine Linux (minimal attack surface)
+#   - Non-root user 'runner'
+#   - No network tools, no shell utilities beyond /bin/sh
+#   - Read-only root FS enforced at runtime (--read-only flag)
+#   - Memory capped at runtime (--memory=96m flag)
+# ─────────────────────────────────────────────────────────────────────────────
+FROM alpine:3.19
+
+# Install GCC (C), Python 3, and OpenJDK 17 (Java)
+# python3 includes the interpreter; openjdk17-jdk includes javac + java
+RUN apk add --no-cache \
+    gcc g++ musl-dev binutils \
+    python3 \
+    openjdk17-jdk \
+    && ln -sf python3 /usr/bin/python
+
+# Create a non-root user for security
+RUN adduser -D -H -s /sbin/nologin runner
+
+# Working directory — code will be mounted here
+WORKDIR /sandbox
+
+# Switch to non-root user
+USER runner
+
+# Verify all runtimes are available
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD gcc --version > /dev/null 2>&1 && python3 --version > /dev/null 2>&1 && java -version > /dev/null 2>&1 || exit 1
+
+# Default command (overridden by docker run args)
+CMD ["/bin/sh"]

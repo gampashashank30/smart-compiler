@@ -33,12 +33,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # apt package post-install scripts (like ca-certificates) use mktemp in TMPDIR.
 RUN mkdir -p /tmp /data/compiler-tmp && chmod 777 /tmp /data/compiler-tmp
 
-# Install GCC, G++, Make, Python3 & curl for healthcheck
+# Install GCC, G++, Make, Python3, Java (JDK) & curl for healthcheck
+# python3-is-python creates /usr/bin/python → python3 so ws-executor can call 'python'
+# default-jdk installs javac + java (OpenJDK) for interactive Java execution
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     make \
     python3 \
+    python3-is-python \
+    default-jdk \
     ca-certificates \
     curl \
     && rm -rf /var/lib/apt/lists/*

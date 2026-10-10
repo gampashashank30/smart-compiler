@@ -1,23 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { bugTrackerStore, ERROR_TYPES, TIPS, MAX_SESSIONS } from '../bugTracker.js';
-import { analyticsStore } from '../analytics.js';
+import { bugTrackerStore, ERROR_TYPES, getTips, MAX_SESSIONS, getEventSeverity } from '../bugTracker.js';
+import { analyticsStore, toLocalDateStr } from '../analytics.js';
+import { LANGUAGE_META } from '../constants.js';
 import styles from './AnalyticsPanel.module.css';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function toDateStr(ts) {
-  return new Date(ts).toISOString().slice(0, 10);
-}
-
 function computeStreak(sessions) {
   if (!sessions.length) return 0;
-  const days = new Set(sessions.map(s => toDateStr(s.timestamp)));
+  const days = new Set(sessions.map(s => toLocalDateStr(s.timestamp)));
   let streak = 0;
   const today = new Date();
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    if (days.has(d.toISOString().slice(0, 10))) {
+    if (days.has(toLocalDateStr(d))) {
       streak++;
     } else {
       break;
@@ -26,27 +23,13 @@ function computeStreak(sessions) {
   return streak;
 }
 
-function computeAvgFixTime(sessions) {
-  try {
-    let total = 0, count = 0;
-    for (let i = 0; i < sessions.length - 1; i++) {
-      if (sessions[i].subtype !== 'Successful Run') {
-        const next = sessions.slice(i + 1).find(s => s.subtype === 'Successful Run');
-        if (next) {
-          total += Math.round((next.timestamp - sessions[i].timestamp) / 1000);
-          count++;
-        }
-      }
-    }
-    return count > 0 ? Math.round(total / count) : null;
-  } catch { return null; }
-}
 
 function checkFiveConsecutiveSuccesses(sessions) {
   try {
     let count = 0;
     for (let i = sessions.length - 1; i >= 0; i--) {
-      if (sessions[i].subtype === 'Successful Run') {
+      const sev = getEventSeverity(sessions[i]);
+      if (sev === 'success' || sev === 'warning') {
         count++;
         if (count >= 5) return true;
       } else {
@@ -59,34 +42,48 @@ function checkFiveConsecutiveSuccesses(sessions) {
 
 function checkErrorFreeDay(sessions) {
   try {
-    const today = toDateStr(Date.now());
-    const todaySessions = sessions.filter(s => toDateStr(s.timestamp) === today);
-    return todaySessions.length > 0 && todaySessions.every(s => s.subtype === 'Successful Run');
+    const today = toLocalDateStr(Date.now());
+    const todaySessions = sessions.filter(s => toLocalDateStr(s.timestamp) === today);
+    return todaySessions.length > 0 && todaySessions.every(s => {
+      const sev = getEventSeverity(s);
+      return sev === 'success' || sev === 'warning';
+    });
   } catch { return false; }
 }
 
-function generateInsights(sessions, stats) {
+function generateInsights(sessions, stats, language = 'c') {
   const insights = [];
   try {
-    const { totalRuns, successes, byType, consecutiveTLE, avgFixTime } = stats;
+    const { totalRuns, successes, byType, consecutiveTLE } = stats;
     if (totalRuns === 0) return [];
 
     const successRate = totalRuns > 0 ? (successes / totalRuns) * 100 : 0;
+    const langLabel = LANGUAGE_META[language]?.label || 'code';
 
     // Insight 1 — Success rate
     if (successRate >= 80) {
-      insights.push({ icon: 'star', title: 'Great accuracy!', text: `${successRate.toFixed(0)}% success rate — you write clean C code. Keep it up!`, color: '#059669' });
+      insights.push({ icon: 'star', title: 'Great accuracy!', text: `${successRate.toFixed(0)}% success rate — you write clean ${langLabel}. Keep it up!`, color: '#059669' });
     } else if (successRate >= 50) {
       insights.push({ icon: 'trending', title: 'Improving steadily', text: `${successRate.toFixed(0)}% success rate. Try reading errors top-down to fix root causes faster.`, color: '#0ea5e9' });
     } else if (totalRuns >= 3) {
       insights.push({ icon: 'bulb', title: 'Error patterns detected', text: `${(100 - successRate).toFixed(0)}% of runs have errors. Focus on one error type at a time.`, color: '#f59e0b' });
     }
 
+    // Insight 1.5 — Improvement evidence
+    if (stats.improvement?.topImprovement) {
+      insights.push({
+        icon: 'trending',
+        title: 'Measurable Skill Growth!',
+        text: `${stats.improvement.topImprovement.text} across recent runs. Outstanding progress!`,
+        color: '#059669',
+      });
+    }
+
     // Insight 2 — Top error
     const topErr = Object.entries(byType).sort(([,a],[,b])=>b-a)[0];
     if (topErr) {
       const [type, count] = topErr;
-      const tips = TIPS[type];
+      const tips = getTips(type, language);
       if (tips?.length) {
         insights.push({ icon: 'target', title: `Top mistake: ${type}`, text: `You've hit this ${count} time${count>1?'s':''} — ${tips[0]}`, color: ERROR_TYPES[type]?.color ?? '#6366f1' });
       }
@@ -97,14 +94,6 @@ function generateInsights(sessions, stats) {
       insights.push({ icon: 'infinity', title: 'Infinite loop pattern', text: `${consecutiveTLE} consecutive TLEs — check your loop increment (i++) and condition.`, color: '#d97706' });
     }
 
-    // Insight 4 — Fix time
-    if (avgFixTime !== null) {
-      if (avgFixTime < 30) {
-        insights.push({ icon: 'bolt', title: 'Lightning fast fixes!', text: `You fix errors in ~${avgFixTime}s on average — excellent debugging instincts.`, color: '#8b5cf6' });
-      } else if (avgFixTime > 120) {
-        insights.push({ icon: 'search', title: 'Take it step by step', text: `Avg fix time is ${avgFixTime}s. Try fixing the first error only, then recompile.`, color: '#64748b' });
-      }
-    }
 
     // Insight 5 — streak
     const streak = computeStreak(sessions);
@@ -130,16 +119,15 @@ function generateInsights(sessions, stats) {
 
 // ─── 1. KPI Hero Cards ────────────────────────────────────────────────────────
 function HeroStats({ stats, sessions, cloudStreak }) {
-  const { totalRuns, successes } = stats;
+  const { totalRuns, successes, errors } = stats;
   const successRate = totalRuns > 0 ? ((successes / totalRuns) * 100).toFixed(1) : null;
-  const avgFix = computeAvgFixTime(sessions);
   // Prefer DB-backed streak (authoritative across sessions) over local computation
   const streak = cloudStreak ?? computeStreak(sessions);
 
   const cards = [
     { label: 'Total Runs', value: totalRuns || '0', icon: '▶', color: '#3b82f6', bg: '#eff6ff' },
+    { label: 'Errors Found', value: errors || '0', icon: '⚠', color: '#ef4444', bg: '#fef2f2' },
     { label: 'Success Rate', value: successRate != null ? `${successRate}%` : '—', icon: '✓', color: '#059669', bg: '#ecfdf5' },
-    { label: 'Avg Fix Time', value: avgFix != null ? `${avgFix}s` : '—', icon: '⚡', color: '#f59e0b', bg: '#fffbeb' },
     { label: 'Day Streak', value: streak || '0', icon: '🔥', color: '#f97316', bg: '#fff7ed' },
   ];
 
@@ -162,30 +150,37 @@ function Heatmap({ sessions }) {
   const gridRef = useRef(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  // Build daily map
+  // Build daily map with explicit severities
   const dailyMap = {};
   sessions.forEach(s => {
-    const d = toDateStr(s.timestamp);
-    if (!dailyMap[d]) dailyMap[d] = { total: 0, success: 0, error: 0 };
+    const d = toLocalDateStr(s.timestamp);
+    if (!dailyMap[d]) dailyMap[d] = { total: 0, success: 0, warning: 0, mistakes: 0 };
+    const sev = getEventSeverity(s);
     dailyMap[d].total++;
-    if (s.subtype === 'Successful Run') dailyMap[d].success++;
-    else dailyMap[d].error++;
+    if (sev === 'success') {
+      dailyMap[d].success++;
+    } else if (sev === 'warning') {
+      dailyMap[d].warning++;
+      dailyMap[d].success++; // Warnings count as success for Perfect Day & streak
+    } else {
+      dailyMap[d].mistakes++;
+    }
   });
 
-  // Last 14 days
+  // Last 14 days in user's LOCAL timezone
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (13 - i));
-    const str = d.toISOString().slice(0, 10);
-    const info = dailyMap[str] || { total: 0, success: 0, error: 0 };
+    const str = toLocalDateStr(d);
+    const info = dailyMap[str] || { total: 0, success: 0, warning: 0, mistakes: 0 };
     return { str, info, d };
   });
 
   const maxTotal = Math.max(...days.map(d => d.info.total), 1);
 
-  function getCellColor(total, error) {
+  function getCellColor(total, mistakes) {
     if (total === 0) return '#f1f5f9';
-    if (error === 0 && total > 0) return '#059669';  // perfect day — deepest green
+    if (mistakes === 0 && total > 0) return '#059669';  // perfect day — deepest green
     const intensity = total / maxTotal;
     if (intensity < 0.33) return '#bbf7d0';
     if (intensity < 0.66) return '#34d399';
@@ -198,7 +193,7 @@ function Heatmap({ sessions }) {
 
   const weekdays = ['S','M','T','W','T','F','S'];
   const hovDay = hovIdx !== null ? days[hovIdx] : null;
-  const isPerfect = hovDay && hovDay.info.total > 0 && hovDay.info.error === 0;
+  const isPerfect = hovDay && hovDay.info.total > 0 && hovDay.info.mistakes === 0;
 
   return (
     <div className={styles.heatmapWrap} ref={gridRef}>
@@ -207,7 +202,7 @@ function Heatmap({ sessions }) {
           <div
             key={day.str}
             className={`${styles.heatCell} ${hovIdx === i ? styles.heatCellHov : ''}`}
-            style={{ background: getCellColor(day.info.total, day.info.error) }}
+            style={{ background: getCellColor(day.info.total, day.info.mistakes), position: 'relative' }}
             onMouseEnter={(e) => {
               setHovIdx(i);
               const gridRect = gridRef.current?.getBoundingClientRect();
@@ -218,8 +213,26 @@ function Heatmap({ sessions }) {
               });
             }}
             onMouseLeave={() => setHovIdx(null)}
-            aria-label={`${day.str}: ${day.info.total} runs, ${day.info.error} mistakes`}
-          />
+            aria-label={`${day.str}: ${day.info.total} runs, ${day.info.mistakes} mistakes${day.info.warning ? `, ${day.info.warning} warnings` : ''}`}
+          >
+            {/* Amber indicator dot if day succeeded with compiler warnings */}
+            {day.info.warning > 0 && day.info.mistakes === 0 && day.info.total > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 2,
+                  width: 4,
+                  height: 4,
+                  borderRadius: '50%',
+                  background: '#f59e0b',
+                  boxShadow: '0 0 2px rgba(0,0,0,0.5)',
+                  pointerEvents: 'none',
+                }}
+                title="Succeeded with warnings"
+              />
+            )}
+          </div>
         ))}
       </div>
 
@@ -236,14 +249,22 @@ function Heatmap({ sessions }) {
           <div className={styles.heatTipDate}>{fmtDate(hovDay.d)}</div>
           <div className={styles.heatTipRow}>
             <span className={styles.heatTipIcon} style={{ color: '#ef4444' }}>✕</span>
-            {hovDay.info.error} mistake{hovDay.info.error !== 1 ? 's' : ''}
+            {hovDay.info.mistakes} mistake{hovDay.info.mistakes !== 1 ? 's' : ''}
           </div>
+          {hovDay.info.warning > 0 && (
+            <div className={styles.heatTipRow}>
+              <span className={styles.heatTipIcon} style={{ color: '#f59e0b' }}>⚠️</span>
+              {hovDay.info.warning} warning{hovDay.info.warning !== 1 ? 's' : ''}
+            </div>
+          )}
           <div className={styles.heatTipRow}>
             <span className={styles.heatTipIcon} style={{ color: '#3b82f6' }}>▶</span>
             {hovDay.info.total} run{hovDay.info.total !== 1 ? 's' : ''}
           </div>
           {isPerfect && (
-            <div className={styles.heatTipPerfect}>Perfect Day! 🌟</div>
+            <div className={styles.heatTipPerfect}>
+              Perfect Day! 🌟 {hovDay.info.warning > 0 ? <span style={{ color: '#f59e0b', fontSize: '0.72rem' }}>(with warnings ⚠️)</span> : null}
+            </div>
           )}
         </div>
       )}
@@ -407,33 +428,157 @@ function CompileTimeline({ sessions }) {
 }
 
 // ─── 5. Radar Chart ───────────────────────────────────────────────────────────
-function RadarChart({ byType, totalRuns }) {
-  const axes = [
-    { label: 'Syntax', key: ['Missing Semicolon','Missing Parenthesis','Missing Brace/Bracket','Missing < or >','Unclosed String'] },
-    { label: 'Variable', key: ['Undeclared Variable','Uninitialized Variable','Unused Variable'] },
-    { label: 'Runtime', key: ['Runtime Crash','Segmentation Fault'] },
-    { label: 'Logic', key: ['Infinite Loop / TLE','Array Out of Bounds'] },
-    { label: 'Type', key: ['Type Mismatch','Format Specifier Mismatch','Implicit Declaration'] },
-  ];
+
+/**
+ * Format error labels cleanly for radar axes so they never clip or truncate abruptly.
+ * Returns an array of lines to render via <tspan>.
+ */
+function formatRadarLabel(name) {
+  const overrides = {
+    'Missing Semicolon': ['Missing', 'Semicolon'],
+    'Undeclared Variable': ['Undeclared', 'Variable'],
+    'Uninitialized Variable': ['Uninitialized', 'Variable'],
+    'Unclosed String': ['Unclosed', 'String'],
+    'Missing Parenthesis': ['Missing', 'Parenthesis'],
+    'Missing Brace/Bracket': ['Missing Brace', 'or Bracket'],
+    'Missing < or >': ['Missing', '< or >'],
+    'Missing # Directive': ['Missing #', 'Directive'],
+    'Implicit Declaration': ['Implicit', 'Declaration'],
+    'Type Mismatch': ['Type', 'Mismatch'],
+    'Array Out of Bounds': ['Array Out of', 'Bounds'],
+    'Unused Variable': ['Unused', 'Variable'],
+    'Format Specifier Mismatch': ['Format Spec', 'Mismatch'],
+    'Compilation Error': ['Compilation', 'Error'],
+    'Missing Return Statement': ['Missing Return', 'Statement'],
+    'Missing Import': ['Missing', 'Import'],
+    'Static Context Error': ['Static Context', 'Error'],
+    'Class Not Found': ['Class Not', 'Found'],
+    'Null Pointer Exception': ['Null Pointer', 'Exception'],
+    'Stack Overflow Error': ['Stack Overflow', 'Error'],
+    'Java Compilation Error': ['Java Compile', 'Error'],
+    'Indentation Error': ['Indentation', 'Error'],
+    'Syntax Error': ['Syntax', 'Error'],
+    'Key Error': ['Key Error'],
+    'Zero Division Error': ['Zero Division', 'Error'],
+    'Import Error': ['Import', 'Error'],
+    'File Not Found': ['File Not', 'Found'],
+    'Recursion Error': ['Recursion', 'Error'],
+    'Python Error': ['Python Error'],
+    'Infinite Loop / TLE': ['Infinite Loop', '/ TLE'],
+    'Runtime Crash': ['Runtime', 'Crash'],
+    'Segmentation Fault': ['Segmentation', 'Fault'],
+  };
+
+  if (overrides[name]) return overrides[name];
+  if (name.length <= 11) return [name];
+
+  const words = name.split(' ');
+  if (words.length <= 1) return [name];
+  const mid = Math.ceil(words.length / 2);
+  return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+}
+
+function RadarChart({ byType, totalRuns, language = 'c' }) {
+  // Canonical top categories per language as intelligent defaults
+  const defaultCategories = {
+    c: ['Missing Semicolon', 'Undeclared Variable', 'Type Mismatch', 'Array Out of Bounds', 'Segmentation Fault'],
+    python: ['Indentation Error', 'Syntax Error', 'Undeclared Variable', 'Type Mismatch', 'Zero Division Error'],
+    java: ['Missing Semicolon', 'Type Mismatch', 'Array Out of Bounds', 'Null Pointer Exception', 'Runtime Crash'],
+  };
+
+  const canonical = defaultCategories[language] || defaultCategories.c;
+  const tracked = Object.entries(byType || {})
+    .filter(([k]) => k !== 'Successful Run')
+    .sort(([, a], [, b]) => b - a);
+
+  // Take top categories from real user data, filling up to 5 from canonical defaults if needed
+  const selectedKeys = [];
+  for (const [k] of tracked) {
+    if (selectedKeys.length >= 5) break;
+    selectedKeys.push(k);
+  }
+  for (const k of canonical) {
+    if (selectedKeys.length >= 5) break;
+    if (!selectedKeys.includes(k)) {
+      selectedKeys.push(k);
+    }
+  }
+
+  const axes = selectedKeys.slice(0, 5).map(key => ({
+    key,
+    lines: formatRadarLabel(key),
+    count: byType?.[key] || 0,
+  }));
 
   const N = axes.length;
-  const CX = 100, CY = 100, R = 75;
-  const total = totalRuns || 1;
+  const CX = 190, CY = 142, R = 80;
+  const maxCount = Math.max(...axes.map(ax => ax.count), 1);
 
   const pts = axes.map((ax, i) => {
     const angle = (i / N) * 2 * Math.PI - Math.PI / 2;
-    const count = ax.key.reduce((s, k) => s + (byType[k] || 0), 0);
-    const ratio = Math.min(count / Math.max(total * 0.5, 1), 1);
+    const ratio = ax.count > 0 ? Math.max(0.2, Math.min(ax.count / maxCount, 1)) : 0;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    // Dynamic text anchor and placement based on angle direction
+    let anchor = 'middle';
+    let lx = CX + (R + 14) * cos;
+    let ly = CY + (R + 14) * sin;
+    let dyFirst = '0.35em';
+
+    if (cos > 0.25) {
+      anchor = 'start';
+      lx = CX + R * cos + 12;
+      if (Math.abs(sin) <= 0.4) {
+        ly = CY + R * sin;
+        dyFirst = ax.lines.length > 1 ? '-0.25em' : '0.35em';
+      } else if (sin > 0.4) {
+        ly = CY + R * sin + 12;
+        dyFirst = '0.4em';
+      } else {
+        ly = CY + R * sin - 8;
+        dyFirst = '-0.6em';
+      }
+    } else if (cos < -0.25) {
+      anchor = 'end';
+      lx = CX + R * cos - 12;
+      if (Math.abs(sin) <= 0.4) {
+        ly = CY + R * sin;
+        dyFirst = ax.lines.length > 1 ? '-0.25em' : '0.35em';
+      } else if (sin > 0.4) {
+        ly = CY + R * sin + 12;
+        dyFirst = '0.4em';
+      } else {
+        ly = CY + R * sin - 8;
+        dyFirst = '-0.6em';
+      }
+    } else {
+      anchor = 'middle';
+      if (sin < 0) {
+        // Top vertex: place above apex
+        ly = CY + R * sin - (ax.lines.length > 1 ? 22 : 14);
+        dyFirst = '0em';
+      } else {
+        // Bottom vertex: place below apex
+        ly = CY + R * sin + 14;
+        dyFirst = '0.7em';
+      }
+    }
+
     return {
-      label: ax.label,
+      key: ax.key,
+      lines: ax.lines,
+      count: ax.count,
       ratio,
       angle,
-      x: CX + R * Math.cos(angle),
-      y: CY + R * Math.sin(angle),
-      vx: CX + R * ratio * Math.cos(angle),
-      vy: CY + R * ratio * Math.sin(angle),
-      lx: CX + (R + 18) * Math.cos(angle),
-      ly: CY + (R + 18) * Math.sin(angle),
+      anchor,
+      dyFirst,
+      x: CX + R * cos,
+      y: CY + R * sin,
+      vx: CX + R * ratio * cos,
+      vy: CY + R * ratio * sin,
+      lx,
+      ly,
     };
   });
 
@@ -444,45 +589,78 @@ function RadarChart({ byType, totalRuns }) {
   const rings = [0.25, 0.5, 0.75, 1];
 
   return (
-    <svg width="200" height="200" viewBox="0 0 200 200" className={styles.radarSvg}>
+    <svg
+      width="100%"
+      height="auto"
+      viewBox="0 0 380 284"
+      className={styles.radarSvg}
+      style={{ maxWidth: 380, overflow: 'visible' }}
+    >
       {/* Grid rings */}
       {rings.map(r => (
-        <polygon key={r}
+        <polygon
+          key={r}
           points={pts.map(p => {
             const rx = CX + R * r * Math.cos(p.angle);
             const ry = CY + R * r * Math.sin(p.angle);
             return `${rx},${ry}`;
           }).join(' ')}
-          fill="none" stroke="#e2e8f0" strokeWidth="1"
+          fill="none"
+          stroke="#e2e8f0"
+          strokeWidth="1"
         />
       ))}
       {/* Axis lines */}
       {pts.map(p => (
-        <line key={p.label} x1={CX} y1={CY} x2={p.x} y2={p.y} stroke="#e2e8f0" strokeWidth="1" />
+        <line key={p.key} x1={CX} y1={CY} x2={p.x} y2={p.y} stroke="#e2e8f0" strokeWidth="1" />
       ))}
       {/* Outer ring (baseline) */}
       <polygon points={outerPoints} fill="rgba(241,245,249,0.4)" stroke="#e2e8f0" strokeWidth="1.5" />
       {/* Student polygon */}
-      <polygon points={polyPoints}
-        fill="rgba(16,185,129,0.18)" stroke="#10b981" strokeWidth="2"
+      <polygon
+        points={polyPoints}
+        fill="rgba(16,185,129,0.18)"
+        stroke="#10b981"
+        strokeWidth="2"
         style={{ animation: 'radarIn 700ms cubic-bezier(0.16,1,0.3,1) both' }}
       />
-      <style>{`@keyframes radarIn { from { opacity:0; transform-origin:100px 100px; transform:scale(0.2); } }`}</style>
+      <style>{`@keyframes radarIn { from { opacity:0; transform-origin:${CX}px ${CY}px; transform:scale(0.2); } }`}</style>
       {/* Data points */}
       {pts.map(p => (
-        <circle key={p.label} cx={p.vx} cy={p.vy} r="4"
-          fill="#10b981" stroke="#fff" strokeWidth="2"
-        />
+        <circle
+          key={p.key}
+          cx={p.vx}
+          cy={p.vy}
+          r="4.5"
+          fill="#10b981"
+          stroke="#fff"
+          strokeWidth="2"
+        >
+          <title>{`${p.key}: ${p.count} occurrence${p.count === 1 ? '' : 's'}`}</title>
+        </circle>
       ))}
       {/* Labels */}
       {pts.map(p => (
-        <text key={p.label}
-          x={p.lx} y={p.ly}
-          textAnchor="middle" dominantBaseline="middle"
-          fontSize="10" fontWeight="600" fill="#475569"
-          fontFamily="Inter,sans-serif"
+        <text
+          key={p.key}
+          x={p.lx}
+          y={p.ly}
+          textAnchor={p.anchor}
+          fontSize="10.5"
+          fontWeight="600"
+          fill="#475569"
+          fontFamily="Inter, system-ui, -apple-system, sans-serif"
         >
-          {p.label}
+          {p.lines.map((line, lIdx) => (
+            <tspan
+              key={lIdx}
+              x={p.lx}
+              dy={lIdx === 0 ? p.dyFirst : '1.2em'}
+            >
+              {line}
+            </tspan>
+          ))}
+          <title>{`${p.key}: ${p.count} occurrence${p.count === 1 ? '' : 's'}`}</title>
         </text>
       ))}
     </svg>
@@ -596,7 +774,7 @@ function VelocityGraph({ sessions }) {
 }
 
 // ─── 8. Error Tags ────────────────────────────────────────────────────────────
-function ErrorTags({ byType }) {
+function ErrorTags({ byType, language = 'c' }) {
   const [expanded, setExpanded] = useState(null);
   const sorted = Object.entries(byType).sort(([,a],[,b]) => b - a).slice(0, 8);
   const max = sorted[0]?.[1] || 1;
@@ -609,7 +787,7 @@ function ErrorTags({ byType }) {
         const meta = ERROR_TYPES[type] ?? { icon: '?', color: '#94a3b8', bg: '#f8fafc' };
         const pct = (count / max) * 100;
         const isExp = expanded === type;
-        const tips = TIPS[type] ?? [];
+        const tips = getTips(type, language);
         return (
           <div key={type} className={styles.tagRow}>
             <div className={styles.tagHeader}
@@ -644,10 +822,16 @@ function ErrorTags({ byType }) {
 function SessionSummary({ sessions }) {
   if (sessions.length === 0) return <div className={styles.emptySmall}>Run some code to see session stats</div>;
 
-  const today = toDateStr(Date.now());
-  const todaySessions = sessions.filter(s => toDateStr(s.timestamp) === today);
-  const todayErrors = todaySessions.filter(s => s.subtype !== 'Successful Run').length;
-  const todaySuccess = todaySessions.filter(s => s.subtype === 'Successful Run').length;
+  const today = toLocalDateStr(Date.now());
+  const todaySessions = sessions.filter(s => toLocalDateStr(s.timestamp) === today);
+  const todayErrors = todaySessions.filter(s => {
+    const sev = getEventSeverity(s);
+    return sev === 'error' || sev === 'runtime_error' || sev === 'timeout';
+  }).length;
+  const todaySuccess = todaySessions.filter(s => {
+    const sev = getEventSeverity(s);
+    return sev === 'success' || sev === 'warning';
+  }).length;
 
   const first = todaySessions[0]?.timestamp;
   const last = todaySessions[todaySessions.length - 1]?.timestamp;
@@ -741,9 +925,9 @@ function InsightIcon({ name, color }) {
   }
 }
 
-function InsightCards({ sessions, stats }) {
+function InsightCards({ sessions, stats, language = 'c' }) {
   const [active, setActive] = useState(0);
-  const insights = generateInsights(sessions, stats);
+  const insights = generateInsights(sessions, stats, language);
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -783,7 +967,8 @@ function InsightCards({ sessions, stats }) {
 }
 
 // ─── Empty State ─────────────────────────────────────────────────────────────
-function EmptyState() {
+function EmptyState({ language = 'c' }) {
+  const langLabel = LANGUAGE_META[language]?.label || language.toUpperCase();
   return (
     <div className={styles.emptyState}>
       <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
@@ -798,8 +983,8 @@ function EmptyState() {
         <circle cx="52" cy="10" r="3" fill="#059669" />
         <polyline points="16,36 28,26 40,18 52,10" stroke="#059669" strokeWidth="2" strokeLinecap="round" fill="none" />
       </svg>
-      <p className={styles.emptyTitle}>No analytics yet</p>
-      <p className={styles.emptySub}>Run your first program to start seeing insights, charts, and progress tracking here.</p>
+      <p className={styles.emptyTitle}>No {langLabel} analytics yet</p>
+      <p className={styles.emptySub}>Run your first {langLabel} program to start seeing insights, charts, and progress tracking here.</p>
     </div>
   );
 }
@@ -929,11 +1114,17 @@ function CloudProfile({ stats }) {
 }
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
-export default function AnalyticsPanel({ onClose }) {
-  const [sessions, setSessions] = useState(() => bugTrackerStore.sessions);
-  const [stats, setStats] = useState(() => bugTrackerStore.getStats());
-  const [cloudStats, setCloudStats] = useState(() => analyticsStore.getStats());
+export default function AnalyticsPanel({ onClose, selectedLanguage = 'c' }) {
+  const [sessions, setSessions] = useState(() => bugTrackerStore.getSessions(selectedLanguage));
+  const [stats, setStats] = useState(() => bugTrackerStore.getStats(selectedLanguage));
+  const [cloudStats, setCloudStats] = useState(() => analyticsStore.getStats(selectedLanguage));
   const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    setSessions(bugTrackerStore.getSessions(selectedLanguage));
+    setStats(bugTrackerStore.getStats(selectedLanguage));
+    setCloudStats(analyticsStore.getStats(selectedLanguage));
+  }, [selectedLanguage]);
 
   useEffect(() => {
     const unsub = analyticsStore.subscribe((newCloudStats) => {
@@ -943,12 +1134,12 @@ export default function AnalyticsPanel({ onClose }) {
   }, []);
 
   useEffect(() => {
-    const unsub = bugTrackerStore.subscribe((newStats) => {
-      setStats(newStats);
-      setSessions([...bugTrackerStore.sessions]);
+    const unsub = bugTrackerStore.subscribe(() => {
+      setStats(bugTrackerStore.getStats(selectedLanguage));
+      setSessions(bugTrackerStore.getSessions(selectedLanguage));
     });
     return unsub;
-  }, []);
+  }, [selectedLanguage]);
 
   const handleClose = useCallback(() => {
     setClosing(true);
@@ -985,6 +1176,9 @@ export default function AnalyticsPanel({ onClose }) {
               </svg>
             </div>
             Analytics
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6366f1', marginLeft: 6 }}>
+              {LANGUAGE_META[selectedLanguage]?.label || selectedLanguage.toUpperCase()}
+            </span>
           </div>
           <div className={styles.headerActions}>
             {stats.totalRuns > 0 && (
@@ -1005,7 +1199,7 @@ export default function AnalyticsPanel({ onClose }) {
                 </span>
                 <button
                   className={styles.clearBtn}
-                  onClick={() => { bugTrackerStore.reset(); }}
+                  onClick={() => { bugTrackerStore.reset(selectedLanguage); }}
                   id="analytics-clear-btn"
                   title="Clear all analytics data"
                 >
@@ -1026,7 +1220,7 @@ export default function AnalyticsPanel({ onClose }) {
         <div className={styles.panelBody}>
           <CloudProfile stats={cloudStats} />
           {!hasData ? (
-            <EmptyState />
+            <EmptyState language={selectedLanguage} />
           ) : (
             <>
               {/* 1 — Hero KPIs */}
@@ -1055,7 +1249,7 @@ export default function AnalyticsPanel({ onClose }) {
               {stats.errors > 0 && (
                 <Section title="Error Profile">
                   <div className={styles.radarWrap}>
-                    <RadarChart byType={stats.byType} totalRuns={stats.totalRuns} />
+                    <RadarChart byType={stats.byType} totalRuns={stats.totalRuns} language={selectedLanguage} />
                     <div className={styles.radarLegend}>
                       <div className={styles.radarLegItem}>
                         <span style={{ display:'inline-block', width:12, height:12, borderRadius:2, background:'rgba(16,185,129,0.4)', border:'2px solid #10b981', marginRight:6 }} />
@@ -1083,7 +1277,7 @@ export default function AnalyticsPanel({ onClose }) {
               {/* 8 — Error Tags */}
               {stats.errors > 0 && (
                 <Section title="Error Frequency (click to see tips)">
-                  <ErrorTags byType={stats.byType} />
+                  <ErrorTags byType={stats.byType} language={selectedLanguage} />
                 </Section>
               )}
 
@@ -1094,7 +1288,7 @@ export default function AnalyticsPanel({ onClose }) {
 
               {/* 10 — AI Insights */}
               <Section title="Personalized Insights">
-                <InsightCards sessions={sessions} stats={stats} />
+                <InsightCards sessions={sessions} stats={stats} language={selectedLanguage} />
               </Section>
             </>
           )}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { bugTrackerStore, ERROR_TYPES, TIPS, MAX_SESSIONS } from '../bugTracker.js';
+import { bugTrackerStore, ERROR_TYPES, getTips, MAX_SESSIONS } from '../bugTracker.js';
+import { LANGUAGE_META } from '../constants.js';
 import styles from './BugTrackerPanel.module.css';
 
 // ─── Donut chart (pure SVG, no libs) ─────────────────────────────────────────
@@ -178,10 +179,11 @@ function RankBadge({ rank }) {
 }
 
 // ─── Common Mistakes card (clickable) ────────────────────────────────────────
-function MistakeCard({ type, count, rank, maxCount, isSelected, onSelect, animDelay = 0, hoveredType, onHover }) {
+function MistakeCard({ type, count, rank, maxCount, isSelected, onSelect, animDelay = 0, hoveredType, onHover, language = 'c', improvementPct = null }) {
   const meta = ERROR_TYPES[type] ?? { icon: '?', color: '#6b7280', bg: '#f9fafb' };
   const pct  = maxCount > 0 ? (count / maxCount) * 100 : 0;
-  const hasTips = Boolean(TIPS[type]?.length);
+  const tips = getTips(type, language);
+  const hasTips = Boolean(tips?.length);
 
   const isHov    = hoveredType === type;
   const isAnyHov = hoveredType !== null;
@@ -232,12 +234,30 @@ function MistakeCard({ type, count, rank, maxCount, isSelected, onSelect, animDe
       </div>
       <div className={styles.mistakeFreqRow}>
         <span className={styles.mistakeFreqLabel}>Frequency</span>
-        <span
-          className={styles.mistakeFreqPill}
-          style={{ background: isSelected ? meta.color : meta.bg, color: isSelected ? '#fff' : meta.color }}
-        >
-          {count} {count === 1 ? 'time' : 'times'}
-        </span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {improvementPct !== null && improvementPct > 0 && (
+            <span
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                color: '#059669',
+                background: '#ecfdf5',
+                padding: '2px 6px',
+                borderRadius: 999,
+                border: '1px solid #a7f3d0',
+              }}
+              title={`Error frequency dropped by ${improvementPct}% in recent runs!`}
+            >
+              ↓ {improvementPct}%
+            </span>
+          )}
+          <span
+            className={styles.mistakeFreqPill}
+            style={{ background: isSelected ? meta.color : meta.bg, color: isSelected ? '#fff' : meta.color }}
+          >
+            {count} {count === 1 ? 'time' : 'times'}
+          </span>
+        </div>
       </div>
       <div className={styles.mistakeBar}>
         <div
@@ -250,12 +270,13 @@ function MistakeCard({ type, count, rank, maxCount, isSelected, onSelect, animDe
 }
 
 // ─── Tips section ─────────────────────────────────────────────────────────────
-function TipsSection({ selectedType, defaultType }) {
+function TipsSection({ selectedType, defaultType, language = 'c' }) {
   // Show selected type's tips if available, else fall back to default (top error)
-  const activeType = (selectedType && TIPS[selectedType]?.length) ? selectedType : defaultType;
-  const tipList    = TIPS[activeType] ?? TIPS['Compilation Error'];
+  const selectedTips = selectedType ? getTips(selectedType, language) : [];
+  const activeType = (selectedType && selectedTips.length) ? selectedType : defaultType;
+  const tipList    = getTips(activeType, language);
   const meta       = ERROR_TYPES[activeType] ?? { color: '#10b981', bg: '#ecfdf5', icon: '?' };
-  const isFiltered = selectedType && selectedType !== defaultType && TIPS[selectedType]?.length;
+  const isFiltered = selectedType && selectedType !== defaultType && selectedTips.length;
 
   return (
     <div>
@@ -303,8 +324,8 @@ function TipsSection({ selectedType, defaultType }) {
 }
 
 // ─── Main Panel component ─────────────────────────────────────────────────────
-export default function BugTrackerPanel({ onClose }) {
-  const [stats, setStats]               = useState(() => bugTrackerStore.getStats());
+export default function BugTrackerPanel({ onClose, selectedLanguage = 'c' }) {
+  const [stats, setStats]               = useState(() => bugTrackerStore.getStats(selectedLanguage));
   const [tleDismissed, setTleDismissed] = useState(false);
   const [closing, setClosing]           = useState(false);
   // Which mistake card the user last clicked (null = auto — shows top error type's tips)
@@ -312,11 +333,20 @@ export default function BugTrackerPanel({ onClose }) {
   // Shared hover state — syncs donut segments ↔ mistake cards
   const [hoveredType, setHoveredType]   = useState(null);
 
+  // Sync stats whenever selectedLanguage changes
+  useEffect(() => {
+    setStats(bugTrackerStore.getStats(selectedLanguage));
+    setSelectedType(null);
+    setTleDismissed(false);
+  }, [selectedLanguage]);
+
   // Subscribe to store updates
   useEffect(() => {
-    const unsub = bugTrackerStore.subscribe(setStats);
+    const unsub = bugTrackerStore.subscribe(() => {
+      setStats(bugTrackerStore.getStats(selectedLanguage));
+    });
     return unsub;
-  }, []);
+  }, [selectedLanguage]);
 
   // Animated close
   const handleClose = useCallback(() => {
@@ -325,10 +355,10 @@ export default function BugTrackerPanel({ onClose }) {
   }, [onClose]);
 
   const handleReset = useCallback(() => {
-    bugTrackerStore.reset();
+    bugTrackerStore.reset(selectedLanguage);
     setTleDismissed(false);
     setSelectedType(null);
-  }, []);
+  }, [selectedLanguage]);
 
   // Close on backdrop click
   const handleBackdrop = useCallback(() => handleClose(), [handleClose]);
@@ -390,6 +420,9 @@ export default function BugTrackerPanel({ onClose }) {
               </svg>
             </div>
             Bug Tracker
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', marginLeft: 6 }}>
+              {LANGUAGE_META[selectedLanguage]?.label || selectedLanguage.toUpperCase()}
+            </span>
           </div>
           <div className={styles.headerActions}>
             {hasData && (
@@ -434,10 +467,12 @@ export default function BugTrackerPanel({ onClose }) {
                   <line x1="24" y1="22" x2="29" y2="25" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <p className={styles.emptyStateTitle}>No compile attempts yet</p>
+              <p className={styles.emptyStateTitle}>
+                No {LANGUAGE_META[selectedLanguage]?.label || selectedLanguage} runs yet
+              </p>
               <p className={styles.emptyStateSub}>
-                Click ▶ Run to compile your code.<br/>
-                Errors and patterns will appear here.
+                Write your first {LANGUAGE_META[selectedLanguage]?.label || selectedLanguage} program above and click ▶ Run.<br/>
+                Errors and patterns will appear here automatically.
               </p>
             </div>
           ) : (
@@ -456,6 +491,30 @@ export default function BugTrackerPanel({ onClose }) {
                   />
                 </div>
               </Section>
+
+              {/* ── Improvement Banner ────────────────── */}
+              {stats.improvement?.hasData && stats.improvement.topImprovement && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.08))',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  borderRadius: 12,
+                  padding: '12px 16px',
+                  marginBottom: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}>
+                  <span style={{ fontSize: '1.4rem' }}>📈</span>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#059669' }}>
+                      Skill Improvement Detected!
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#334155', marginTop: 2 }}>
+                      {stats.improvement.topImprovement.text} in recent runs (dropped from {stats.improvement.topImprovement.prevPct}% to {stats.improvement.topImprovement.recentPct}%).
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* ── 2. Donut chart ────────────────────── */}
               {errors > 0 && (
@@ -504,20 +563,25 @@ export default function BugTrackerPanel({ onClose }) {
                     </p>
                   </div>
                   <div className={styles.mistakesGrid}>
-                    {sortedTypes.map(([type, count], i) => (
-                      <MistakeCard
-                        key={type}
-                        type={type}
-                        count={count}
-                        rank={i + 1}
-                        maxCount={maxCount}
-                        isSelected={selectedType === type}
-                        onSelect={handleCardSelect}
-                        animDelay={i * 60}
-                        hoveredType={hoveredType}
-                        onHover={setHoveredType}
-                      />
-                    ))}
+                    {sortedTypes.map(([type, count], i) => {
+                      const imp = stats.improvement?.byType?.find(t => t.type === type && t.improved);
+                      return (
+                        <MistakeCard
+                          key={type}
+                          type={type}
+                          count={count}
+                          rank={i + 1}
+                          maxCount={maxCount}
+                          isSelected={selectedType === type}
+                          onSelect={handleCardSelect}
+                          animDelay={i * 60}
+                          hoveredType={hoveredType}
+                          onHover={setHoveredType}
+                          language={selectedLanguage}
+                          improvementPct={imp ? imp.pctDecrease : null}
+                        />
+                      );
+                    })}
                   </div>
                 </Section>
               )}
@@ -528,6 +592,7 @@ export default function BugTrackerPanel({ onClose }) {
                   <TipsSection
                     selectedType={selectedType}
                     defaultType={topType}
+                    language={selectedLanguage}
                   />
                 </Section>
               )}

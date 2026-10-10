@@ -1,5 +1,19 @@
 import { supabase } from './supabaseClient.js';
 
+function loadLangNum(prefix, lang, fallback = 0) {
+  try {
+    const val = localStorage.getItem(`sc_analytics_${prefix}_${lang}`);
+    return val !== null ? parseInt(val, 10) : fallback;
+  } catch { return fallback; }
+}
+
+function saveLangNum(prefix, lang, val) {
+  try {
+    localStorage.setItem(`sc_analytics_${prefix}_${lang}`, String(val));
+  } catch {}
+}
+
+let activeLang = 'c';
 let currentUserId = null;
 let localStats = {
   total_runs: 0,
@@ -10,11 +24,30 @@ let localStats = {
   email: '',
   token_limit: 15000,
   current_streak: 0,
-  last_activity_date: null
+  last_activity_date: null,
+  runs_by_lang: {
+    c:      loadLangNum('runs', 'c', 0),
+    python: loadLangNum('runs', 'python', 0),
+    java:   loadLangNum('runs', 'java', 0),
+  },
+  errors_by_lang: {
+    c:      loadLangNum('errors', 'c', 0),
+    python: loadLangNum('errors', 'python', 0),
+    java:   loadLangNum('errors', 'java', 0),
+  },
 };
 
 let listeners = [];
 let timeBuffer = 0; // Accumulate time locally before saving
+
+// Returns date as 'YYYY-MM-DD' in the user's LOCAL timezone
+export function toLocalDateStr(date = new Date()) {
+  const d = typeof date === 'number' || typeof date === 'string' ? new Date(date) : date;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export const analyticsStore = {
   // Initialize and load user data from Supabase
@@ -30,7 +63,17 @@ export const analyticsStore = {
         email: '',
         token_limit: 15000,
         current_streak: 0,
-        last_activity_date: null
+        last_activity_date: null,
+        runs_by_lang: {
+          c:      loadLangNum('runs', 'c', 0),
+          python: loadLangNum('runs', 'python', 0),
+          java:   loadLangNum('runs', 'java', 0),
+        },
+        errors_by_lang: {
+          c:      loadLangNum('errors', 'c', 0),
+          python: loadLangNum('errors', 'python', 0),
+          java:   loadLangNum('errors', 'java', 0),
+        },
       };
       this.notify();
       return;
@@ -39,7 +82,7 @@ export const analyticsStore = {
     currentUserId = user.id;
     localStats.email = user.email;
 
-    if (!supabase) {
+    if (!supabase || typeof supabase.from !== 'function') {
       this.notify();
       return;
     }
@@ -135,7 +178,18 @@ export const analyticsStore = {
         email: data.email ?? user.email,
         token_limit: statsData.token_limit ?? 15000,
         current_streak: statsData.current_streak ?? 0,
-        last_activity_date: data.last_activity_date ?? null
+        last_activity_date: data.last_activity_date ?? null,
+        // Per-language stats: prefer DB values, fall back to localStorage
+        runs_by_lang: statsData.runs_by_lang ?? {
+          c:      loadLangNum('runs', 'c', 0),
+          python: loadLangNum('runs', 'python', 0),
+          java:   loadLangNum('runs', 'java', 0),
+        },
+        errors_by_lang: statsData.errors_by_lang ?? {
+          c:      loadLangNum('errors', 'c', 0),
+          python: loadLangNum('errors', 'python', 0),
+          java:   loadLangNum('errors', 'java', 0),
+        },
       };
       
       // On login, refresh streak if the day has rolled over
@@ -168,12 +222,8 @@ export const analyticsStore = {
     }
   },
 
-  // Returns today's date as 'YYYY-MM-DD' in the user's LOCAL timezone
   _localDateStr(date = new Date()) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return toLocalDateStr(date);
   },
 
   // Compute new streak value based on last_activity_date vs today.
@@ -195,8 +245,40 @@ export const analyticsStore = {
     return { newStreak: 1, newDate: today, changed: true };
   },
 
-  getStats() {
-    return { ...localStats };
+  setActiveLanguage(lang) {
+    if (!lang || activeLang === lang) return;
+    activeLang = lang;
+    this.notify();
+  },
+
+  getActiveLanguage() {
+    return activeLang;
+  },
+
+  getStats(language = null) {
+    const lang = language || activeLang;
+    const runsMap = localStats.runs_by_lang || {};
+    const errorsMap = localStats.errors_by_lang || {};
+    const langRuns = runsMap[lang] ?? 0;
+    const langErrors = errorsMap[lang] ?? 0;
+    const globalRuns = Math.max(
+      localStats.total_runs ?? 0,
+      Object.values(runsMap).reduce((sum, v) => sum + (v || 0), 0)
+    );
+    const globalErrors = Math.max(
+      localStats.error_counts ?? 0,
+      Object.values(errorsMap).reduce((sum, v) => sum + (v || 0), 0)
+    );
+    return {
+      ...localStats,
+      activeLanguage: lang,
+      lang_runs: langRuns,
+      lang_errors: langErrors,
+      total_runs: langRuns,
+      error_counts: langErrors,
+      global_total_runs: globalRuns,
+      global_error_counts: globalErrors,
+    };
   },
 
   isLimitReached() {
@@ -215,8 +297,14 @@ export const analyticsStore = {
   },
 
   // Record code run execution — also updates streak
-  async recordRun() {
-    localStats.total_runs += 1;
+  async recordRun(language = null) {
+    const lang = language || activeLang || 'c';
+    localStats.runs_by_lang[lang] = (localStats.runs_by_lang[lang] || 0) + 1;
+    saveLangNum('runs', lang, localStats.runs_by_lang[lang]);
+    localStats.total_runs = Math.max(
+      localStats.total_runs || 0,
+      Object.values(localStats.runs_by_lang).reduce((sum, v) => sum + (v || 0), 0)
+    );
 
     // Update streak locally for instant UI feedback (server computes the authoritative value)
     const { newStreak, newDate } = this._computeStreak(
@@ -227,30 +315,34 @@ export const analyticsStore = {
     localStats.last_activity_date = newDate;
 
     this.notify();
-    // NOTE: The server records total_runs and streak via the record_user_run RPC
-    // (called inside POST /api/compile and /ws/run). We do NOT write to Supabase
-    // here to prevent client-side manipulation of run counts or streaks.
   },
 
   // Record error counts from bug tracker
-  async recordErrors(count) {
-    if (localStats.error_counts === count) return;
-    localStats.error_counts = count;
+  async recordErrors(count, language = null) {
+    const lang = language || activeLang || 'c';
+    localStats.errors_by_lang[lang] = count;
+    saveLangNum('errors', lang, count);
+    const globalCount = Object.values(localStats.errors_by_lang).reduce((sum, v) => sum + (v || 0), 0);
+    localStats.error_counts = globalCount;
     this.notify();
 
     if (!supabase || !currentUserId) return;
     try {
       await supabase
         .from('user_stats')
-        .update({ error_counts: count })
+        .update({ error_counts: globalCount })
         .eq('id', currentUserId);
     } catch (err) {
       console.error('[Analytics] Failed to save error count:', err.message);
     }
   },
 
-  syncLocalErrors(count, breakdown) {
-    localStats.error_counts = count;
+  syncLocalErrors(count, breakdown, language = null) {
+    const lang = language || activeLang || 'c';
+    localStats.errors_by_lang[lang] = count;
+    saveLangNum('errors', lang, count);
+    const globalCount = Object.values(localStats.errors_by_lang).reduce((sum, v) => sum + (v || 0), 0);
+    localStats.error_counts = globalCount;
     localStats.error_breakdown = breakdown ?? {};
     this.notify();
   },

@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 // These values are injected at BUILD TIME by Vite from environment variables.
 // Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Render → Docker Build Arguments.
 // Never hardcode fallback values here — they get baked into the public JS bundle.
-const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
+const supabaseUrl     = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 'https://ibztlqnbjvqpsfgigqop.supabase.co';
+const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || 'sb_publishable_C98fRiosjZ7xX3_nFFvc7Q_wTVXBfzW';
 
 // Check if we are running locally with dummy/placeholder variables
 let isValidUrl = false;
@@ -19,12 +19,24 @@ const mockSupabase = {
   isDummy: true,
   auth: {
     getSession: async () => {
-      const sessionStr = localStorage.getItem('supabase-mock-session');
+      let sessionStr = localStorage.getItem('supabase-mock-session');
+      if (!sessionStr) {
+        const mockUser = { id: 'dummy-user-id', email: 'guest@example.com', user_metadata: { full_name: 'Guest Developer' } };
+        const mockSession = { user: mockUser, access_token: 'dummy-access-token' };
+        localStorage.setItem('supabase-mock-session', JSON.stringify(mockSession));
+        sessionStr = JSON.stringify(mockSession);
+      }
       const session = sessionStr ? JSON.parse(sessionStr) : null;
       return { data: { session }, error: null };
     },
     onAuthStateChange: (callback) => {
-      const sessionStr = localStorage.getItem('supabase-mock-session');
+      let sessionStr = localStorage.getItem('supabase-mock-session');
+      if (!sessionStr) {
+        const mockUser = { id: 'dummy-user-id', email: 'guest@example.com', user_metadata: { full_name: 'Guest Developer' } };
+        const mockSession = { user: mockUser, access_token: 'dummy-access-token' };
+        localStorage.setItem('supabase-mock-session', JSON.stringify(mockSession));
+        sessionStr = JSON.stringify(mockSession);
+      }
       const session = sessionStr ? JSON.parse(sessionStr) : null;
       // Fire key events asynchronously to match real Supabase behavior
       const timeoutId = setTimeout(() => {

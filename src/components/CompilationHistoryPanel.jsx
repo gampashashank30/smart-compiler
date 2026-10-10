@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { compilationHistoryStore, MAX_ENTRIES } from '../compilationHistory.js';
+import { LANGUAGE_META } from '../constants.js';
+import { highlightCode } from '../highlight.js';
 import styles from './CompilationHistoryPanel.module.css';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -333,7 +335,9 @@ function MaximizeModal({ entry, onClose, onLoadInEditor, onDelete }) {
           {/* Code pane */}
           <div className={styles.modalCodePane}>
             <div className={styles.modalPaneHeader}>
-              <span className={styles.modalPaneTitle}>Source Code</span>
+              <span className={styles.modalPaneTitle}>
+                {entry.filename ? `Source Code (${entry.filename})` : 'Source Code'}
+              </span>
               <span className={styles.modalLineCount}>{codeLines.length} lines</span>
             </div>
             <div className={styles.modalCodeScroll}>
@@ -494,24 +498,20 @@ function HistoryCard({ entry, onLoadInEditor, onDelete }) {
             <span className={`${styles.trafficDot} ${styles.trafficRed}`}/>
             <span className={`${styles.trafficDot} ${styles.trafficYellow}`}/>
             <span className={`${styles.trafficDot} ${styles.trafficGreen}`}/>
-            <span className={styles.codeEditorFilename}>main.c</span>
+            <span className={styles.codeEditorFilename}>
+              {entry.filename || (LANGUAGE_META[entry.language]?.defaultFile || (entry.language === 'java' ? 'Main.java' : entry.language === 'python' ? 'main.py' : 'main.c'))}
+            </span>
           </div>
           {/* Code with line numbers */}
           <div className={styles.codeScrollArea}>
             <table className={styles.codeTable}>
               <tbody>
-                {/*
-                  SECURITY: highlightC() (src/highlight.js) HTML-escapes ALL user
-                  input via esc() (&, <, >, ", ', /) before wrapping tokens in
-                  <span> tags with hard-coded class names.  No raw user-supplied
-                  content is ever injected as HTML — dangerouslySetInnerHTML is safe.
-                */}
                 {entry.code.split('\n').map((line, i) => (
                   <tr key={i} className={styles.codeLine}>
                     <td className={styles.codeLineNum}>{i + 1}</td>
                     <td
                       className={styles.codeLineContent}
-                      dangerouslySetInnerHTML={{ __html: highlightC(line) || '\u00a0' }}
+                      dangerouslySetInnerHTML={{ __html: highlightCode(line, entry.language) || '\u00a0' }}
                     />
                   </tr>
                 ))}
@@ -577,8 +577,8 @@ function HistoryCard({ entry, onLoadInEditor, onDelete }) {
 
 // ── Main Panel ────────────────────────────────────────────────────────────────
 
-export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
-  const [entries, setEntries]       = useState(() => compilationHistoryStore.getAll());
+export default function CompilationHistoryPanel({ onClose, onLoadInEditor, selectedLanguage = 'c' }) {
+  const [entries, setEntries]       = useState(() => compilationHistoryStore.getAll(selectedLanguage));
   const [closing, setClosing]       = useState(false);
   const [search, setSearch]         = useState('');
   const [filter, setFilter]         = useState('all');
@@ -586,10 +586,17 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
   const [confirmClear, setConfirmClear] = useState(false);
   const confirmTimerRef = useRef(null);
 
+  // Sync entries when selectedLanguage changes
   useEffect(() => {
-    const unsub = compilationHistoryStore.subscribe(setEntries);
+    setEntries(compilationHistoryStore.getAll(selectedLanguage));
+  }, [selectedLanguage]);
+
+  useEffect(() => {
+    const unsub = compilationHistoryStore.subscribe(() => {
+      setEntries(compilationHistoryStore.getAll(selectedLanguage));
+    });
     return unsub;
-  }, []);
+  }, [selectedLanguage]);
 
   const handleClose = useCallback(() => {
     setClosing(true);
@@ -603,8 +610,8 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
   }, [handleClose]);
 
   const handleDelete = useCallback((id) => {
-    compilationHistoryStore.delete(id);
-  }, []);
+    compilationHistoryStore.delete(id, selectedLanguage);
+  }, [selectedLanguage]);
 
   const handleClearAll = useCallback(() => {
     if (!confirmClear) {
@@ -613,9 +620,9 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
       confirmTimerRef.current = setTimeout(() => setConfirmClear(false), 3000);
       return;
     }
-    compilationHistoryStore.clearAll();
+    compilationHistoryStore.clearAll(selectedLanguage);
     setConfirmClear(false);
-  }, [confirmClear]);
+  }, [confirmClear, selectedLanguage]);
 
   const handleLoadInEditor = useCallback((code) => {
     onLoadInEditor?.(code);
@@ -660,7 +667,10 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
                 <circle cx="10" cy="10" r="1.2" fill="#10b981"/>
               </svg>
             </div>
-            Compilation History
+            History
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', marginLeft: 6 }}>
+              {LANGUAGE_META[selectedLanguage]?.label || selectedLanguage.toUpperCase()}
+            </span>
           </div>
           <div className={styles.headerActions}>
             {entries.length > 0 && (
@@ -742,8 +752,13 @@ export default function CompilationHistoryPanel({ onClose, onLoadInEditor }) {
                   <circle cx="26" cy="26" r="2" fill="#10b981"/>
                 </svg>
               </div>
-              <p className={styles.emptyTitle}>No compilations yet</p>
-              <p className={styles.emptySub}>Click ▶ Run to compile your code.<br/>Each run will appear here.</p>
+              <p className={styles.emptyTitle}>
+                No {LANGUAGE_META[selectedLanguage]?.label || selectedLanguage} compilations yet
+              </p>
+              <p className={styles.emptySub}>
+                Write your first {LANGUAGE_META[selectedLanguage]?.label || selectedLanguage} program and click ▶ Run.<br/>
+                Each run will appear here.
+              </p>
             </div>
           ) : filtered.length === 0 ? (
             <div className={styles.emptyState}>
