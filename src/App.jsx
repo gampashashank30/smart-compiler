@@ -85,34 +85,22 @@ const DEFAULT_WORKSPACE_TABS = {
 };
 
 function getInitialWorkspaceTabs() {
+  // Clear any previously persisted tabs so every refresh resets to default starter code
   try {
-    const raw = localStorage.getItem('sc_workspace_tabs');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        c: parsed.c?.length ? parsed.c : DEFAULT_WORKSPACE_TABS.c,
-        python: parsed.python?.length ? parsed.python : DEFAULT_WORKSPACE_TABS.python,
-        java: parsed.java?.length ? parsed.java : DEFAULT_WORKSPACE_TABS.java,
-      };
-    }
+    localStorage.removeItem('sc_workspace_tabs');
+    localStorage.removeItem('sc_active_tab_ids');
   } catch {}
-  return DEFAULT_WORKSPACE_TABS;
+  return {
+    c:      [{ id: 1, name: 'main.c', code: STARTER_CODE_C }],
+    python: [{ id: 101, name: 'main.py', code: STARTER_CODE_PYTHON }],
+    java:   [{ id: 201, name: 'Main.java', code: STARTER_CODE_JAVA }],
+  };
 }
 
 function getInitialActiveTabIds() {
-  try {
-    const raw = localStorage.getItem('sc_active_tab_ids');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        c: parsed.c || 1,
-        python: parsed.python || 101,
-        java: parsed.java || 201,
-      };
-    }
-  } catch {}
   return { c: 1, python: 101, java: 201 };
 }
+
 
 
 
@@ -246,18 +234,6 @@ export default function App() {
   const [activeTabIds, setActiveTabIds] = useState(getInitialActiveTabIds);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Sync workspace tabs and active tab IDs to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('sc_workspace_tabs', JSON.stringify(workspaceTabs));
-    } catch {}
-  }, [workspaceTabs]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('sc_active_tab_ids', JSON.stringify(activeTabIds));
-    } catch {}
-  }, [activeTabIds]);
 
   useEffect(() => {
     try {
