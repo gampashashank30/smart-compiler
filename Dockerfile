@@ -34,18 +34,19 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN mkdir -p /tmp /data/compiler-tmp && chmod 777 /tmp /data/compiler-tmp
 
 # Install GCC, G++, Make, Python3, Java (JDK) & curl for healthcheck
-# python3-is-python creates /usr/bin/python → python3 so ws-executor can call 'python'
+# python-is-python3 creates /usr/bin/python → python3 (Debian Bookworm package name)
 # default-jdk installs javac + java (OpenJDK) for interactive Java execution
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     make \
     python3 \
-    python3-is-python \
+    python-is-python3 \
     default-jdk \
     ca-certificates \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3 /usr/local/bin/python || true
 
 # Create app user
 RUN groupadd --gid 1001 appuser && \
