@@ -64,9 +64,13 @@ const QUICK_KEYWORDS = [
   { lang: 'typescript', confidence: 95, label: 'TS type annotation',   test: (c) => /:\s*(string|number|boolean|any|void|never|unknown)\b/.test(c) },
   { lang: 'typescript', confidence: 95, label: 'interface declaration', test: (c) => /\binterface\s+\w+\s*\{/.test(c) },
   { lang: 'typescript', confidence: 92, label: 'type alias',            test: (c) => /^\s*type\s+\w+\s*=/m.test(c) },
-  { lang: 'typescript', confidence: 90, label: 'generic syntax <T>',   test: (c) => /<[A-Z]\w*>/.test(c) || /\w+<\w+>/.test(c) },
+  // generic <T>: only fire if the code also has a TS-exclusive type annotation or 'interface'/'type' keyword.
+  // This avoids matching Java List<String> or C++ vector<int> in isolation.
+  { lang: 'typescript', confidence: 88, label: 'generic syntax <T>',   test: (c) => (/\w+<\w+>/.test(c) || /<[A-Z]\w*>/.test(c)) && /:\s*(string|number|boolean|any|void|never|unknown)\b|\binterface\s+\w+|^\s*type\s+\w+\s*=/m.test(c) },
   { lang: 'typescript', confidence: 88, label: 'enum declaration',      test: (c) => /\benum\s+\w+\s*\{/.test(c) },
-  { lang: 'typescript', confidence: 85, label: 'access modifiers',      test: (c) => /\b(public|private|protected|readonly)\s+\w+/.test(c) },
+  // access modifiers: exclude patterns that are uniquely Java/C++
+  // (public class, public static, public interface, public abstract, public void)
+  { lang: 'typescript', confidence: 82, label: 'access modifiers',      test: (c) => /\b(public|private|protected|readonly)\s+\w+/.test(c) && !/\b(public|private|protected)\s+(class|static|interface|abstract|void|enum)\b/.test(c) },
   { lang: 'typescript', confidence: 82, label: 'as type casting',       test: (c) => /\bas\s+(string|number|boolean|any|\w+)\b/.test(c) },
 
   // ── C++ ─────────────────────────────────────────────────────────────────
@@ -90,7 +94,8 @@ const QUICK_KEYWORDS = [
   { lang: 'c', confidence: 80, label: 'malloc/calloc/free',       test: (c) => /\b(malloc|calloc|realloc|free)\s*\(/.test(c) },
 
   // ── Java ─────────────────────────────────────────────────────────────────
-  { lang: 'java', confidence: 95, label: 'public class + {',       test: (c) => /\bpublic\s+class\s+\w+/.test(c) },
+  // 'public class' even without a class name yet (in-progress typing) → Java, not TypeScript
+  { lang: 'java', confidence: 95, label: 'public class + {',       test: (c) => /\bpublic\s+class\b/.test(c) },
   { lang: 'java', confidence: 95, label: 'public static void main',test: (c) => /public\s+static\s+void\s+main/.test(c) },
   { lang: 'java', confidence: 92, label: 'System.out.println',     test: (c) => /System\.out\.(print|println|printf)\s*\(/.test(c) },
   { lang: 'java', confidence: 90, label: 'import java.',           test: (c) => /\bimport\s+java\./.test(c) },
@@ -245,9 +250,11 @@ const LANGUAGE_SIGNALS = {
     { label: ': string/number/bool type', weight: 40, test: (c) => /:\s*(string|number|boolean|any|void|never|unknown|object)\b/.test(c) },
     { label: 'interface declaration',  weight: 45, test: (c) => /\binterface\s+\w+\s*\{/.test(c) },
     { label: 'type alias',             weight: 40, test: (c) => /^\s*type\s+\w+\s*=/m.test(c) },
-    { label: 'generic <T>',            weight: 35, test: (c) => /\w+<\w+>/.test(c) },
+    // generic <T>: require co-presence of a TS type annotation to avoid matching Java/C++ generics
+    { label: 'generic <T>',            weight: 35, test: (c) => /\w+<\w+>/.test(c) && /:\s*(string|number|boolean|any|void|never|unknown)\b|\binterface\s+\w+|^\s*type\s+\w+\s*=/m.test(c) },
     { label: 'enum declaration',       weight: 38, test: (c) => /\benum\s+\w+\s*\{/.test(c) },
-    { label: 'access modifiers',       weight: 30, test: (c) => /\b(public|private|protected|readonly)\s+\w+/.test(c) },
+    // access modifiers: exclude Java (public class/static/interface/abstract/void) and C++ (public: label)
+    { label: 'access modifiers',       weight: 30, test: (c) => /\b(public|private|protected|readonly)\s+\w+/.test(c) && !/\b(public|private|protected)\s+(class|static|interface|abstract|void|enum)\b/.test(c) && !/(public|private|protected)\s*:/.test(c) },
     { label: 'as type casting',        weight: 28, test: (c) => /\bas\s+(string|number|boolean|any|\w+)\b/.test(c) },
     { label: 'import from ES6',        weight: 22, test: (c) => /\bimport\s+.+\bfrom\s+['"]/.test(c) },
     { label: 'const/let declaration',  weight: 15, test: (c) => /\b(const|let)\s+\w+\s*=/.test(c) },
