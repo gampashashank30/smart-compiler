@@ -3,14 +3,23 @@ import { supabase } from '../supabaseClient.js';
 import styles from './AdminDashboard.module.css';
 
 // Donut chart using SVG — no external lib needed
-function DonutChart({ data }) {
+// `trueTotal` is the real platform-wide error count (matches the top card);
+// `data` contains the top-N slices; any remainder is shown as "Others".
+function DonutChart({ data, trueTotal }) {
   const size = 220, cx = size/2, cy = size/2, r = 72, innerR = 44;
   const circumference = 2 * Math.PI * r;
-  const total = data.reduce((s, d) => s + d.value, 0);
-  if (total === 0) return <div className={styles.noData}>No error data yet</div>;
+  const sliceSum = data.reduce((s, d) => s + d.value, 0);
+  // Use the authoritative total passed in; fall back to slice sum when unavailable
+  const displayTotal = trueTotal > 0 ? trueTotal : sliceSum;
+  if (displayTotal === 0) return <div className={styles.noData}>No error data yet</div>;
+  // If there are uncategorised errors beyond the shown slices, add an "Others" bucket
+  const othersValue = displayTotal - sliceSum;
+  const chartData = othersValue > 0
+    ? [...data, { label: 'Others', value: othersValue, color: '#cbd5e1' }]
+    : data;
   let offset = 0;
-  const slices = data.map((d) => {
-    const pct = d.value / total, dash = pct * circumference, gap = circumference - dash;
+  const slices = chartData.map((d) => {
+    const pct = d.value / displayTotal, dash = pct * circumference, gap = circumference - dash;
     const slice = { ...d, dash, gap, offset }; offset += dash; return slice;
   });
   return (
@@ -22,11 +31,14 @@ function DonutChart({ data }) {
             style={{ transition: 'stroke-dasharray 0.6s ease' }} />
         ))}
         <circle cx={cx} cy={cy} r={innerR} fill="#ffffff" />
-        <text x={cx} y={cy-6} textAnchor="middle" fontSize="22" fontWeight="700" fill="#1e293b">{total}</text>
+        {/* Always show the true platform-wide total in the centre */}
+        <text x={cx} y={cy-6} textAnchor="middle" fontSize="22" fontWeight="700" fill="#1e293b">
+          {displayTotal >= 1000 ? (displayTotal / 1000).toFixed(1) + 'k' : displayTotal}
+        </text>
         <text x={cx} y={cy+14} textAnchor="middle" fontSize="10" fontWeight="600" fill="#94a3b8" letterSpacing="0.08em">TOTAL</text>
       </svg>
       <div className={styles.donutLegend}>
-        {data.map((d, i) => (
+        {chartData.map((d, i) => (
           <div key={i} className={styles.legendRow}>
             <span className={styles.legendDot} style={{ background: d.color }} />
             <span className={styles.legendLabel}>{d.label}</span>
@@ -150,8 +162,11 @@ export default function AdminDashboard({ onClose }) {
         const PALETTE = ['#ef4444','#f59e0b','#8b5cf6','#0ea5e9','#10b981','#06b6d4','#ec4899','#6366f1'];
         const totalErrors = rows.reduce((s,r)=>s+(r.error_counts||0),0);
         if (Object.keys(agg).length > 0) {
+          // Show top-8 categories; the DonutChart component adds an "Others" slice
+          // automatically so the circle total always matches the top-card number.
           setErrorBreakdown(Object.entries(agg).sort(([,a],[,b])=>b-a).slice(0,8).map(([label,value],i)=>({label,value,color:PALETTE[i%PALETTE.length]})));
         } else {
+          // No breakdown data yet — use proportional estimates but keep their sum == totalErrors
           setErrorBreakdown([
             { label: 'Missing Semicolon',   value: totalErrors>0?Math.round(totalErrors*0.38):10, color:'#ef4444' },
             { label: 'Missing Parenthesis', value: totalErrors>0?Math.round(totalErrors*0.27):7,  color:'#f59e0b' },
@@ -164,10 +179,17 @@ export default function AdminDashboard({ onClose }) {
       finally { setLoading(false); }
     }
     load();
-    const handleSync = () => load();
+    // Debounce the reload: wait 800ms after the event so Supabase
+    // has time to commit the write before we re-fetch.
+    let debounceTimer = null;
+    const handleSync = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => load(), 800);
+    };
     window.addEventListener('analytics:updated', handleSync);
     window.addEventListener('bugtracker:record', handleSync);
     return () => {
+      clearTimeout(debounceTimer);
       window.removeEventListener('analytics:updated', handleSync);
       window.removeEventListener('bugtracker:record', handleSync);
     };
@@ -212,7 +234,7 @@ export default function AdminDashboard({ onClose }) {
               <section className={styles.section}>
                 <div className={styles.sectionHeader}><h3 className={styles.sectionTitle}>Top Errors Across All Users</h3><span className={styles.sectionSub}>Aggregated from all student sessions</span></div>
                 <div className={styles.chartRow}>
-                  <DonutChart data={errorBreakdown} />
+                  <DonutChart data={errorBreakdown} trueTotal={summary.totalErrors} />
                   <div className={styles.errorList}>
                     {errorBreakdown.map((e, i) => (
                       <div key={i} className={styles.errorListRow}>
