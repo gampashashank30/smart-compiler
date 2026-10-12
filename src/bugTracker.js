@@ -1145,6 +1145,20 @@ export const bugTrackerStore = {
           }
         }
         if (anyLoaded) {
+          try {
+            const { data: userStats } = await supabase
+              .from('user_stats')
+              .select('error_counts, error_breakdown')
+              .eq('id', this.userId)
+              .single();
+            if (userStats && analyticsStore && typeof analyticsStore.syncLocalErrors === 'function') {
+              analyticsStore.syncLocalErrors(
+                userStats.error_counts || 0,
+                userStats.error_breakdown || {},
+                this.activeLanguage
+              );
+            }
+          } catch {}
           this._notify();
           return;
         }
@@ -1251,6 +1265,17 @@ export const bugTrackerStore = {
           .eq('language', lang);
 
         if (deleteError) throw deleteError;
+
+        // Reset user_stats so Admin Dashboard also resets to 0 bugs
+        await supabase
+          .from('user_stats')
+          .update({
+            error_counts: 0,
+            error_breakdown: {},
+          })
+          .eq('id', this.userId);
+
+        window.dispatchEvent(new CustomEvent('analytics:updated'));
       } catch (err) {
         console.error('[BugTracker] Failed to reset database analytics:', err.message);
       }

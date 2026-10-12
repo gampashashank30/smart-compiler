@@ -164,6 +164,13 @@ export default function AdminDashboard({ onClose }) {
       finally { setLoading(false); }
     }
     load();
+    const handleSync = () => load();
+    window.addEventListener('analytics:updated', handleSync);
+    window.addEventListener('bugtracker:record', handleSync);
+    return () => {
+      window.removeEventListener('analytics:updated', handleSync);
+      window.removeEventListener('bugtracker:record', handleSync);
+    };
   }, []);
 
   function fmt(n) { if (n>=1_000_000) return (n/1_000_000).toFixed(1)+'M'; if (n>=1_000) return (n/1_000).toFixed(1)+'k'; return String(n); }

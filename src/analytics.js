@@ -345,6 +345,20 @@ export const analyticsStore = {
     localStats.error_counts = globalCount;
     localStats.error_breakdown = breakdown ?? {};
     this.notify();
+
+    if (supabase && currentUserId && !supabase.isDummy) {
+      supabase
+        .from('user_stats')
+        .update({
+          error_counts: globalCount,
+          error_breakdown: localStats.error_breakdown,
+        })
+        .eq('id', currentUserId)
+        .then(() => {
+          window.dispatchEvent(new CustomEvent('analytics:updated'));
+        })
+        .catch(err => console.error('[Analytics] Failed to sync error stats to DB:', err.message));
+    }
   },
 
   // Buffer and periodically save time spent
