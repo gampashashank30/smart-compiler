@@ -9,7 +9,8 @@ export const TUTOR_CURRICULUM = {
         "title": "Hello World & Basic Output",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "5 min",
+        "levelNum": 1,
+        "estimatedTime": "5 min",
         "concept": {
             "summary": "Your very first C program — printing text to the screen. Every programmer starts here.",
             "whatIsIt": "A \"Hello World\" program is the simplest possible program you can write. It teaches you the basic skeleton of every C program: the includes, the main function, and how to print output. Think of it as learning to say \"Hello\" in a new language.",
@@ -159,7 +160,8 @@ export const TUTOR_CURRICULUM = {
         "title": "Variables & Data Types",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "10 min",
+        "levelNum": 1,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Variables are named containers that store data. Data types tell the computer how much space to reserve and what kind of data goes in.",
             "whatIsIt": "Imagine your computer's memory as a row of numbered boxes. A variable is a label you put on a box so you can find it by name. The data type tells the computer how big the box should be — an int needs 4 bytes, a char needs 1 byte, and a double needs 8 bytes.",
@@ -308,7 +310,8 @@ export const TUTOR_CURRICULUM = {
         "title": "Arithmetic Operators",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "8 min",
+        "levelNum": 1,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Arithmetic operators perform math on numbers. C supports +, -, *, /, and % (modulus). Understanding integer division vs float division is critical.",
             "whatIsIt": "Operators are symbols that perform operations on values. In C, arithmetic operators work on numbers. The tricky ones are division (/) and modulus (%): when both operands are int, division gives you only the whole number part. Modulus gives you the remainder.",
@@ -463,7 +466,8 @@ export const TUTOR_CURRICULUM = {
         "title": "If-Else Conditions",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "10 min",
+        "levelNum": 1,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "If-else lets your program make decisions. If a condition is true, one block runs; otherwise, the else block runs.",
             "whatIsIt": "Without conditions, programs can only do the same thing every time. If-else lets you branch: \"IF the temperature is above 30, print HOT, ELSE print COLD.\" The condition inside if() is tested — if it evaluates to non-zero (true), the if-block runs; if zero (false), the else-block runs.",
@@ -613,29 +617,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Even or Odd Check",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "5 min",
+        "levelNum": 1,
+        "estimatedTime": "5 min",
         "concept": {
             "summary": "Determine if an integer is even or odd using the modulus operator %.",
-            "whatIsIt": "Even numbers are completely divisible by 2 (remainder is 0). Odd numbers leave a remainder of 1 when divided by 2.",
+            "whatIsIt": "The even-odd check determines whether an integer is divisible by 2 without any remainder. In C, we use the modulus operator `%` to inspect the remainder: if `n % 2 == 0`, the number is even; otherwise, it is odd.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Check Remainder",
-                    "description": "if (n % 2 == 0) -> even, else -> odd."
+                    "title": "Read integer input",
+                    "description": "Prompt the user and read an integer into variable `n` using `scanf(\"%d\", &n)`."
+                },
+                {
+                    "step": 2,
+                    "title": "Evaluate remainder",
+                    "description": "Compute `n % 2` to calculate the remainder after division by 2."
+                },
+                {
+                    "step": 3,
+                    "title": "Branch condition",
+                    "description": "Use `if (n % 2 == 0)` to check if the remainder is exactly zero."
+                },
+                {
+                    "step": 4,
+                    "title": "Output result",
+                    "description": "Print that the number is Even if true, or Odd in the `else` branch."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Modulus (%)",
-                    "definition": "Returns the remainder of division."
+                    "term": "Modulus Operator (%)",
+                    "definition": "Returns the integer remainder of a division operation (e.g., 7 % 2 is 1)."
+                },
+                {
+                    "term": "Even Number",
+                    "definition": "Any integer divisible by 2 with zero remainder, ending in 0, 2, 4, 6, or 8."
+                },
+                {
+                    "term": "Odd Number",
+                    "definition": "Any integer that leaves a remainder of 1 (or -1) when divided by 2."
+                },
+                {
+                    "term": "Parity Check",
+                    "definition": "Testing whether a binary or integer value is odd or even."
                 }
             ],
-            "realWorldExample": "Dividing items equally between two people. If 1 is left over, the total number was odd.",
+            "realWorldExample": "Dividing a deck of cards or bill equally between two people without any leftovers.",
             "timeComplexity": "O(1)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Basic decision making and conditional branching exercises.",
             "commonMistakes": [
-                "Using division / instead of modulus %"
+                "Using division `/` instead of modulus `%` (e.g., `n / 2 == 0` is false for non-zero numbers).",
+                "Using single equals `=` instead of comparison `==` in `if (n % 2 = 0)`.",
+                "Forgetting about negative odd numbers where `n % 2` yields `-1` in C; using `n % 2 != 0` is safer than `== 1`.",
+                "Forgetting the ampersand `&` in `scanf(\"%d\", &n)` causing a segmentation fault."
             ],
             "diagramType": null
         },
@@ -709,8 +744,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Input a number, divide by 2, check if remainder is 0.",
             "keySteps": [
-                "Read x",
-                "if x % 2 == 0 print Even, else print Odd"
+                "Read integer n from user input",
+                "Compute remainder using n % 2",
+                "Check if remainder equals 0",
+                "Display 'Even' if true, else display 'Odd'"
             ],
             "pseudocode": "READ x\nIF x % 2 == 0: PRINT \"Even\"\nELSE: PRINT \"Odd\""
         },
@@ -722,29 +759,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Sign of a Number",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "5 min",
+        "levelNum": 1,
+        "estimatedTime": "5 min",
         "concept": {
             "summary": "Determine if a number is positive, negative, or zero using if-else if.",
-            "whatIsIt": "Checks the numeric range relative to zero.",
+            "whatIsIt": "Determining the sign of a number checks whether a numeric value lies above, below, or exactly at zero on the real number line. It teaches multi-way branching in C using `if`, `else if`, and `else` constructs.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "If conditions",
-                    "description": "if n > 0 -> positive, else if n < 0 -> negative, else -> zero."
+                    "title": "Read the number",
+                    "description": "Accept an integer or floating-point value from standard input."
+                },
+                {
+                    "step": 2,
+                    "title": "Check positive condition",
+                    "description": "Evaluate `if (n > 0)` to identify numbers strictly greater than zero."
+                },
+                {
+                    "step": 3,
+                    "title": "Check negative condition",
+                    "description": "Evaluate `else if (n < 0)` for numbers strictly less than zero."
+                },
+                {
+                    "step": 4,
+                    "title": "Fallback to zero",
+                    "description": "Use the final `else` clause when the number is neither positive nor negative, confirming it is zero."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Conditional Branching",
-                    "definition": "Directing flow based on value ranges."
+                    "term": "Signum / Sign",
+                    "definition": "The mathematical property indicating whether a real number is positive, negative, or zero."
+                },
+                {
+                    "term": "Multi-way Branching",
+                    "definition": "Chaining `if ... else if ... else` statements to test mutually exclusive conditions."
+                },
+                {
+                    "term": "Strict Inequality",
+                    "definition": "Relational comparisons `>` and `<` that exclude equality."
+                },
+                {
+                    "term": "Neutral Element",
+                    "definition": "Zero is neither positive nor negative; it is the origin on the number line."
                 }
             ],
-            "realWorldExample": "Classifying bank balances as positive, overdrawn (negative), or closed (zero).",
+            "realWorldExample": "A bank account balance: positive means savings, negative means overdraft debt, zero means empty.",
             "timeComplexity": "O(1)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Basic sign evaluation requirements.",
             "commonMistakes": [
-                "Incorrect comparison operators."
+                "Using `>= 0` for positive, which mistakenly classifies zero as a positive number.",
+                "Writing separate disconnected `if` statements instead of `else if`, causing redundant evaluations.",
+                "Forgetting to handle large negative inputs that may approach signed integer limits.",
+                "Comparing uninitialized variables containing garbage values."
             ],
             "diagramType": null
         },
@@ -818,9 +886,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Compare input with 0.",
             "keySteps": [
-                "if n > 0 positive",
-                "else if n < 0 negative",
-                "else zero"
+                "Input value n",
+                "If n > 0, output 'Positive'",
+                "Else if n < 0, output 'Negative'",
+                "Else output 'Zero'"
             ],
             "pseudocode": "IF n > 0: PRINT \"Positive\"\nELSE IF n < 0: PRINT \"Negative\"\nELSE: PRINT \"Zero\""
         },
@@ -832,29 +901,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Leap Year Check",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "8 min",
+        "levelNum": 1,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Check if a year is a leap year (366 days) using nested or logical conditions.",
-            "whatIsIt": "A leap year is divisible by 4, except for end-of-century years which must be divisible by 400.",
+            "whatIsIt": "A leap year has 366 days instead of 365, adding February 29 to synchronize the calendar year with the astronomical solar cycle. The Gregorian rule requires: divisible by 4, except century years must also be divisible by 400.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Conditions",
-                    "description": "Leap year if: divisible by 400 OR (divisible by 4 AND NOT divisible by 100)."
+                    "title": "Accept year input",
+                    "description": "Read a 4-digit positive integer representing the calendar year."
+                },
+                {
+                    "step": 2,
+                    "title": "Check century rule",
+                    "description": "If `year % 400 == 0`, it is definitively a leap year (e.g., 2000)."
+                },
+                {
+                    "step": 3,
+                    "title": "Check 100 exception",
+                    "description": "If `year % 100 == 0`, it is NOT a leap year (e.g., 1900, 2100)."
+                },
+                {
+                    "step": 4,
+                    "title": "Check 4-year rule",
+                    "description": "If `year % 4 == 0`, it is a leap year; combine with `(year % 400 == 0) || (year % 4 == 0 && year % 100 != 0)`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Leap Year",
-                    "definition": "A calendar year containing an extra day (Feb 29)."
+                    "term": "Gregorian Calendar Rule",
+                    "definition": "Divisible by 4 and not 100, unless also divisible by 400."
+                },
+                {
+                    "term": "Century Year",
+                    "definition": "Years ending in 00 (e.g., 1800, 1900, 2000)."
+                },
+                {
+                    "term": "Logical Operators",
+                    "definition": "Using `&&` (AND) and `||` (OR) to express compound boolean conditions."
+                },
+                {
+                    "term": "Short-circuit Evaluation",
+                    "definition": "C stops evaluating boolean expressions as soon as the final truth value is determined."
                 }
             ],
-            "realWorldExample": "Calendar systems and time tracking software calculations.",
+            "realWorldExample": "Adding an extra day to February every 4 years so seasonal solstices do not drift across months.",
             "timeComplexity": "O(1)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Date validations and calendrical operations.",
             "commonMistakes": [
-                "Assuming all years divisible by 4 are leap years (e.g. 1900 is divisible by 4 but NOT a leap year)."
+                "Only checking `year % 4 == 0`, which incorrectly flags century years like 1900 and 2100 as leap years.",
+                "Using bitwise `&` or `|` instead of logical `&&` or `||`.",
+                "Incorrect operator precedence: forgetting parentheses around `(year % 4 == 0 && year % 100 != 0)`.",
+                "Assuming every 4th year is automatically a leap year without applying the century exception."
             ],
             "diagramType": null
         },
@@ -928,8 +1028,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Use logic: year % 400 == 0 || (year % 4 == 0 && year % 100 != 0).",
             "keySteps": [
-                "Apply leap check condition",
-                "Print leap year or common year"
+                "Read year integer",
+                "Check condition: (year % 400 == 0) OR (year % 4 == 0 AND year % 100 != 0)",
+                "If condition is true, print 'Leap Year'",
+                "Else print 'Not a Leap Year'"
             ],
             "pseudocode": "IF year % 400 == 0 OR (year % 4 == 0 AND year % 100 != 0):\n  PRINT \"Leap Year\"\nELSE:\n  PRINT \"Not Leap Year\""
         },
@@ -941,34 +1043,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Swap Two Numbers",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "5 min",
+        "levelNum": 1,
+        "estimatedTime": "5 min",
         "concept": {
             "summary": "Swap values of two variables using a temporary variable, or using arithmetic operations without a third variable.",
-            "whatIsIt": "Swapping means exchanging values. If x=5 and y=10, after swapping x becomes 10 and y becomes 5. This can be done with a temp variable (like a third cup to exchange juice between two cups) or directly using math (+ and -).",
+            "whatIsIt": "Swapping exchanges the values of two variables so each holds the value previously held by the other. It is the fundamental primitive operation in sorting algorithms, queue reordering, and data structure rotations.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Using temp variable",
-                    "description": "temp = a; a = b; b = temp;"
+                    "title": "Declare temporary storage",
+                    "description": "Create a temporary variable `temp` of the same data type as the variables to swap."
                 },
                 {
                     "step": 2,
-                    "title": "Without temp variable",
-                    "description": "a = a + b; b = a - b; a = a - b;"
+                    "title": "Save first variable",
+                    "description": "Store variable `a` into `temp` (`temp = a`) so its value is preserved."
+                },
+                {
+                    "step": 3,
+                    "title": "Overwrite first variable",
+                    "description": "Assign `b` into `a` (`a = b`), transferring the second value."
+                },
+                {
+                    "step": 4,
+                    "title": "Restore second variable",
+                    "description": "Assign saved `temp` into `b` (`b = temp`), completing the two-way exchange."
                 }
             ],
             "keyTerms": [
                 {
                     "term": "Temporary Variable",
-                    "definition": "A helper variable used to store a value temporarily during data exchange."
+                    "definition": "A placeholder variable used to prevent data loss during overwriting."
+                },
+                {
+                    "term": "In-place Swap",
+                    "definition": "Swapping using arithmetic `a = a + b; b = a - b; a = a - b` or XOR `^` without extra variables."
+                },
+                {
+                    "term": "Data Overwrite",
+                    "definition": "Writing into a variable before saving its original value causes irreversible data loss."
+                },
+                {
+                    "term": "Pass by Reference",
+                    "definition": "Using pointers `swap(&a, &b)` to modify variables outside the caller function."
                 }
             ],
-            "realWorldExample": "Pouring milk from glass A and juice from glass B into each other by using an empty glass C.",
+            "realWorldExample": "Pouring coffee from cup A to cup B using a third empty glass C to hold the liquid temporarily.",
             "timeComplexity": "O(1)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Fundamental building block in sorting algorithms like Bubble Sort or Selection Sort.",
             "commonMistakes": [
-                "Writing a = b; b = a; directly (this overwrites a, resulting in both variables having b's value)"
+                "Overwriting `a = b` without saving `a` in `temp`, causing both variables to hold `b`'s value.",
+                "Arithmetic swap `a = a + b` can cause integer overflow when working with large numbers.",
+                "XOR swap fails when swapping a variable with itself at the same memory location, zeroing it out.",
+                "Passing values instead of pointers when trying to swap variables inside a separate function."
             ],
             "diagramType": null
         },
@@ -1042,9 +1170,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Store a in temp, assign b to a, assign temp to b.",
             "keySteps": [
-                "temp = a",
-                "a = b",
-                "b = temp"
+                "Read two integers a and b",
+                "Set temp = a",
+                "Set a = b",
+                "Set b = temp",
+                "Display new values of a and b"
             ],
             "pseudocode": "temp = a\na = b\nb = temp"
         },
@@ -1056,7 +1186,8 @@ export const TUTOR_CURRICULUM = {
         "title": "Switch Statement",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "10 min",
+        "levelNum": 1,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Switch is a cleaner way to handle multiple choices based on a single variable's value. It replaces long if-else if chains.",
             "whatIsIt": "When you have one variable that can have many specific values and you want to do different things for each value, switch is cleaner than many else-if blocks. The switch statement jumps directly to the matching case — like a jump table. Without break, it \"falls through\" to the next case.",
@@ -1201,35 +1332,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Simple Calculator",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "10 min",
+        "levelNum": 1,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Implement a basic arithmetic calculator (+, -, *, /) using a switch statement.",
-            "whatIsIt": "Reads an operator (+, -, *, /) and two operands, and performs the corresponding math operation using switch(operator).",
+            "whatIsIt": "A menu-driven calculator performs basic arithmetic (+, -, *, /) based on an operator character chosen by the user. It showcases the `switch-case` statement in C as a clean, performant alternative to nested if-else ladders.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Read operator",
-                    "description": "Read operator char and two operands."
+                    "title": "Read operator and operands",
+                    "description": "Read two numbers and an operator character (`+`, `-`, `*`, `/`)."
                 },
                 {
                     "step": 2,
-                    "title": "Switch",
-                    "description": "switch(operator) and execute matched case."
+                    "title": "Pass operator to switch",
+                    "description": "Evaluate `switch (operator)` matching against discrete `case` constants."
+                },
+                {
+                    "step": 3,
+                    "title": "Execute matching case",
+                    "description": "Perform operation and include `break;` to prevent fall-through to the next case."
+                },
+                {
+                    "step": 4,
+                    "title": "Default error branch",
+                    "description": "Use `default:` to catch invalid operators and check for division by zero."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Switch Expression",
-                    "definition": "The variable evaluated against case labels."
+                    "term": "Switch-Case",
+                    "definition": "A multi-branch statement that jumps directly to matching integer or character labels."
+                },
+                {
+                    "term": "Break Statement",
+                    "definition": "Terminates the switch block immediately, preventing unintentional case fall-through."
+                },
+                {
+                    "term": "Case Fall-through",
+                    "definition": "When code execution flows sequentially into the next case due to a missing break."
+                },
+                {
+                    "term": "Divide by Zero",
+                    "definition": "An undefined mathematical operation that causes runtime hardware exception crashes in C."
                 }
             ],
-            "realWorldExample": "A basic desk calculator interface.",
+            "realWorldExample": "A vending machine button: pressing 'B4' triggers the specific motor for that item and stops.",
             "timeComplexity": "O(1)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Basic command interpreter and menu routing programs.",
             "commonMistakes": [
-                "Forgetting division-by-zero check.",
-                "Not putting break; in cases."
+                "Forgetting `break;` after a case, causing subsequent cases to execute unintentionally.",
+                "Not checking for division by zero before executing `a / b` when `b == 0`.",
+                "Buffer leftover newline issue: `scanf(\" %c\", &op)` requires a leading space to skip preceding whitespace.",
+                "Using strings or floats in `switch()`, which only accepts integral types (`int`, `char`, `enum`)."
             ],
             "diagramType": null
         },
@@ -1304,8 +1460,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Switch on operator char. Check division by zero in division case.",
             "keySteps": [
-                "Read op, a, b",
-                "switch(op): case '+': print a+b; ..."
+                "Input operator char and operands a, b",
+                "Switch on operator (+, -, *, /)",
+                "In each case, compute and display result, then break",
+                "If operator is '/' and b == 0, print error",
+                "In default case, handle invalid operator"
             ],
             "pseudocode": "SWITCH operator:\n  CASE '+': PRINT a + b; BREAK\n  CASE '/': IF b != 0: PRINT a / b; ELSE: PRINT \"Error\""
         },
@@ -1317,7 +1476,8 @@ export const TUTOR_CURRICULUM = {
         "title": "For Loop",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "10 min",
+        "levelNum": 1,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "The for loop repeats code a specific number of times. It's the most-used loop in C when you know exactly how many times to repeat.",
             "whatIsIt": "A loop lets you run the same code multiple times without copy-pasting. The for loop is perfect when you know the count upfront: \"print this 10 times\", \"process 100 array elements\". It has 3 parts in one line: initialization, condition, and update.",
@@ -1471,7 +1631,8 @@ export const TUTOR_CURRICULUM = {
         "title": "While Loop",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "10 min",
+        "levelNum": 1,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "The while loop repeats as long as a condition stays true. Use it when you don't know in advance how many times to loop.",
             "whatIsIt": "Unlike the for loop (where you know the count), the while loop keeps running as long as a condition is met. It's perfect for \"keep reading until the user enters -1\" or \"keep searching until found\". The condition is checked BEFORE every iteration.",
@@ -1617,51 +1778,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Do-While Loop",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "8 min",
+        "levelNum": 1,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Do-while executes the body FIRST, then checks the condition. It always runs at least once — perfect for menus and input validation.",
-            "whatIsIt": "The do-while loop is the only \"exit-controlled\" loop in C — it checks the condition AFTER running the body. This guarantees the body executes at least once. This makes it perfect for showing a menu or asking for input, where you must display/ask before checking.",
+            "whatIsIt": "A `do-while` loop is an exit-controlled loop that executes its code block at least once before testing the condition at the end. It is commonly used for input validation and interactive, menu-driven programs where an action must happen first.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Execute body first",
-                    "description": "The code inside do { } runs FIRST without any condition check."
+                    "title": "Enter loop unconditionally",
+                    "description": "Execution enters the `do { ... }` block directly on the first pass without checking the condition."
                 },
                 {
                     "step": 2,
-                    "title": "Check condition after",
-                    "description": "while(condition) at the bottom — if true, loop back. If false, exit."
+                    "title": "Execute body statements",
+                    "description": "Run interactive prompts, read user input, or perform calculations."
                 },
                 {
                     "step": 3,
-                    "title": "Guarantees one run",
-                    "description": "Even if condition is false from the beginning, the body executes once."
+                    "title": "Evaluate loop condition",
+                    "description": "Test `while (condition);` at the closing brace."
                 },
                 {
                     "step": 4,
-                    "title": "Semicolon after while",
-                    "description": "do { } while(condition); — don't forget the semicolon after the closing while!"
+                    "title": "Repeat or exit",
+                    "description": "If condition is true, loop jumps back to the `do` block; if false, loop terminates."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "do { } while()",
-                    "definition": "Exit-controlled loop. Body runs first, condition checked after."
+                    "term": "Exit-Controlled Loop",
+                    "definition": "A loop whose termination condition is tested after each iteration body executes."
                 },
                 {
-                    "term": "Exit-controlled",
-                    "definition": "Condition is checked at the exit (bottom) of the loop, not the entry."
+                    "term": "Guaranteed Single Execution",
+                    "definition": "The body always runs at least once, even if the condition is false initially."
                 },
                 {
-                    "term": "At least once",
-                    "definition": "The defining feature of do-while — body always executes at minimum one time."
+                    "term": "Input Validation Loop",
+                    "definition": "Repeatedly prompting a user until they provide valid data within acceptable bounds."
                 },
                 {
-                    "term": "Semicolon after while",
-                    "definition": "do {} while(cond); needs a semicolon after the condition. Easy to forget!"
+                    "term": "Trailing Semicolon",
+                    "definition": "The `while (condition);` line in a do-while loop MUST conclude with a semicolon."
                 }
             ],
-            "realWorldExample": "A restaurant menu: \"Show menu → Take order → while(customer wants more food) → show menu again.\" You always show the menu at least once before checking if they want to continue.",
+            "realWorldExample": "Entering your ATM PIN: the keypad prompts you at least once, and only loops if the PIN was incorrect.",
             "timeComplexity": {
                 "best": "O(1)",
                 "average": "O(n)",
@@ -1670,9 +1832,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "Menus, input validation, any situation where the action must happen at least once before checking the condition.",
             "commonMistakes": [
-                "Forgetting the semicolon after while(condition); — do{} while(cond) without ; is a syntax error",
-                "Confusing with while — do-while always runs at least once, while may run zero times",
-                "Forgetting that the condition is checked after, not before the first iteration"
+                "Forgetting the required semicolon `;` after `while (condition)` causing a compile error.",
+                "Assuming a do-while loop checks the condition before the first run like a while loop does.",
+                "Not updating the loop control variable inside the body, causing an infinite loop.",
+                "Variable scoping errors: declaring variables inside `do { }` and trying to use them in the `while()` condition."
             ],
             "diagramType": "loop-flow"
         },
@@ -1746,11 +1909,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Build a repeating menu using do-while that keeps showing until user chooses to exit.",
             "keySteps": [
-                "Step 1: Write do { open brace",
-                "Step 2: Print menu options inside the body",
-                "Step 3: Read user's choice",
-                "Step 4: Use switch or if to handle each choice",
-                "Step 5: Write } while(choice != 0); — loop until exit chosen"
+                "Enter do block",
+                "Prompt user or perform task",
+                "Read input or update control variables",
+                "Evaluate while(condition);",
+                "Repeat if condition is true"
             ],
             "pseudocode": "DO:\n  PRINT menu options\n  READ choice\n  HANDLE choice with switch\nWHILE choice != 0"
         },
@@ -1762,29 +1925,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Multiplication Table",
         "category": "Basics & Arithmetic",
         "level": "beginner",
-        "levelNum": 1,"estimatedTime": "5 min",
+        "levelNum": 1,
+        "estimatedTime": "5 min",
         "concept": {
             "summary": "Print the multiplication table of a number up to a specified limit.",
-            "whatIsIt": "Prints n * 1 = n, n * 2 = 2n, ..., n * limit = limit*n.",
+            "whatIsIt": "Generating a multiplication table displays the sequential products of a given number `n` multiplied by integers from 1 up to 10 (or a custom limit). It is the premier introductory problem for understanding loop counters and formatted output in C.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Loop and print",
-                    "description": "Loop i from 1 to limit, printing n * i."
+                    "title": "Read base number",
+                    "description": "Accept the number `n` whose table needs to be generated."
+                },
+                {
+                    "step": 2,
+                    "title": "Initialize counter loop",
+                    "description": "Set up a `for` loop starting at `i = 1` running up to `i <= 10`."
+                },
+                {
+                    "step": 3,
+                    "title": "Compute product",
+                    "description": "Calculate `product = n * i` for each iteration."
+                },
+                {
+                    "step": 4,
+                    "title": "Format console output",
+                    "description": "Use `printf(\"%d x %d = %d\\n\", n, i, n * i);` to display clean tabular rows."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Multiplication Table",
-                    "definition": "A grid or list showing multiples of a number."
+                    "term": "Loop Counter",
+                    "definition": "A loop variable (e.g. `i`) that increments monotonically with each repetition."
+                },
+                {
+                    "term": "Formatted Printing",
+                    "definition": "Using `%d` placeholders and newline `\\n` to produce organized text columns."
+                },
+                {
+                    "term": "Linear Iteration",
+                    "definition": "Executing a block of code a predetermined, fixed number of times."
+                },
+                {
+                    "term": "Arithmetic Multiplication",
+                    "definition": "The `*` operator in C computing products between integer types."
                 }
             ],
-            "realWorldExample": "Creating lookup grids for basic math tables.",
+            "realWorldExample": "Reading times tables from a printed math chart to quickly calculate batch prices in a store.",
             "timeComplexity": "O(limit)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Practice simple loop printing and formatted outputs.",
             "commonMistakes": [
-                "Incorrect format specifiers in printf statements."
+                "Starting loop at `i = 0` instead of `i = 1`, printing `n x 0 = 0` unexpectedly.",
+                "Using loop condition `i < 10` instead of `i <= 10`, stopping at 9.",
+                "Overwriting `n` inside the loop instead of multiplying with counter `i`.",
+                "Missing `\\n` newline in `printf()`, causing all lines to print on a single unreadable line."
             ],
             "diagramType": null
         },
@@ -1858,7 +2052,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Loop i from 1 to limit, printing the product of number and i.",
             "keySteps": [
-                "FOR i = 1 to limit: print n * i"
+                "Input integer n",
+                "Loop i from 1 to 10",
+                "Print n * i with formatted text",
+                "Terminate when i exceeds 10"
             ],
             "pseudocode": "FOR i = 1 TO limit:\n  PRINT n, \"x\", i, \"=\", n * i"
         },
@@ -1870,7 +2067,8 @@ export const TUTOR_CURRICULUM = {
         "title": "Nested Loops",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "12 min",
+        "levelNum": 2,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A nested loop is a loop inside another loop. The inner loop completes all its iterations for EACH iteration of the outer loop.",
             "whatIsIt": "Think of nested loops like a clock: the minute hand (inner loop) completes a full 60-rotation for every single rotation of the hour hand (outer loop). They are essential for working with 2D data (matrices), patterns, and combinations.",
@@ -2015,38 +2213,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Right Triangle Pattern",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "8 min",
+        "levelNum": 2,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Print a right-angled triangle of stars using nested loops. Row i has i stars.",
-            "whatIsIt": "The right triangle is the simplest pattern: row 1 has 1 star, row 2 has 2 stars, ..., row n has n stars. The key insight is: in row i, the inner loop runs exactly i times.",
+            "whatIsIt": "A right-angled triangle pattern prints rows of stars or numbers where row `i` contains exactly `i` items. It introduces nested loops: an outer loop controlling the row number and an inner loop controlling the items printed per row.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Outer loop for rows",
-                    "description": "for(i=1; i<=n; i++) — i controls the current row number."
+                    "title": "Outer row loop",
+                    "description": "Iterate row counter `i` from 1 to `rows` to manage vertical lines."
                 },
                 {
                     "step": 2,
-                    "title": "Inner loop for stars",
-                    "description": "for(j=1; j<=i; j++) — print i stars in row i."
+                    "title": "Inner column loop",
+                    "description": "Iterate column counter `j` from 1 to `i` on each row."
                 },
                 {
                     "step": 3,
-                    "title": "Print newline",
-                    "description": "After inner loop, printf(\"\\n\") to go to next row."
+                    "title": "Print symbol",
+                    "description": "Print an asterisk `printf(\"* \")` or number without a newline inside the inner loop."
+                },
+                {
+                    "step": 4,
+                    "title": "Row newline",
+                    "description": "Print `printf(\"\\n\")` immediately after the inner loop finishes to start the next row."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Row",
-                    "definition": "Each line in the pattern. Controlled by outer loop variable i."
+                    "term": "Nested Loops",
+                    "definition": "A loop placed inside the body of another loop; inner loop executes completely for each outer step."
                 },
                 {
-                    "term": "Column",
-                    "definition": "Each element in a row. Controlled by inner loop variable j."
+                    "term": "Row-Dependent Bound",
+                    "definition": "The inner loop's termination condition depends directly on outer counter `i` (`j <= i`)."
+                },
+                {
+                    "term": "Grid Generation",
+                    "definition": "Mapping two-dimensional coordinates `(row, col)` onto sequential console output."
+                },
+                {
+                    "term": "Row Line-Feed",
+                    "definition": "Emitting `\\n` after completing a row of characters."
                 }
             ],
-            "realWorldExample": "Staircase: step 1 is 1 unit wide, step 2 is 2 units, etc.",
+            "realWorldExample": "A staircase seen from the side: each step down is one unit wider than the step above it.",
             "timeComplexity": {
                 "best": "O(n²)",
                 "average": "O(n²)",
@@ -2055,8 +2267,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "Foundation pattern for all other star patterns.",
             "commonMistakes": [
-                "Missing newline after inner loop — all stars on one line",
-                "Wrong inner loop limit: j<=n instead of j<=i gives a square, not triangle"
+                "Placing `printf(\"\\n\")` inside the inner loop instead of after it, printing all stars vertically.",
+                "Using `j <= rows` instead of `j <= i` in the inner loop, printing a full square instead of a triangle.",
+                "Mixing up counter variables `i` and `j` inside inner loop conditions.",
+                "Forgetting to reset or initialize `j = 1` on each outer loop pass."
             ],
             "diagramType": null
         },
@@ -2130,9 +2344,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Outer loop for rows 1 to n. Inner loop prints i stars per row. Print newline after each row.",
             "keySteps": [
-                "Outer: i from 1 to n",
-                "Inner: j from 1 to i, print *",
-                "Print \\n after inner"
+                "Read number of rows N",
+                "Outer loop i from 1 to N",
+                "Inner loop j from 1 to i: print '* '",
+                "Print newline after inner loop completes"
             ],
             "pseudocode": "FOR i = 1 TO n:\n  FOR j = 1 TO i:\n    PRINT \"*\"\n  PRINT newline"
         },
@@ -2144,34 +2359,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Inverted Triangle Pattern",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "8 min",
+        "levelNum": 2,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "An upside-down triangle: row 1 has n stars, row 2 has n-1 stars, ..., row n has 1 star.",
-            "whatIsIt": "The inverted triangle is a right triangle flipped. In row i, you print (n - i + 1) stars. So the outer loop still goes from 1 to n, but the inner loop decreases.",
+            "whatIsIt": "An inverted right-angled triangle pattern starts with `n` stars on the first row and decreases by one star per row down to 1 star. It teaches decreasing loop bounds and inverse linear relationships `(n - i + 1)` in nested loops.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Outer loop",
-                    "description": "for(i=1; i<=n; i++) — same as before, rows 1 to n."
+                    "title": "Outer row loop",
+                    "description": "Run `i` from `n` down to 1 (or `i` from 1 to `n`)."
                 },
                 {
                     "step": 2,
-                    "title": "Inner loop",
-                    "description": "for(j=1; j<=(n-i+1); j++) — prints fewer stars as i increases."
+                    "title": "Calculate stars per row",
+                    "description": "Inner loop runs `j` from 1 to `i` (when outer decreases), printing stars."
                 },
                 {
                     "step": 3,
-                    "title": "Newline",
-                    "description": "printf(\"\\n\") after inner loop."
+                    "title": "Print star symbol",
+                    "description": "Print `* ` without moving to a new line."
+                },
+                {
+                    "step": 4,
+                    "title": "Advance line",
+                    "description": "Emit `printf(\"\\n\")` when the inner row is finished."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "n - i + 1",
-                    "definition": "The number of stars in row i of an inverted triangle. When i=1, gives n stars. When i=n, gives 1 star."
+                    "term": "Decreasing Loop",
+                    "definition": "A loop where counter variable decrements `i--` on each pass toward a lower bound."
+                },
+                {
+                    "term": "Inverse Scaling",
+                    "definition": "The quantity of items printed is inversely proportional to the row index."
+                },
+                {
+                    "term": "Nested Grid",
+                    "definition": "Controlling column iteration limits using dynamically decreasing thresholds."
+                },
+                {
+                    "term": "Triangle Geometry",
+                    "definition": "A 2D ASCII shape with a horizontal top base tapering down to a single point."
                 }
             ],
-            "realWorldExample": "A funnel: wide at the top, narrow at the bottom.",
+            "realWorldExample": "A funneled ramp or diminishing stack of wooden blocks arranged widest on top.",
             "timeComplexity": {
                 "best": "O(n²)",
                 "average": "O(n²)",
@@ -2180,7 +2413,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "Component of diamond pattern, and practice for loop bounds.",
             "commonMistakes": [
-                "Inner loop: j<=n-i instead of j<=n-i+1 gives one too few stars"
+                "Wrong decrement condition: using `i++` with `i >= 1` creating an infinite loop.",
+                "Setting inner loop boundary to `j <= n` printing a square box.",
+                "Missing `\\n` newline after inner loop.",
+                "Off-by-one error printing 0 stars on the final row."
             ],
             "diagramType": null
         },
@@ -2254,9 +2490,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Outer loop i from 1 to n. Inner loop j from 1 to (n-i+1). Decreasing number of stars.",
             "keySteps": [
-                "Outer: i from 1 to n",
-                "Inner: j from 1 to (n-i+1)",
-                "Print \\n after inner"
+                "Read number of rows N",
+                "Outer loop i from N down to 1",
+                "Inner loop j from 1 to i: print '* '",
+                "Print newline after each row"
             ],
             "pseudocode": "FOR i = 1 TO n:\n  FOR j = 1 TO (n - i + 1):\n    PRINT \"*\"\n  PRINT newline"
         },
@@ -2268,43 +2505,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Pyramid Pattern",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "12 min",
+        "levelNum": 2,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A centered pyramid of stars requires printing spaces before each row's stars to center them.",
-            "whatIsIt": "The pyramid pattern is trickier because you need TWO inner loops per row: one for leading spaces (to center) and one for stars. Row i has (n-i) spaces and (2i-1) stars.",
+            "whatIsIt": "A pyramid pattern prints a centered, symmetrical triangle of stars. To achieve symmetry on a standard console grid, each row requires two consecutive inner loops: one to print leading spaces and one to print odd numbers of stars `(2*i - 1)`.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Outer loop rows",
-                    "description": "for(i=1; i<=n; i++)"
+                    "title": "Outer row loop",
+                    "description": "Loop `i` from 1 to `n` to traverse each row of the pyramid."
                 },
                 {
                     "step": 2,
-                    "title": "Print spaces first",
-                    "description": "for(j=1; j<=(n-i); j++) printf(\" \"); — prints (n-i) spaces to center the row."
+                    "title": "Leading spaces loop",
+                    "description": "First inner loop prints `n - i` spaces to push the stars into the center."
                 },
                 {
                     "step": 3,
-                    "title": "Print stars",
-                    "description": "for(j=1; j<=(2*i-1); j++) printf(\"*\"); — row i has (2i-1) stars."
+                    "title": "Star printing loop",
+                    "description": "Second inner loop prints `2*i - 1` stars (or `i` stars with trailing space)."
                 },
                 {
                     "step": 4,
-                    "title": "Newline",
-                    "description": "printf(\"\\n\") to end each row."
+                    "title": "End of row",
+                    "description": "Print `\\n` to start the next horizontal level."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "2i - 1",
-                    "definition": "Number of stars in row i of a pyramid. Row 1: 1 star, row 2: 3 stars, row 3: 5 stars (odd numbers)."
+                    "term": "Leading Spaces",
+                    "definition": "Blank characters printed before text to horizontally center content in fixed-width fonts."
                 },
                 {
-                    "term": "Leading spaces",
-                    "definition": "(n-i) spaces before each row's stars to achieve the centered pyramid look."
+                    "term": "Sequential Inner Loops",
+                    "definition": "Running two separate inner loops sequentially within the same outer row loop."
+                },
+                {
+                    "term": "Odd Number Arithmetic",
+                    "definition": "Generating odd sequence `1, 3, 5, 7...` using `2*i - 1` for pyramid width."
+                },
+                {
+                    "term": "Symmetrical Alignment",
+                    "definition": "Ensuring left and right margins balance around a vertical center axis."
                 }
             ],
-            "realWorldExample": "The Great Pyramid of Giza viewed from above — widest at bottom, point at top.",
+            "realWorldExample": "The Great Pyramid of Giza: widest at the base and tapering evenly to a peak in the center.",
             "timeComplexity": {
                 "best": "O(n²)",
                 "average": "O(n²)",
@@ -2313,8 +2559,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "Practice for multi-loop patterns and understanding how spaces create visual alignment.",
             "commonMistakes": [
-                "Wrong star count: using j<=i instead of j<=(2*i-1)",
-                "Forgetting to print spaces before stars"
+                "Printing leading spaces and stars in the wrong order, throwing off alignment.",
+                "Using `2*i` instead of `2*i - 1`, resulting in even-width flat tops.",
+                "Forgetting spaces between characters in certain styles, compressing the pyramid.",
+                "Missing the `n - i` space calculation, leaving stars left-aligned."
             ],
             "diagramType": null
         },
@@ -2388,10 +2636,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Three loops per row: outer (rows), inner1 (spaces), inner2 (stars). Spaces = n-i, Stars = 2i-1.",
             "keySteps": [
-                "FOR i=1 to n",
-                "Print (n-i) spaces",
-                "Print (2i-1) stars",
-                "Print newline"
+                "Read total rows N",
+                "For each row i from 1 to N:",
+                "  Print (N - i) spaces",
+                "  Print (2*i - 1) stars",
+                "  Print newline"
             ],
             "pseudocode": "FOR i = 1 TO n:\n  FOR j = 1 TO (n-i): PRINT \" \"\n  FOR j = 1 TO (2*i-1): PRINT \"*\"\n  PRINT newline"
         },
@@ -2403,33 +2652,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Diamond Pattern",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "15 min",
+        "levelNum": 2,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "A diamond is a pyramid on top plus an inverted pyramid below. Print upper half then lower half.",
-            "whatIsIt": "The diamond pattern combines two halves: the upper half is a pyramid (rows 1 to n), and the lower half is an inverted pyramid (rows n-1 down to 1). You need two separate nested loop groups.",
+            "whatIsIt": "A diamond pattern combines an upright pyramid and an inverted pyramid to form a four-sided symmetrical geometric diamond. It requires splitting the pattern into two distinct nested-loop phases: upper half and lower half.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Upper half",
-                    "description": "Normal pyramid: spaces = n-i, stars = 2i-1, for i = 1 to n."
+                    "title": "Upper pyramid phase",
+                    "description": "Loop `i` from 1 to `n` printing spaces and expanding stars up to the widest midline."
                 },
                 {
                     "step": 2,
-                    "title": "Lower half",
-                    "description": "Inverted pyramid: spaces = n-i, stars = 2i-1, but for i = n-1 DOWN TO 1."
+                    "title": "Lower inverted phase",
+                    "description": "Loop `i` from `n - 1` down to 1 printing increasing spaces and shrinking stars."
+                },
+                {
+                    "step": 3,
+                    "title": "Space and star loops",
+                    "description": "Within each phase, use separate inner loops for leading indentation and star counts."
+                },
+                {
+                    "step": 4,
+                    "title": "Row completion",
+                    "description": "Emit `\\n` after completing each row to maintain vertical geometry."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Upper half",
-                    "definition": "Pyramid from row 1 to n (widening)."
+                    "term": "Two-Phase Generation",
+                    "definition": "Dividing a complex shape into symmetrical ascending and descending phases."
                 },
                 {
-                    "term": "Lower half",
-                    "definition": "Inverted pyramid from row n-1 to 1 (narrowing)."
+                    "term": "Midline / Equator",
+                    "definition": "The widest row in the diamond separating upper and lower halves."
+                },
+                {
+                    "term": "Horizontal Inversion",
+                    "definition": "Mirroring an indentation sequence from decreasing to increasing."
+                },
+                {
+                    "term": "ASCII Artistry",
+                    "definition": "Using character symbols and whitespace to render structured 2D geometric shapes."
                 }
             ],
-            "realWorldExample": "A diamond gemstone shape.",
+            "realWorldExample": "A playing card diamond suit (♦) or a cut gemstone viewed from the front.",
             "timeComplexity": {
                 "best": "O(n²)",
                 "average": "O(n²)",
@@ -2438,8 +2706,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "Combines pyramid and inverted pyramid — good test of nested loop mastery.",
             "commonMistakes": [
-                "Lower half starting at n instead of n-1 — repeats the middle row",
-                "Not decrementing i in lower half loop: for(i=n-1; i>=1; i--)"
+                "Duplicating the midline row twice, distorting the diamond's symmetry.",
+                "Incorrect lower half loop start: starting at `n` instead of `n - 1`.",
+                "Inconsistent spacing between stars in the top half versus bottom half.",
+                "Using odd row counts without properly computing half-height `n = total / 2 + 1`."
             ],
             "diagramType": null
         },
@@ -2513,8 +2783,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Two groups of nested loops: upper (i=1 to n) and lower (i=n-1 to 1).",
             "keySteps": [
-                "Upper: i=1 to n, print (n-i) spaces and (2i-1) stars",
-                "Lower: i=n-1 to 1, print (n-i) spaces and (2i-1) stars"
+                "Read half-height N",
+                "Loop i from 1 to N: print (N-i) spaces, then (2*i-1) stars",
+                "Loop i from N-1 down to 1: print (N-i) spaces, then (2*i-1) stars",
+                "Ensure proper newlines after each row"
             ],
             "pseudocode": "/* Upper half */\nFOR i = 1 TO n:\n  PRINT (n-i) spaces, (2i-1) stars, newline\n/* Lower half */\nFOR i = n-1 DOWNTO 1:\n  PRINT (n-i) spaces, (2i-1) stars, newline"
         },
@@ -2526,39 +2798,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Floyd's Triangle",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "10 min",
+        "levelNum": 2,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Floyd's Triangle fills rows with consecutive integers starting from 1. Row i has i numbers.",
-            "whatIsIt": "Floyd's Triangle is a right triangle filled with consecutive numbers. Row 1: 1. Row 2: 2 3. Row 3: 4 5 6. The numbers are sequential — a counter keeps incrementing across all rows.",
+            "whatIsIt": "Floyd's Triangle is a right-angled triangle filled with consecutive natural numbers starting from 1. Unlike patterns that print row indices, Floyd's triangle maintains a continuous running counter that increments with every single number printed.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Initialize counter",
-                    "description": "int num = 1; — starts at 1 before the loops."
+                    "title": "Initialize global counter",
+                    "description": "Set running integer `num = 1` before entering any loop."
                 },
                 {
                     "step": 2,
-                    "title": "Outer loop rows",
-                    "description": "for(i=1; i<=n; i++)"
+                    "title": "Outer row loop",
+                    "description": "Iterate row counter `i` from 1 to `rows`."
                 },
                 {
                     "step": 3,
-                    "title": "Inner loop prints and increments",
-                    "description": "for(j=1; j<=i; j++) { printf(\"%d \", num); num++; }"
+                    "title": "Inner column loop",
+                    "description": "Iterate `j` from 1 to `i`, printing `num` and immediately incrementing `num++`."
                 },
                 {
                     "step": 4,
-                    "title": "Newline after row",
-                    "description": "printf(\"\\n\")"
+                    "title": "Row linebreak",
+                    "description": "Print `\\n` at the end of each row."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Sequential counter",
-                    "definition": "A variable (num) that keeps increasing across all iterations of all inner loops."
+                    "term": "Continuous Counter",
+                    "definition": "A variable that preserves its state across loop iterations rather than resetting."
+                },
+                {
+                    "term": "Natural Numbers",
+                    "definition": "Positive sequential integers starting from 1, 2, 3, 4..."
+                },
+                {
+                    "term": "Triangular Number",
+                    "definition": "The last number of row `n` is always the n-th triangular number `n*(n+1)/2`."
+                },
+                {
+                    "term": "Post-increment (`num++`)",
+                    "definition": "Uses the current value in output and immediately increments it by 1."
                 }
             ],
-            "realWorldExample": "Numbering items in a triangle arrangement.",
+            "realWorldExample": "Arranging bowling pins sequentially numbered 1 at the head, 2-3 in the second row, 4-5-6 in the third row.",
             "timeComplexity": {
                 "best": "O(n²)",
                 "average": "O(n²)",
@@ -2567,8 +2852,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "Classic pattern problem in exams. Tests understanding of sequential counters across loops.",
             "commonMistakes": [
-                "Initializing num inside outer loop — resets counter each row",
-                "Forgetting num++ after printing"
+                "Resetting `num = 1` inside the outer loop, printing `1 / 1 2 / 1 2 3` instead of Floyd's triangle.",
+                "Printing `i` or `j` instead of the continuous counter `num`.",
+                "Using unformatted spacing: numbers > 9 take 2 characters and misalign columns if not spaced with `%2d`.",
+                "Missing `\\n` causing numbers to run together into a single line."
             ],
             "diagramType": null
         },
@@ -2642,10 +2929,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Use a counter variable outside loops. Inner loop prints and increments counter.",
             "keySteps": [
-                "SET num = 1 (before loops)",
-                "Outer: i=1 to n",
-                "Inner: j=1 to i, print num then num++",
-                "Print newline"
+                "Initialize count = 1",
+                "For i from 1 to N rows:",
+                "  For j from 1 to i:",
+                "    Print count, then increment count by 1",
+                "  Print newline"
             ],
             "pseudocode": "SET num = 1\nFOR i = 1 TO n:\n  FOR j = 1 TO i:\n    PRINT num\n    num = num + 1\n  PRINT newline"
         },
@@ -2657,43 +2945,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Pascal's Triangle",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "18 min",
+        "levelNum": 2,
+        "estimatedTime": "18 min",
         "concept": {
             "summary": "Pascal's Triangle: each number is the sum of the two numbers above it. Row n contains binomial coefficients C(n,k).",
-            "whatIsIt": "Pascal's Triangle starts with 1 at the top. Each subsequent row is built by adding adjacent elements from the row above. The value at row n, position k is the combination C(n,k) = n!/(k!(n-k)!). It appears in probability, algebra, and combinatorics.",
+            "whatIsIt": "Pascal's Triangle is a triangular array of binomial coefficients where each number is the sum of the two directly above it. In C, it can be generated using combinatorics `C(n, k) = n! / (k! * (n-k)!)` or dynamically using `val = val * (i - j) / j`.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Start with C = 1",
-                    "description": "First element of each row is always 1 (C(n,0) = 1)."
+                    "title": "Outer row loop",
+                    "description": "Loop row index `i` from 0 to `rows - 1`."
                 },
                 {
                     "step": 2,
-                    "title": "Calculate next element",
-                    "description": "C = C * (i - j) / j — this updates C iteratively using the previous value."
+                    "title": "Leading indentation",
+                    "description": "Print `rows - i` spaces to center the triangular pyramid."
                 },
                 {
                     "step": 3,
-                    "title": "Print spaces for centering",
-                    "description": "n-i spaces before each row."
+                    "title": "Inner term computation",
+                    "description": "Initialize `coef = 1` for first column; for subsequent columns, update `coef = coef * (i - j + 1) / j`."
                 },
                 {
                     "step": 4,
-                    "title": "Print each element",
-                    "description": "Print C and update it for the next position."
+                    "title": "Display and advance",
+                    "description": "Print `coef` with space, and print `\\n` after completing the row."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "C(n, k)",
-                    "definition": "Combination/Binomial coefficient. Number of ways to choose k items from n items."
+                    "term": "Binomial Coefficient",
+                    "definition": "The coefficient `nCr` of the x^k term in the polynomial expansion of `(1 + x)^n`."
                 },
                 {
-                    "term": "Iterative formula",
-                    "description": "C(n, k) = C(n, k-1) * (n-k+1) / k — avoids computing factorial repeatedly."
+                    "term": "Additive Property",
+                    "definition": "Each number is the sum of the two numbers immediately above it in the preceding row."
+                },
+                {
+                    "term": "Combinatoric Formula",
+                    "definition": "Calculating `n! / (r! * (n-r)!)` or using recursive addition."
+                },
+                {
+                    "term": "0-Indexed Triangle",
+                    "definition": "Pascal's triangle rows and columns are conventionally indexed starting from 0."
                 }
             ],
-            "realWorldExample": "Pascal's triangle appears in probability (coin flips), binomial expansion, and determining number of paths in a grid.",
+            "realWorldExample": "Calculating coin toss probabilities: row 4 (1, 4, 6, 4, 1) gives combinations for 0, 1, 2, 3, 4 heads.",
             "timeComplexity": {
                 "best": "O(n²)",
                 "average": "O(n²)",
@@ -2702,8 +2999,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "University exam staple. Tests understanding of combinatorics and pattern printing.",
             "commonMistakes": [
-                "Using factorial computation — works but overflows for large n; use iterative formula",
-                "Wrong centering spaces"
+                "Calculating factorials directly for each term causing integer overflow beyond row 12 in standard 32-bit `int`.",
+                "Integer division truncation: multiplying before dividing `coef * (i - j) / j` to prevent zeroing out.",
+                "Starting row index at 1 instead of 0, complicating binomial coefficient indexing.",
+                "Neglecting centering spaces, turning the equilateral triangle into a skewed right triangle."
             ],
             "diagramType": null
         },
@@ -2777,11 +3076,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Use iterative combination formula. For each row i, C starts at 1 and updates as C = C*(i-j)/j.",
             "keySteps": [
-                "Outer: i=0 to n-1",
-                "Print (n-i-1) spaces",
-                "SET C=1",
-                "Inner: j=0 to i, print C, update C=C*(i-j)/(j+1)",
-                "Newline"
+                "Read number of rows N",
+                "For row i from 0 to N-1:",
+                "  Print (N - i) spaces for alignment",
+                "  Set coef = 1",
+                "  For j from 0 to i: print coef, then update coef = coef * (i - j) / (j + 1)",
+                "  Print newline"
             ],
             "pseudocode": "FOR i = 0 TO n-1:\n  PRINT (n-i-1) spaces\n  C = 1\n  FOR j = 0 TO i:\n    PRINT C\n    C = C * (i - j) / (j + 1)\n  PRINT newline"
         },
@@ -2793,34 +3093,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Sum of Digits",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "8 min",
+        "levelNum": 2,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Extract each digit of a number and calculate their sum.",
-            "whatIsIt": "For 123, sum = 1 + 2 + 3 = 6.",
+            "whatIsIt": "Sum of digits extracts every single digit of an integer using modulo arithmetic and computes their cumulative sum. It is the core algorithm behind checksums, digital root calculations, and ISBN/credit-card validation formulas.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Extract digit",
-                    "description": "d = num % 10"
+                    "title": "Initialize accumulator",
+                    "description": "Declare `sum = 0` to store the running total."
                 },
                 {
                     "step": 2,
-                    "title": "Add and shrink",
-                    "description": "sum += d; num /= 10;"
+                    "title": "Extract last digit",
+                    "description": "Use `digit = n % 10` to peel off the units digit."
+                },
+                {
+                    "step": 3,
+                    "title": "Accumulate digit",
+                    "description": "Add the extracted digit to the accumulator `sum += digit`."
+                },
+                {
+                    "step": 4,
+                    "title": "Discard last digit and repeat",
+                    "description": "Perform integer division `n = n / 10` to shift right, repeating until `n == 0`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Mod 10",
-                    "definition": "Extracts the rightmost digit."
+                    "term": "Modulo 10 (% 10)",
+                    "definition": "Extracts the rightmost (units) digit of any base-10 number."
+                },
+                {
+                    "term": "Integer Division (/ 10)",
+                    "definition": "Trims the rightmost digit off a number by truncating the decimal remainder."
+                },
+                {
+                    "term": "Digit Extraction Loop",
+                    "definition": "The standard `while (n > 0)` pattern used to process numbers digit-by-digit."
+                },
+                {
+                    "term": "Accumulator Variable",
+                    "definition": "A variable initialized to 0 that gathers additive contributions over time."
                 }
             ],
-            "realWorldExample": "Calculating checksum digits (like barcode validation sums).",
+            "realWorldExample": "A digital root check or Luhn algorithm verifying credit card numbers by summing account digits.",
             "timeComplexity": "O(log n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Working with digit processing algorithms.",
             "commonMistakes": [
-                "Infinite loop by not dividing num by 10 inside the loop."
+                "Forgetting to initialize `sum = 0`, causing garbage values to corrupt the calculation.",
+                "Using `if` instead of `while`, resulting in summing only the first extracted digit.",
+                "Failing to handle negative numbers: `n = abs(n)` ensures extracted digits are positive.",
+                "Loop condition `n >= 0` instead of `n > 0`, causing an infinite loop because `0 / 10 == 0`."
             ],
             "diagramType": null
         },
@@ -2894,7 +3220,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Extract digits using %10, add to sum, shrink using /10 until 0.",
             "keySteps": [
-                "While n > 0: sum += n % 10; n /= 10;"
+                "Input integer n (use abs(n) for negatives)",
+                "Set sum = 0",
+                "While n > 0: add (n % 10) to sum, then set n = n / 10",
+                "Output sum"
             ],
             "pseudocode": "sum = 0\nWHILE n > 0:\n  sum = sum + (n % 10)\n  n = n / 10\nRETURN sum"
         },
@@ -2906,29 +3235,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Reverse a Number",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "8 min",
+        "levelNum": 2,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Reverse the order of digits of an integer.",
-            "whatIsIt": "1234 becomes 4321.",
+            "whatIsIt": "Reversing an integer inverts the order of its decimal digits (e.g., 1234 becomes 4321). It repeatedly extracts the last digit with `% 10` and builds the reversed value by multiplying the existing result by 10 and adding the new digit.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Build reverse",
-                    "description": "rev = rev * 10 + (num % 10); num /= 10;"
+                    "title": "Initialize reversed variable",
+                    "description": "Set `rev = 0` to hold the newly constructed number."
+                },
+                {
+                    "step": 2,
+                    "title": "Extract units digit",
+                    "description": "Extract the last digit using `rem = n % 10`."
+                },
+                {
+                    "step": 3,
+                    "title": "Shift and append",
+                    "description": "Multiply existing `rev` by 10 to shift digits left, then add `rem`: `rev = rev * 10 + rem`."
+                },
+                {
+                    "step": 4,
+                    "title": "Shrink input number",
+                    "description": "Divide `n = n / 10`, repeating the loop until `n` becomes 0."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Reversal",
-                    "definition": "Flipping digit order."
+                    "term": "Base-10 Shifting",
+                    "definition": "Multiplying by 10 shifts decimal digits one position left (e.g., 4 becomes 40)."
+                },
+                {
+                    "term": "Reverse Construction",
+                    "definition": "Building a number backwards using `rev = rev * 10 + digit`."
+                },
+                {
+                    "term": "Remainder Extraction",
+                    "definition": "Peeling off the least significant digit with `% 10`."
+                },
+                {
+                    "term": "Integer Overflow",
+                    "definition": "Reversing a number close to `INT_MAX` can exceed 32-bit capacity."
                 }
             ],
-            "realWorldExample": "Data processing tasks requiring reading digit keys in reverse.",
+            "realWorldExample": "Reading a car odometer or digital clock in a rearview mirror where digits appear inverted.",
             "timeComplexity": "O(log n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "General digit manipulation tasks.",
             "commonMistakes": [
-                "Not handling negative numbers correctly."
+                "Printing digits individually instead of mathematically constructing the reversed integer variable.",
+                "Forgetting to initialize `rev = 0` resulting in undefined garbage output.",
+                "Losing trailing zeros: reversing 1200 yields 21 because leading zeros in integers are not stored.",
+                "Not accounting for negative numbers: the minus sign must be preserved separately."
             ],
             "diagramType": null
         },
@@ -3002,7 +3362,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Extract last digit and append to reversed number, shifting left by multiplying by 10.",
             "keySteps": [
-                "While n > 0: rev = rev * 10 + (n % 10); n /= 10;"
+                "Input integer n",
+                "Set rev = 0",
+                "While n != 0:",
+                "  rev = rev * 10 + (n % 10)",
+                "  n = n / 10",
+                "Print rev"
             ],
             "pseudocode": "rev = 0\nWHILE n > 0:\n  rev = rev * 10 + (n % 10)\n  n = n / 10\nRETURN rev"
         },
@@ -3014,34 +3379,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Palindrome Number Check",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "8 min",
+        "levelNum": 2,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Check if a number reads the same backwards as forwards (e.g. 121, 1331).",
-            "whatIsIt": "A palindrome remains identical when reversed. We check this by reversing the digits and comparing the result to the original number.",
+            "whatIsIt": "A palindrome number reads identically forwards and backwards (e.g., 121, 1331, 7). To check if an integer is a palindrome, we reverse its digits mathematically and compare the reversed value to a preserved copy of the original number.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Reverse digits",
-                    "description": "Reconstruct reversed number: rev = rev * 10 + (num % 10)."
+                    "title": "Store original number",
+                    "description": "Save `original = n` in a temporary variable before mutating `n`."
                 },
                 {
                     "step": 2,
-                    "title": "Compare",
-                    "description": "Check if original equals reversed."
+                    "title": "Reverse the number",
+                    "description": "Extract digits and build `rev = rev * 10 + (n % 10)` while `n > 0`."
+                },
+                {
+                    "step": 3,
+                    "title": "Compare original with reversed",
+                    "description": "Check if `original == rev` using an equality comparison."
+                },
+                {
+                    "step": 4,
+                    "title": "Display verdict",
+                    "description": "Output 'Palindrome' if equal; otherwise output 'Not a Palindrome'."
                 }
             ],
             "keyTerms": [
                 {
                     "term": "Palindrome",
-                    "definition": "A sequence that reads the same forwards and backwards."
+                    "definition": "A value that remains unchanged when its sequence of components is reversed."
+                },
+                {
+                    "term": "Preserved Copy",
+                    "definition": "Storing an unmodified backup of input data before destructive loop operations."
+                },
+                {
+                    "term": "Reversal Comparison",
+                    "definition": "Comparing `original == reversed` to determine symmetry."
+                },
+                {
+                    "term": "Single-Digit Palindrome",
+                    "definition": "All single digit integers (0 through 9) are palindromes by definition."
                 }
             ],
-            "realWorldExample": "Dates like 02/02/2020 are palindrome dates.",
+            "realWorldExample": "Symmetrical odometer readings like 74247 km, or radar and palindrome words like 'radar' and 'level'.",
             "timeComplexity": "O(log n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Digit manipulation and reversing algorithms.",
             "commonMistakes": [
-                "Integer overflow when reversing very large numbers (can use `long long` for reversed variable)."
+                "Comparing `rev == n` after the loop: `n` has been reduced to 0 by division, so the test always fails.",
+                "Assuming negative numbers can be palindromes: -121 reversed is 121-, so negative numbers are not palindromes.",
+                "Integer overflow when reversing very large 9 or 10-digit integers.",
+                "Overwriting the original variable without making a backup copy before the while loop."
             ],
             "diagramType": null
         },
@@ -3115,9 +3506,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Reverse digits by extracting last digit and building up reversed number. Compare with original copy.",
             "keySteps": [
-                "Store copy = num",
-                "While num > 0: rev = rev * 10 + (num % 10); num /= 10",
-                "Compare copy == rev"
+                "Input integer n",
+                "If n < 0, print 'Not Palindrome' (negative numbers cannot be palindromes)",
+                "Copy original = n, set rev = 0",
+                "While n > 0: rev = rev * 10 + (n % 10); n = n / 10",
+                "If original == rev, print 'Palindrome', else 'Not Palindrome'"
             ],
             "pseudocode": "copy = num, rev = 0\nWHILE num > 0:\n  rev = rev * 10 + (num % 10)\n  num = num / 10\nRETURN copy == rev"
         },
@@ -3129,39 +3522,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Armstrong Number Check",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "10 min",
+        "levelNum": 2,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Check if an n-digit number is equal to the sum of its digits raised to the nth power.",
-            "whatIsIt": "For example, 153 is an Armstrong number because it has 3 digits, and 1³ + 5³ + 3³ = 1 + 125 + 27 = 153.",
+            "whatIsIt": "An Armstrong number (narcissistic number) of k digits equals the sum of its own digits each raised to the k-th power (e.g., 153 = 1^3 + 5^3 + 3^3 = 1 + 125 + 27 = 153). It teaches digit counting, power computation, and number preservation.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Count digits",
-                    "description": "Count how many digits the number has."
+                    "title": "Count number of digits",
+                    "description": "Count the total number of digits `k` by dividing a copy of `n` by 10 until 0."
                 },
                 {
                     "step": 2,
-                    "title": "Sum powers",
-                    "description": "Extract digits one by one, raise each to the power of digit count, and add to sum."
+                    "title": "Initialize sum",
+                    "description": "Set `sum = 0` and restore `temp = n` to prepare for digit processing."
                 },
                 {
                     "step": 3,
-                    "title": "Compare",
-                    "description": "Check if sum equals original number."
+                    "title": "Extract and raise power",
+                    "description": "Extract `d = temp % 10`, compute `d^k` (using loop or `pow()`), and add to `sum`."
+                },
+                {
+                    "step": 4,
+                    "title": "Compare with original",
+                    "description": "If `sum == n`, output 'Armstrong Number'; otherwise output 'Not Armstrong'."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Armstrong Number",
-                    "definition": "A number equal to the sum of its own digits raised to the power of the number of digits."
+                    "term": "Armstrong / Narcissistic Number",
+                    "definition": "A number equal to the sum of its digits raised to the power of the number of digits."
+                },
+                {
+                    "term": "Digit Count (k)",
+                    "definition": "The total number of decimal digits composing the integer."
+                },
+                {
+                    "term": "Power Function (`pow`)",
+                    "definition": "Standard math library function `<math.h>` computing base raised to exponent."
+                },
+                {
+                    "term": "Floating-Point Rounding",
+                    "definition": "Casting `(int)(pow(d, k) + 0.5)` prevents floating point truncation bugs."
                 }
             ],
-            "realWorldExample": "A recreational mathematics puzzle showing interesting digit patterns.",
+            "realWorldExample": "Recreational number theory puzzles and mathematical verification algorithms.",
             "timeComplexity": "O(log n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Digit extraction and math exercises.",
             "commonMistakes": [
-                "Not using a copy of the original number when extracting digits (overwriting the original variable)."
+                "Assuming k is always 3: numbers like 1634 have 4 digits (`1^4 + 6^4 + 3^4 + 4^4 = 1634`), so k must be dynamic.",
+                "Floating point truncation bug: `(int)pow(5, 2)` can evaluate to 24 due to `24.999999` representation.",
+                "Modifying `n` in place during digit count without preserving copies for the power sum and final comparison.",
+                "Forgetting to `#include <math.h>` and link `-lm` when using `pow()` in C."
             ],
             "diagramType": null
         },
@@ -3235,9 +3649,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Count digits, then extract each digit, raise to power of count, and sum.",
             "keySteps": [
-                "Count digits `c` of `num`",
-                "Copy `num` to `temp`",
-                "While `temp > 0`, extract `digit = temp % 10`, compute power, add to sum, `temp /= 10`"
+                "Read integer n",
+                "Count digits k of n",
+                "Set sum = 0, temp = n",
+                "While temp > 0: digit = temp % 10; sum += digit^k; temp /= 10",
+                "If sum == n, print 'Armstrong', else 'Not Armstrong'"
             ],
             "pseudocode": "c = countDigits(num)\ntemp = num, sum = 0\nWHILE temp > 0:\n  d = temp % 10\n  sum = sum + d^c\n  temp = temp / 10\nRETURN sum == num"
         },
@@ -3249,35 +3665,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Prime Number Check",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "10 min",
+        "levelNum": 2,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Check if a number is prime (divisible only by 1 and itself) by testing factors up to its square root.",
-            "whatIsIt": "A prime number is a number greater than 1 with no positive divisors other than 1 and itself. For example: 2, 3, 5, 7, 11...",
+            "whatIsIt": "A prime number is a natural number strictly greater than 1 that has no positive divisors other than 1 and itself (e.g., 2, 3, 5, 7, 11). Checking for primality tests whether any integer from 2 up to sqrt(n) divides n evenly.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Handle <= 1",
-                    "description": "Numbers <= 1 are not prime."
+                    "title": "Filter base cases",
+                    "description": "If `n <= 1`, it is NOT prime. If `n == 2`, it IS prime (the only even prime)."
                 },
                 {
                     "step": 2,
-                    "title": "Loop factors",
-                    "description": "Loop i from 2 to sqrt(n). If n % i == 0, it is not prime."
+                    "title": "Eliminate even numbers",
+                    "description": "If `n % 2 == 0`, it is not prime, eliminating 50% of candidates immediately."
+                },
+                {
+                    "step": 3,
+                    "title": "Test factors up to sqrt(n)",
+                    "description": "Loop odd numbers `i = 3` while `i * i <= n`; if `n % i == 0`, a factor exists."
+                },
+                {
+                    "step": 4,
+                    "title": "Confirm primality",
+                    "description": "If no divisor divides `n`, conclude that `n` is prime."
                 }
             ],
             "keyTerms": [
                 {
                     "term": "Prime Number",
-                    "definition": "Integer > 1 that has no positive divisors other than 1 and itself."
+                    "definition": "An integer greater than 1 with exactly two distinct positive divisors: 1 and itself."
+                },
+                {
+                    "term": "Composite Number",
+                    "definition": "A positive integer that can be formed by multiplying two smaller positive integers."
+                },
+                {
+                    "term": "Square Root Optimization (`i * i <= n`)",
+                    "definition": "If n has a divisor, at least one divisor must be <= sqrt(n), reducing work from O(n) to O(sqrt(n))."
+                },
+                {
+                    "term": "Trial Division",
+                    "definition": "Testing sequential integers to discover whether any divide n without remainder."
                 }
             ],
-            "realWorldExample": "Cryptography algorithms like RSA use huge prime numbers to secure internet communications.",
+            "realWorldExample": "RSA Public Key Cryptography encrypts online banking and HTTPS traffic using products of massive prime numbers.",
             "timeComplexity": "O(sqrt(n))",
             "spaceComplexity": "O(1)",
             "whenToUse": "Basic math and number theory applications.",
             "commonMistakes": [
-                "Checking factors up to n-1 (inefficient; only need to go up to sqrt(n))",
-                "Considering 1 as prime (1 is neither prime nor composite)"
+                "Checking factors all the way up to `n - 1`, wasting CPU cycles when `sqrt(n)` is sufficient.",
+                "Considering 1 or negative numbers as prime: 1 is neither prime nor composite by definition.",
+                "Overlooking 2: the number 2 is prime, but can be accidentally rejected by even-number checks.",
+                "Using `i <= sqrt(n)` calling the slow `sqrt()` function every loop pass instead of `i * i <= n`."
             ],
             "diagramType": null
         },
@@ -3351,9 +3792,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Loop i from 2 to sqrt(n). If divisible, set flag = 0 (not prime). If loop finishes, check flag.",
             "keySteps": [
-                "Check n <= 1 -> not prime",
-                "Loop i from 2 to i*i <= n",
-                "If n % i == 0 -> set flag=0 and break"
+                "Read integer n",
+                "If n <= 1, print 'Not Prime'",
+                "Loop i from 2 while i*i <= n:",
+                "  If n % i == 0, print 'Not Prime' and exit",
+                "Print 'Prime Number'"
             ],
             "pseudocode": "IF n <= 1: RETURN False\nFOR i = 2 TO i * i <= n:\n  IF n % i == 0: RETURN False\nRETURN True"
         },
@@ -3365,38 +3808,60 @@ export const TUTOR_CURRICULUM = {
         "title": "GCD and LCM",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "10 min",
+        "levelNum": 2,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Find the Greatest Common Divisor (GCD) using Euclidean Algorithm, and Least Common Multiple (LCM).",
-            "whatIsIt": "GCD is the largest integer that divides both numbers. LCM is the smallest positive integer divisible by both. Relation: LCM(a,b) = (a * b) / GCD(a,b).",
+            "whatIsIt": "The Greatest Common Divisor (GCD) is the largest positive integer that divides two numbers without remainder. The Least Common Multiple (LCM) is the smallest positive integer divisible by both. They are connected by: `GCD(a, b) * LCM(a, b) = a * b`.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Euclidean GCD",
-                    "description": "Repeatedly replace a with b, and b with a % b, until b becomes 0. The last non-zero a is the GCD."
+                    "title": "Read two positive integers",
+                    "description": "Accept integers `a` and `b`, preserving original copies for LCM computation."
                 },
                 {
                     "step": 2,
+                    "title": "Apply Euclidean algorithm",
+                    "description": "While `b != 0`, compute remainder `temp = a % b`, set `a = b`, and set `b = temp`."
+                },
+                {
+                    "step": 3,
+                    "title": "Identify GCD",
+                    "description": "When `b == 0`, the current value of `a` is the GCD."
+                },
+                {
+                    "step": 4,
                     "title": "Calculate LCM",
-                    "description": "LCM = (a * b) / GCD."
+                    "description": "Compute `lcm = (original_a * original_b) / gcd`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Greatest Common Divisor",
-                    "definition": "Largest divisor shared by two numbers."
+                    "term": "Euclidean Algorithm",
+                    "definition": "An ancient, highly efficient O(log(min(a,b))) method for computing GCD via repeated modulo."
                 },
                 {
-                    "term": "Euclidean Algorithm",
-                    "definition": "Efficient method for computing the GCD of two integers."
+                    "term": "GCD / HCF",
+                    "definition": "Greatest Common Divisor (or Highest Common Factor) shared between two integers."
+                },
+                {
+                    "term": "LCM",
+                    "definition": "The smallest non-zero common multiple of two integers."
+                },
+                {
+                    "term": "Product Identity",
+                    "definition": "Mathematical law stating `a * b = GCD(a, b) * LCM(a, b)`."
                 }
             ],
-            "realWorldExample": "Dividing two fields into largest possible equal square plots, or finding when two recurring events sync.",
+            "realWorldExample": "Synchronizing traffic lights: if light A cycles in 12s and B in 15s, both turn green together at LCM(12,15) = 60s.",
             "timeComplexity": "O(log(min(a,b)))",
             "spaceComplexity": "O(1)",
             "whenToUse": "Fraction reductions, modular arithmetic, and general number theory.",
             "commonMistakes": [
-                "Integer division overflow when calculating a * b before division: compute (a / GCD) * b instead."
+                "Using naive linear decrement `i = min(a,b)` down to 1 which runs in O(n) instead of Euclidean O(log n).",
+                "Integer overflow in LCM calculation: `(a * b) / gcd` can overflow; write `(a / gcd) * b` instead.",
+                "Division by zero if one input is 0; `gcd(a, 0)` is `a`.",
+                "Mutating `a` and `b` during Euclidean algorithm without saving them to compute LCM afterwards."
             ],
             "diagramType": null
         },
@@ -3470,9 +3935,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Use Euclid's modulo method to get GCD, then compute LCM.",
             "keySteps": [
-                "While b != 0: temp = b; b = a % b; a = temp;",
-                "GCD = a",
-                "LCM = (origA * origB) / GCD"
+                "Input a, b; save origA = a, origB = b",
+                "While b != 0: temp = a % b; a = b; b = temp",
+                "gcd = a",
+                "lcm = (origA / gcd) * origB",
+                "Print gcd and lcm"
             ],
             "pseudocode": "FUNCTION getGCD(a, b):\n  WHILE b != 0:\n    temp = b\n    b = a % b\n    a = temp\n  RETURN a"
         },
@@ -3484,39 +3951,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Power of a Number",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "8 min",
+        "levelNum": 2,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Calculate base raised to the power of exponent (base^exponent) without using pow().",
-            "whatIsIt": "Multiplies the base by itself exponent times. For example, 2^3 = 2 * 2 * 2 = 8.",
+            "whatIsIt": "Computing the power of a number evaluates `base^exp` (multiplying the base by itself `exp` times). While iterative loops compute this in O(n) time, binary exponentiation optimizes it to O(log n) time by squaring the base.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Initialize result = 1",
-                    "description": "Start at multiplicative identity 1."
+                    "title": "Read base and exponent",
+                    "description": "Read numeric `base` and integer `exponent`."
                 },
                 {
                     "step": 2,
-                    "title": "Loop and multiply",
-                    "description": "Loop exponent times, multiplying result by base."
+                    "title": "Handle exponent zero",
+                    "description": "Any non-zero number raised to the power of 0 equals 1 (`result = 1`)."
+                },
+                {
+                    "step": 3,
+                    "title": "Iterative multiplication",
+                    "description": "Loop `i` from 1 to `exp`, multiplying `result *= base` on each step."
+                },
+                {
+                    "step": 4,
+                    "title": "Negative exponent handling",
+                    "description": "If exponent is negative, compute positive power and return `1.0 / result`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Base",
-                    "definition": "The number to be multiplied."
+                    "term": "Base and Exponent",
+                    "definition": "In b^e, b is the factor repeatedly multiplied and e is the count of repetitions."
                 },
                 {
-                    "term": "Exponent",
-                    "definition": "The number of times the base is multiplied by itself."
+                    "term": "Multiplicative Identity",
+                    "definition": "Result variable must be initialized to 1 (not 0) because 1 is the neutral element for multiplication."
+                },
+                {
+                    "term": "Exponentiation by Squaring",
+                    "definition": "An O(log n) divide-and-conquer optimization squaring base when exponent is even."
+                },
+                {
+                    "term": "Negative Powers",
+                    "definition": "A negative exponent represents division: b^(-e) = 1 / (b^e)."
                 }
             ],
-            "realWorldExample": "Calculating compound interest growth rates or binary code capacity combinations.",
+            "realWorldExample": "Compound interest calculations: $A = P(1 + r)^t$ where money compounds exponentially over time.",
             "timeComplexity": "O(exponent)",
             "spaceComplexity": "O(1)",
             "whenToUse": "General integer exponentiation without linking math.h library.",
             "commonMistakes": [
-                "Initializing result to 0.",
-                "Not handling negative exponents."
+                "Initializing result to 0: `0 * base` will always remain 0.",
+                "Using the bitwise XOR operator `^` in C thinking it calculates powers (`2 ^ 3` is 1, not 8).",
+                "Not handling negative exponents resulting in 0 due to integer truncation.",
+                "Rapid integer overflow: powers grow exponentially, easily exceeding 32-bit limits."
             ],
             "diagramType": null
         },
@@ -3590,8 +4078,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Multiply result by base, exponent times in a loop.",
             "keySteps": [
-                "result = 1",
-                "Loop i from 1 to exp: result *= base"
+                "Read base and exponent exp",
+                "Set result = 1.0",
+                "For i from 1 to abs(exp): result *= base",
+                "If exp < 0: result = 1.0 / result",
+                "Output result"
             ],
             "pseudocode": "result = 1\nFOR i = 1 TO exponent:\n  result = result * base\nRETURN result"
         },
@@ -3603,34 +4094,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Fibonacci Series (Iterative)",
         "category": "Loops & Math Logic",
         "level": "beginner",
-        "levelNum": 2,"estimatedTime": "8 min",
+        "levelNum": 2,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Generate and print the first n terms of the Fibonacci sequence iteratively.",
-            "whatIsIt": "Prints the sequence 0, 1, 1, 2, 3, 5, 8, 13... where each term is the sum of the previous two.",
+            "whatIsIt": "The Fibonacci sequence is an integer series where each term is the sum of the two preceding ones: 0, 1, 1, 2, 3, 5, 8, 13... Iterative generation uses two tracking variables with O(n) time and O(1) space, avoiding exponential recursion costs.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Initialize first two",
-                    "description": "t1 = 0, t2 = 1."
+                    "title": "Initialize seeds",
+                    "description": "Set the first two Fibonacci numbers `a = 0` and `b = 1`."
                 },
                 {
                     "step": 2,
-                    "title": "Print and update",
-                    "description": "Print next term. nextTerm = t1 + t2. Shift t1 = t2, t2 = nextTerm. Repeat."
+                    "title": "Print first two terms",
+                    "description": "Display `a` and `b` directly for the initial sequence positions."
+                },
+                {
+                    "step": 3,
+                    "title": "Calculate next term",
+                    "description": "In a loop from 3 to `n`, calculate `next = a + b` and display it."
+                },
+                {
+                    "step": 4,
+                    "title": "Slide the window",
+                    "description": "Update pointers `a = b` and `b = next` to prepare for the subsequent term."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Iterative Sequence",
-                    "definition": "Generating terms step-by-step using a loop."
+                    "term": "Fibonacci Recurrence",
+                    "definition": "The mathematical rule F(n) = F(n-1) + F(n-2) with F(0)=0 and F(1)=1."
+                },
+                {
+                    "term": "Sliding Window",
+                    "definition": "Keeping only the two most recent values in memory (a and b) for O(1) space efficiency."
+                },
+                {
+                    "term": "Seed Values",
+                    "definition": "The initial boundary numbers (0 and 1) that bootstrap the sequence."
+                },
+                {
+                    "term": "Golden Ratio (φ)",
+                    "definition": "The ratio between consecutive Fibonacci numbers converges to 1.618033..."
                 }
             ],
-            "realWorldExample": "Calculating rabbit population growth models or financial analysis indicators.",
+            "realWorldExample": "Spiral patterns of sunflower seeds, pinecone scales, and nautilus shell growth in nature.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Standard method to print Fibonacci terms without stack overhead of recursion.",
             "commonMistakes": [
-                "Forgetting to update both t1 and t2 in the correct order: must store nextTerm before shifting."
+                "Using naive recursion `fib(n-1) + fib(n-2)` without memoization, running in devastating O(2^n) time.",
+                "Swapping assignment order: setting `b = next` before `a = b`, which overwrites `b` prematurely.",
+                "Off-by-one errors when generating n terms vs printing numbers up to value n.",
+                "Integer overflow: Fibonacci numbers grow rapidly, overflowing standard 32-bit signed ints by the 47th term."
             ],
             "diagramType": null
         },
@@ -3704,8 +4221,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Start with t1=0, t2=1. Loop n times, printing t1, then calculating nextTerm = t1+t2, then setting t1=t2, t2=nextTerm.",
             "keySteps": [
-                "Print t1, t2",
-                "Loop i from 3 to n: next = t1 + t2; print next; t1 = t2; t2 = next;"
+                "Read N (number of terms)",
+                "Set a = 0, b = 1",
+                "Print a and b (if N >= 2)",
+                "Loop i from 3 to N: next = a + b; print next; a = b; b = next"
             ],
             "pseudocode": "t1 = 0, t2 = 1\nFOR i = 1 TO n:\n  PRINT t1\n  next = t1 + t2\n  t1 = t2\n  t2 = next"
         },
@@ -3717,49 +4236,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Function Basics",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "10 min",
+        "levelNum": 3,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Functions are reusable blocks of code that perform specific tasks. They help modularize and clean up code.",
-            "whatIsIt": "A function is like a recipe. Instead of writing the steps to bake a cake every time you want cake, you write a \"bakeCake\" function and call it by name. Functions take inputs (parameters), run code, and return an output (return value).",
+            "whatIsIt": "Functions are self-contained modular blocks of reusable code designed to perform a specific task. Instead of repeating logic, functions allow you to write code once, pass arguments, and return values, making code maintainable, debuggable, and testable.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Declare the function",
-                    "description": "Write a prototype at the top: returnType funcName(parameters);"
+                    "title": "Function declaration (prototype)",
+                    "description": "Declare the function signature `returnType name(params);` before `main()` so the compiler knows its interface."
                 },
                 {
                     "step": 2,
-                    "title": "Define the function",
-                    "description": "Write the actual code block implementing the prototype."
+                    "title": "Function call",
+                    "description": "Call the function from `main()` by passing actual parameters (arguments) matching the parameter types."
                 },
                 {
                     "step": 3,
-                    "title": "Call the function",
-                    "description": "Invoke it from main() or another function: funcName(arguments);"
+                    "title": "Execution in call frame",
+                    "description": "The CPU pushes a new stack frame for local variables, executes function logic, and prepares the return value."
+                },
+                {
+                    "step": 4,
+                    "title": "Return to caller",
+                    "description": "The function terminates at `return value;`, the stack frame is popped, and execution resumes at the calling point."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Parameter",
-                    "definition": "The variable declared in the function definition that receives input."
+                    "term": "Function Prototype",
+                    "definition": "A declaration specifying function name, return type, and parameter list before its actual definition."
                 },
                 {
-                    "term": "Argument",
-                    "definition": "The actual value passed to the function when calling it."
+                    "term": "Formal vs Actual Parameters",
+                    "definition": "Formal parameters are variables in the function header; actual parameters are the values passed at call time."
                 },
                 {
-                    "term": "Return Type",
-                    "definition": "The data type of the value the function sends back to the caller (use void if none)."
+                    "term": "Pass-by-Value",
+                    "definition": "C copies argument values into function parameters by default; changes inside do not affect the original caller variables."
+                },
+                {
+                    "term": "Call Stack Frame",
+                    "definition": "Memory allocated automatically on the stack to store function arguments, local variables, and return addresses."
                 }
             ],
-            "realWorldExample": "A juice maker machine. You put fruits in (arguments), it runs some blades (function logic), and pours juice out (return value).",
+            "realWorldExample": "A microwave oven: you press a button (function call), pass the time in seconds (argument), and it beeps with cooked food (return value).",
             "timeComplexity": "O(1)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Whenever you have a block of code that needs to repeat in different places, or to break a large program into small, readable pieces.",
             "commonMistakes": [
-                "Forgetting the semicolon after the function declaration prototype",
-                "Not returning a value when the return type is not void",
-                "Declaring a function inside another function body"
+                "Forgetting the function prototype when defining a function below `main()`, causing implicit declaration warnings.",
+                "Mismatched return types: declaring `int` but not returning a value, causing garbage return values.",
+                "Expecting pass-by-value changes to persist in caller variables without passing pointers.",
+                "Redeclaring variable names with different types inside function parameter lists."
             ],
             "diagramType": null
         },
@@ -3833,9 +4363,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create a simple function to add two numbers and return the result.",
             "keySteps": [
-                "Step 1: Declare the function prototype `int add(int a, int b);`",
-                "Step 2: Define the function returning `a + b`",
-                "Step 3: Call it in `main()` with sample numbers and print output"
+                "Declare prototype above main()",
+                "Define function with parameters and return type",
+                "Call function inside main() passing arguments",
+                "Capture and display return value"
             ],
             "pseudocode": "DEFINE FUNCTION add(a, b):\n  RETURN a + b\nMAIN:\n  CALL add(5, 10) AND PRINT RESULT"
         },
@@ -3847,48 +4378,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Array Basics",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "10 min",
+        "levelNum": 3,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Arrays store multiple items of the same data type in contiguous memory locations.",
-            "whatIsIt": "Instead of declaring 10 separate variables for 10 scores, you declare a single array: `int scores[10];`. Array indices start at 0, meaning the first element is `scores[0]` and the last is `scores[9]`.",
+            "whatIsIt": "An array is a fixed-size, contiguous sequence of memory cells holding elements of the exact same data type. By using a single variable name and zero-based index numbers `arr[0], arr[1]...`, you can store and access hundreds of values in O(1) time.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Declare and size",
-                    "description": "dataType name[size]; reserves memory for size elements."
+                    "title": "Declare array size",
+                    "description": "Allocate contiguous memory using `type name[SIZE];` (e.g., `int arr[5];` allocates 5 consecutive 4-byte integers)."
                 },
                 {
                     "step": 2,
-                    "title": "Access elements",
-                    "description": "Use name[index] to read or write values. Remember index goes from 0 to size-1."
+                    "title": "Initialize elements",
+                    "description": "Assign values using an initializer list `int arr[5] = {10, 20, 30, 40, 50};` or read via `scanf`."
                 },
                 {
                     "step": 3,
-                    "title": "Loop through",
-                    "description": "Usually a for loop is used to read/write all elements."
+                    "title": "Access via index",
+                    "description": "Use subscript operator `arr[i]` where `i` ranges strictly from 0 to `SIZE - 1`."
+                },
+                {
+                    "step": 4,
+                    "title": "Traverse with loop",
+                    "description": "Use a `for (int i = 0; i < SIZE; i++)` loop to process or print each element."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Index",
-                    "definition": "The integer coordinate of an element in the array, starting at 0."
-                },
-                {
                     "term": "Contiguous Memory",
-                    "definition": "Memory locations placed side-by-side with no gaps."
+                    "definition": "Elements stored back-to-back in RAM with no gaps between consecutive indices."
                 },
                 {
-                    "term": "Out of Bounds",
-                    "definition": "Accessing an index less than 0 or >= size, causing undefined behavior or crashes."
+                    "term": "Zero-based Indexing",
+                    "definition": "Array positions begin at index 0 and conclude at index `size - 1`."
+                },
+                {
+                    "term": "Base Address",
+                    "definition": "The memory address of the first element `&arr[0]`; array name decays to this pointer."
+                },
+                {
+                    "term": "Subscript Operator ([])",
+                    "definition": "Calculates memory offset `base + (index * sizeof(type))` to achieve O(1) random access."
                 }
             ],
-            "realWorldExample": "A egg carton. Each slot can hold one egg. You identify slots by their slot number, e.g., slot 0 to 11.",
+            "realWorldExample": "An egg carton with 12 slots numbered 0 to 11: each slot holds one egg of the same type.",
             "timeComplexity": "O(1) access",
             "spaceComplexity": "O(n)",
             "whenToUse": "When you need to store and iterate over a list of items of the same type.",
             "commonMistakes": [
-                "Starting indices at 1 instead of 0",
-                "Accessing index size (e.g. arr[10] for an array of size 10) — this is out of bounds"
+                "Out of bounds access: accessing `arr[size]` which reads or corrupts adjacent memory outside the array.",
+                "Assuming array size can grow dynamically in C: standard arrays have a fixed compile-time size.",
+                "Forgetting to initialize local arrays: uninitialized arrays contain unpredictable garbage values.",
+                "Trying to print the whole array with `printf(\"%d\", arr)` which prints a memory address instead of values."
             ],
             "diagramType": null
         },
@@ -3962,903 +4505,1072 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Declare an array of integers, initialize it, and print all values using a loop.",
             "keySteps": [
-                "Step 1: Declare `int arr[5] = {10, 20, 30, 40, 50};`",
-                "Step 2: Loop from 0 to 4",
-                "Step 3: Print `arr[i]`"
+                "Declare array of size N",
+                "Read N elements using for loop and scanf",
+                "Process or display elements using arr[i]",
+                "Ensure loop boundary stays within 0 to N-1"
             ],
             "pseudocode": "DECLARE arr[5] = [10, 20, 30, 40, 50]\nFOR i = 0 TO 4:\n  PRINT arr[i]"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int arr[5] = {10, 20, 30, 40, 50};\n    \n    printf(\"Array elements:\\n\");\n    for (int i = 0; i < 5; i++) {\n        printf(\"arr[%d] = %d\\n\", i, arr[i]);\n    }\n    return 0;\n}\n",
         "flowDiagramType": null
     },
-        "arrays-max-min": {
+    "arrays-max-min": {
         "id": "arrays-max-min",
         "title": "Find Max & Min in Array",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "6 min",
+        "levelNum": 3,
+        "estimatedTime": "6 min",
         "concept": {
-                "summary": "Scan the array to find the largest (maximum) and smallest (minimum) elements.",
-                "whatIsIt": "Finding the extreme values in a collection. You initialize 'max' and 'min' with the first element, then loop through the rest of the array, updating them whenever a larger or smaller element is encountered.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Initialize markers",
-                                "description": "Set min = arr[0] and max = arr[0]. Do not initialize to 0 as that fails for all-negative or all-positive inputs."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Loop and compare",
-                                "description": "Iterate from index 1 to size - 1. If arr[i] > max, update max. If arr[i] < min, update min."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Return results",
-                                "description": "After the loop ends, max and min hold the absolute extremes."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Maximum",
-                                "definition": "The largest value in a set of numbers."
-                        },
-                        {
-                                "term": "Minimum",
-                                "definition": "The smallest value in a set of numbers."
-                        }
-                ],
-                "realWorldExample": "Checking a weather station's logs to find the hottest and coldest temperatures recorded during the week.",
-                "timeComplexity": "O(n)",
-                "spaceComplexity": "O(1)",
-                "whenToUse": "Whenever you need to find the bounds or range of values in a dataset.",
-                "commonMistakes": [
-                        "Initializing max/min to 0 instead of arr[0]",
-                        "Starting the loop at 0 instead of 1 (unnecessary comparison of first element with itself)"
-                ],
-                "diagramType": null
+            "summary": "Scan the array to find the largest (maximum) and smallest (minimum) elements.",
+            "whatIsIt": "Finding the maximum and minimum elements in an array scans through elements in a single pass to track the extreme values. It teaches conditional updates and the essential pattern of seeding running trackers with the first element `arr[0]`.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Seed with first element",
+                    "description": "Set `max = arr[0]` and `min = arr[0]` to establish valid baseline candidates."
+                },
+                {
+                    "step": 2,
+                    "title": "Linear scan from index 1",
+                    "description": "Loop index `i` from 1 to `n - 1`, inspecting each element in turn."
+                },
+                {
+                    "step": 3,
+                    "title": "Update extremes",
+                    "description": "If `arr[i] > max`, update `max = arr[i]`. If `arr[i] < min`, update `min = arr[i]`."
+                },
+                {
+                    "step": 4,
+                    "title": "Output results",
+                    "description": "After one full pass (O(n) time), print the recorded maximum and minimum values."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Linear Scan",
+                    "definition": "Examining every element in sequential order from beginning to end."
+                },
+                {
+                    "term": "Candidate Extreme",
+                    "definition": "The running champion value that holds the record until a larger/smaller value appears."
+                },
+                {
+                    "term": "Single-Pass Efficiency",
+                    "definition": "Finding both min and max simultaneously in O(n) time without multiple traversals."
+                },
+                {
+                    "term": "Valid Baseline Initialization",
+                    "definition": "Initializing with `arr[0]` guarantees the candidate belongs to the actual dataset."
+                }
+            ],
+            "realWorldExample": "Checking temperatures throughout the year: you record highest summer heat and coldest winter freeze.",
+            "timeComplexity": "O(n)",
+            "spaceComplexity": "O(1)",
+            "whenToUse": "Whenever you need to find the bounds or range of values in a dataset.",
+            "commonMistakes": [
+                "Initializing `max = 0`: if all array elements are negative (e.g. -10, -5, -2), `max` remains 0, which is incorrect.",
+                "Initializing `min = 0`: if all elements are positive, `min` erroneously stays 0.",
+                "Starting loop at index 0 instead of 1 (redundantly comparing `arr[0]` with itself).",
+                "Not checking for empty array input before dereferencing `arr[0]`."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What is the best way to initialize the min and max variables?",
-                        "options": [
-                                "A) Set both to 0",
-                                "B) Set min to 9999 and max to -9999",
-                                "C) Set both to the first element of the array",
-                                "D) Leave them uninitialized"
-                        ],
-                        "correct": 2,
-                        "explanation": "Initializing with the first element (arr[0]) guarantees that the comparison values are actual members of the array, which is robust against all ranges."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "If an array has size N, how many comparisons are needed to find max/min using the standard loop?",
-                        "options": [
-                                "A) N comparisons",
-                                "B) 2 * (N - 1) comparisons",
-                                "C) N^2 comparisons",
-                                "D) log(N) comparisons"
-                        ],
-                        "correct": 1,
-                        "explanation": "For each of the N-1 remaining elements, we compare against both max and min, yielding 2*(N-1) comparisons."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "What is the time complexity of finding max and min in an unsorted array of size N?",
-                        "options": [
-                                "A) O(1)",
-                                "B) O(log N)",
-                                "C) O(N)",
-                                "D) O(N log N)"
-                        ],
-                        "correct": 2,
-                        "explanation": "We must visit every element in the array exactly once, which requires linear O(N) time."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "hard",
-                        "question": "What would happen if you initialized max to 0 and all array values were negative?",
-                        "options": [
-                                "A) The program crashes",
-                                "B) The final max will be 0 (incorrect)",
-                                "C) The compiler raises an error",
-                                "D) The final max will be the correct smallest negative value"
-                        ],
-                        "correct": 1,
-                        "explanation": "Since all array values are negative, none will be greater than 0, leaving max at 0, which is not in the array."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "medium",
-                        "question": "Which header is required for finding max/min in a basic array in C?",
-                        "options": [
-                                "A) <math.h>",
-                                "B) <stdlib.h>",
-                                "C) <stdio.h> (for standard IO)",
-                                "D) No special header is required for raw comparisons"
-                        ],
-                        "correct": 3,
-                        "explanation": "Raw comparison operators like < and > are built into core C language syntax, so no special mathematical library is required."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What is the best way to initialize the min and max variables?",
+                "options": [
+                    "A) Set both to 0",
+                    "B) Set min to 9999 and max to -9999",
+                    "C) Set both to the first element of the array",
+                    "D) Leave them uninitialized"
+                ],
+                "correct": 2,
+                "explanation": "Initializing with the first element (arr[0]) guarantees that the comparison values are actual members of the array, which is robust against all ranges."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "If an array has size N, how many comparisons are needed to find max/min using the standard loop?",
+                "options": [
+                    "A) N comparisons",
+                    "B) 2 * (N - 1) comparisons",
+                    "C) N^2 comparisons",
+                    "D) log(N) comparisons"
+                ],
+                "correct": 1,
+                "explanation": "For each of the N-1 remaining elements, we compare against both max and min, yielding 2*(N-1) comparisons."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "What is the time complexity of finding max and min in an unsorted array of size N?",
+                "options": [
+                    "A) O(1)",
+                    "B) O(log N)",
+                    "C) O(N)",
+                    "D) O(N log N)"
+                ],
+                "correct": 2,
+                "explanation": "We must visit every element in the array exactly once, which requires linear O(N) time."
+            },
+            {
+                "id": 4,
+                "difficulty": "hard",
+                "question": "What would happen if you initialized max to 0 and all array values were negative?",
+                "options": [
+                    "A) The program crashes",
+                    "B) The final max will be 0 (incorrect)",
+                    "C) The compiler raises an error",
+                    "D) The final max will be the correct smallest negative value"
+                ],
+                "correct": 1,
+                "explanation": "Since all array values are negative, none will be greater than 0, leaving max at 0, which is not in the array."
+            },
+            {
+                "id": 5,
+                "difficulty": "medium",
+                "question": "Which header is required for finding max/min in a basic array in C?",
+                "options": [
+                    "A) <math.h>",
+                    "B) <stdlib.h>",
+                    "C) <stdio.h> (for standard IO)",
+                    "D) No special header is required for raw comparisons"
+                ],
+                "correct": 3,
+                "explanation": "Raw comparison operators like < and > are built into core C language syntax, so no special mathematical library is required."
+            }
         ],
         "logicHints": {
-                "approach": "Set min and max to arr[0]. Loop and update both trackers.",
-                "keySteps": [
-                        "Initialize min = arr[0], max = arr[0]",
-                        "Loop i from 1 to 4",
-                        "Compare arr[i] and update min/max if needed"
-                ],
-                "pseudocode": "DECLARE arr[5] = [12, 5, 87, 1, 43]\nmin = arr[0]\nmax = arr[0]\nFOR i = 1 TO 4:\n  IF arr[i] > max THEN max = arr[i]\n  IF arr[i] < min THEN min = arr[i]\nPRINT max, min"
+            "approach": "Set min and max to arr[0]. Loop and update both trackers.",
+            "keySteps": [
+                "Read N and array elements",
+                "Set max = arr[0] and min = arr[0]",
+                "Loop i from 1 to N-1:",
+                "  If arr[i] > max: max = arr[i]",
+                "  If arr[i] < min: min = arr[i]",
+                "Display max and min"
+            ],
+            "pseudocode": "DECLARE arr[5] = [12, 5, 87, 1, 43]\nmin = arr[0]\nmax = arr[0]\nFOR i = 1 TO 4:\n  IF arr[i] > max THEN max = arr[i]\n  IF arr[i] < min THEN min = arr[i]\nPRINT max, min"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int arr[5] = {12, 5, 87, 1, 43};\n    int min = arr[0];\n    int max = arr[0];\n    \n    for (int i = 1; i < 5; i++) {\n        if (arr[i] > max) {\n            max = arr[i];\n        }\n        if (arr[i] < min) {\n            min = arr[i];\n        }\n    }\n    printf(\"Minimum: %d\\n\", min);\n    printf(\"Maximum: %d\\n\", max);\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "arrays-sum": {
         "id": "arrays-sum",
         "title": "Sum of Array Elements",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "5 min",
+        "levelNum": 3,
+        "estimatedTime": "5 min",
         "concept": {
-                "summary": "Accumulate all values in an array into a single sum variable.",
-                "whatIsIt": "A fundamental aggregation task. You initialize a sum variable to 0, then visit each slot in the array sequentially, adding its value to the sum.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Initialize sum",
-                                "description": "Start with sum = 0. Leaving it uninitialized adds items to garbage data."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Iterate & add",
-                                "description": "Loop through each index, adding the element to the accumulator: sum += arr[i]."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Output",
-                                "description": "The final sum value is now complete."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Accumulator",
-                                "definition": "A variable used to collect or gather intermediate results during iteration."
-                        }
-                ],
-                "realWorldExample": "Summing up the individual item costs in a shopping cart array to compute the grand total bill.",
-                "timeComplexity": "O(n)",
-                "spaceComplexity": "O(1)",
-                "whenToUse": "To calculate aggregates, averages, or checksums on a list of numbers.",
-                "commonMistakes": [
-                        "Forgetting to initialize sum to 0",
-                        "Off-by-one errors in loop boundaries"
-                ],
-                "diagramType": null
+            "summary": "Accumulate all values in an array into a single sum variable.",
+            "whatIsIt": "Sum of array elements accumulates the numeric value of every item into a running total. It forms the computational foundation of statistical averages, variance, dot products, and signal processing filters.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Initialize accumulator",
+                    "description": "Declare `sum = 0` before starting the loop."
+                },
+                {
+                    "step": 2,
+                    "title": "Iterate through elements",
+                    "description": "Traverse array indices `i` from 0 to `n - 1`."
+                },
+                {
+                    "step": 3,
+                    "title": "Accumulate values",
+                    "description": "Add each item to the accumulator using `sum += arr[i]`."
+                },
+                {
+                    "step": 4,
+                    "title": "Compute metrics",
+                    "description": "Print total sum and optional average `(float)sum / n`."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Accumulator Variable",
+                    "definition": "A variable initialized to 0 that sums numeric values over successive iterations."
+                },
+                {
+                    "term": "Array Reduction",
+                    "definition": "Collapsing an array of multiple elements into a single aggregate scalar value."
+                },
+                {
+                    "term": "Integer Division Truncation",
+                    "definition": "Dividing two integers in C drops decimal fractions unless explicitly cast to float."
+                },
+                {
+                    "term": "Running Total",
+                    "definition": "The progressive sum maintained throughout sequential element traversal."
+                }
+            ],
+            "realWorldExample": "A supermarket cash register scanning items one by one and accumulating the total receipt bill.",
+            "timeComplexity": "O(n)",
+            "spaceComplexity": "O(1)",
+            "whenToUse": "To calculate aggregates, averages, or checksums on a list of numbers.",
+            "commonMistakes": [
+                "Forgetting `sum = 0` initialization: uninitialized local variables contain garbage values that corrupt the total.",
+                "Writing `i <= n` instead of `i < n` in loop condition, adding random memory beyond array bounds.",
+                "Integer truncation when calculating average: `sum / n` yields an integer; write `(float)sum / n` instead.",
+                "Adding index `i` instead of element value `arr[i]` (`sum += i`)."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What happens if you do not initialize the sum variable to 0?",
-                        "options": [
-                                "A) It defaults to 0 automatically in C",
-                                "B) It will contain a garbage value, producing an incorrect total",
-                                "C) The program fails to compile",
-                                "D) The array elements are erased"
-                        ],
-                        "correct": 1,
-                        "explanation": "Local variables in C are not initialized to 0 by default. They contain random 'garbage' data from memory."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "How do you calculate the average after finding the sum of N elements?",
-                        "options": [
-                                "A) average = sum * N",
-                                "B) average = (float)sum / N",
-                                "C) average = sum % N",
-                                "D) average = sum - N"
-                        ],
-                        "correct": 1,
-                        "explanation": "Average is the total sum divided by the count. Casting to float prevents integer division truncation."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "What is the time complexity of summing an array of N elements?",
-                        "options": [
-                                "A) O(1)",
-                                "B) O(N)",
-                                "C) O(N^2)",
-                                "D) O(log N)"
-                        ],
-                        "correct": 1,
-                        "explanation": "You must visit each of the N elements exactly once, leading to linear O(N) time."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "medium",
-                        "question": "What is the correct loop condition to sum array `int a[5]`?",
-                        "options": [
-                                "A) for(int i=0; i<=5; i++)",
-                                "B) for(int i=1; i<=5; i++)",
-                                "C) for(int i=0; i<5; i++)",
-                                "D) for(int i=0; i<4; i++)"
-                        ],
-                        "correct": 2,
-                        "explanation": "Index starts at 0 and ends at 4, so `i < 5` is correct."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "hard",
-                        "question": "If you sum elements of a massive integer array and get a negative total, what likely occurred?",
-                        "options": [
-                                "A) C doesn't support big sums",
-                                "B) Integer overflow",
-                                "C) Memory leak",
-                                "D) Compiler optimization bug"
-                        ],
-                        "correct": 1,
-                        "explanation": "Accumulating beyond the maximum positive integer limit wraps the value into negative bounds (signed integer overflow)."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What happens if you do not initialize the sum variable to 0?",
+                "options": [
+                    "A) It defaults to 0 automatically in C",
+                    "B) It will contain a garbage value, producing an incorrect total",
+                    "C) The program fails to compile",
+                    "D) The array elements are erased"
+                ],
+                "correct": 1,
+                "explanation": "Local variables in C are not initialized to 0 by default. They contain random 'garbage' data from memory."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "How do you calculate the average after finding the sum of N elements?",
+                "options": [
+                    "A) average = sum * N",
+                    "B) average = (float)sum / N",
+                    "C) average = sum % N",
+                    "D) average = sum - N"
+                ],
+                "correct": 1,
+                "explanation": "Average is the total sum divided by the count. Casting to float prevents integer division truncation."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "What is the time complexity of summing an array of N elements?",
+                "options": [
+                    "A) O(1)",
+                    "B) O(N)",
+                    "C) O(N^2)",
+                    "D) O(log N)"
+                ],
+                "correct": 1,
+                "explanation": "You must visit each of the N elements exactly once, leading to linear O(N) time."
+            },
+            {
+                "id": 4,
+                "difficulty": "medium",
+                "question": "What is the correct loop condition to sum array `int a[5]`?",
+                "options": [
+                    "A) for(int i=0; i<=5; i++)",
+                    "B) for(int i=1; i<=5; i++)",
+                    "C) for(int i=0; i<5; i++)",
+                    "D) for(int i=0; i<4; i++)"
+                ],
+                "correct": 2,
+                "explanation": "Index starts at 0 and ends at 4, so `i < 5` is correct."
+            },
+            {
+                "id": 5,
+                "difficulty": "hard",
+                "question": "If you sum elements of a massive integer array and get a negative total, what likely occurred?",
+                "options": [
+                    "A) C doesn't support big sums",
+                    "B) Integer overflow",
+                    "C) Memory leak",
+                    "D) Compiler optimization bug"
+                ],
+                "correct": 1,
+                "explanation": "Accumulating beyond the maximum positive integer limit wraps the value into negative bounds (signed integer overflow)."
+            }
         ],
         "logicHints": {
-                "approach": "Loop through all elements and add them to sum.",
-                "keySteps": [
-                        "Initialize sum = 0",
-                        "Loop from index 0 to 4",
-                        "Add arr[i] to sum"
-                ],
-                "pseudocode": "sum = 0\nDECLARE arr[5] = [5, 10, 15, 20, 25]\nFOR i = 0 TO 4:\n  sum = sum + arr[i]\nPRINT sum"
+            "approach": "Loop through all elements and add them to sum.",
+            "keySteps": [
+                "Read N and array elements",
+                "Set sum = 0",
+                "For i from 0 to N-1: sum += arr[i]",
+                "Display sum and average ((float)sum / N)"
+            ],
+            "pseudocode": "sum = 0\nDECLARE arr[5] = [5, 10, 15, 20, 25]\nFOR i = 0 TO 4:\n  sum = sum + arr[i]\nPRINT sum"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int arr[5] = {5, 10, 15, 20, 25};\n    int sum = 0;\n    \n    for (int i = 0; i < 5; i++) {\n        sum += arr[i];\n    }\n    printf(\"Sum: %d\\n\", sum);\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "arrays-reverse": {
         "id": "arrays-reverse",
         "title": "Reverse an Array",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "7 min",
+        "levelNum": 3,
+        "estimatedTime": "7 min",
         "concept": {
-                "summary": "Reverse the order of elements in an array in-place.",
-                "whatIsIt": "In-place reversal swaps elements from both ends (using left and right pointers) meeting in the middle, avoiding the need for an extra copy of the array.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Initialize pointers",
-                                "description": "Set start = 0 and end = size - 1."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Swap elements",
-                                "description": "While start < end, swap arr[start] and arr[end] using a temp variable."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Move inward",
-                                "description": "Increment start, decrement end, and repeat."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "In-Place",
-                                "definition": "An algorithm that updates data structures using O(1) auxiliary space."
-                        }
-                ],
-                "realWorldExample": "Reversing an audio wave sample array to play the sound backward.",
-                "timeComplexity": "O(n)",
-                "spaceComplexity": "O(1)",
-                "whenToUse": "To reverse lists, strings, or order-dependent datasets.",
-                "commonMistakes": [
-                        "Looping all the way to N, which swaps elements twice and restores the original array",
-                        "Using end = size instead of size - 1 (causes out of bounds)"
-                ],
-                "diagramType": null
+            "summary": "Reverse the order of elements in an array in-place.",
+            "whatIsIt": "Reversing an array inverts the sequence of elements so the first element becomes the last and vice-versa. Using the two-pointer technique, elements are swapped symmetrically in-place with O(1) auxiliary space.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Set two pointers",
+                    "description": "Initialize `left = 0` at the start and `right = n - 1` at the end."
+                },
+                {
+                    "step": 2,
+                    "title": "Symmetrical swap",
+                    "description": "Swap elements at `arr[left]` and `arr[right]` using a temporary variable."
+                },
+                {
+                    "step": 3,
+                    "title": "Advance pointers",
+                    "description": "Increment `left++` and decrement `right--` to move inward toward the center."
+                },
+                {
+                    "step": 4,
+                    "title": "Termination condition",
+                    "description": "Repeat while `left < right`; stop when pointers meet or cross."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Two-Pointer Technique",
+                    "definition": "Using two index variables starting at opposite boundaries converging toward the center."
+                },
+                {
+                    "term": "In-Place Algorithm",
+                    "definition": "An algorithm that transforms input without allocating additional array buffers (O(1) memory)."
+                },
+                {
+                    "term": "Symmetrical Swapping",
+                    "definition": "Exchanging element at index `i` with element at index `n - 1 - i`."
+                },
+                {
+                    "term": "Convergence Boundary",
+                    "definition": "The midpoint where left and right pointers meet (`left >= right`)."
+                }
+            ],
+            "realWorldExample": "Flipping a row of playing cards: card 1 swaps with card 10, card 2 with card 9, until the whole row is inverted.",
+            "timeComplexity": "O(n)",
+            "spaceComplexity": "O(1)",
+            "whenToUse": "To reverse lists, strings, or order-dependent datasets.",
+            "commonMistakes": [
+                "Looping from 0 to `n`: this swaps elements twice, restoring the array back to its original order.",
+                "Setting initial right index to `n` instead of `n - 1`, swapping with out-of-bounds memory.",
+                "Swapping indices `left` and `right` instead of array values `arr[left]` and `arr[right]`.",
+                "Allocating an unnecessary second array when an in-place swap achieves the same result in O(1) space."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What happens if the swap loop condition is start <= end instead of start < end?",
-                        "options": [
-                                "A) It swaps the middle element with itself, which is harmless",
-                                "B) It causes an infinite loop",
-                                "C) The program crashes",
-                                "D) The array is not reversed"
-                        ],
-                        "correct": 0,
-                        "explanation": "If start == end, the middle element swaps with itself, which leaves the element unchanged and is harmless."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "If you reverse an array using a secondary copy array, what is the space complexity?",
-                        "options": [
-                                "A) O(1)",
-                                "B) O(N)",
-                                "C) O(N^2)",
-                                "D) O(log N)"
-                        ],
-                        "correct": 1,
-                        "explanation": "Creating a secondary array of size N requires auxiliary space proportional to N, hence O(N)."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "Which of the following is correct to swap a and b in C?",
-                        "options": [
-                                "A) a = b; b = a;",
-                                "B) temp = a; a = b; b = temp;",
-                                "C) a = temp; temp = b; b = a;",
-                                "D) b = temp; temp = a; a = b;"
-                        ],
-                        "correct": 1,
-                        "explanation": "We must save 'a' in a temp variable before overwriting it with 'b', then assign the saved value to 'b'."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "hard",
-                        "question": "How many swaps are performed to reverse an array of size N?",
-                        "options": [
-                                "A) N swaps",
-                                "B) N / 2 swaps",
-                                "C) N - 1 swaps",
-                                "D) N^2 swaps"
-                        ],
-                        "correct": 1,
-                        "explanation": "We swap elements from the edges until start meets end in the middle, resulting in N/2 swaps."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "medium",
-                        "question": "What is the index of the last element in array `int arr[N]`?",
-                        "options": [
-                                "A) N",
-                                "B) N + 1",
-                                "C) N - 1",
-                                "D) 0"
-                        ],
-                        "correct": 2,
-                        "explanation": "C arrays use zero-based indexing, so a size N array has indices 0 to N-1."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What happens if the swap loop condition is start <= end instead of start < end?",
+                "options": [
+                    "A) It swaps the middle element with itself, which is harmless",
+                    "B) It causes an infinite loop",
+                    "C) The program crashes",
+                    "D) The array is not reversed"
+                ],
+                "correct": 0,
+                "explanation": "If start == end, the middle element swaps with itself, which leaves the element unchanged and is harmless."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "If you reverse an array using a secondary copy array, what is the space complexity?",
+                "options": [
+                    "A) O(1)",
+                    "B) O(N)",
+                    "C) O(N^2)",
+                    "D) O(log N)"
+                ],
+                "correct": 1,
+                "explanation": "Creating a secondary array of size N requires auxiliary space proportional to N, hence O(N)."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "Which of the following is correct to swap a and b in C?",
+                "options": [
+                    "A) a = b; b = a;",
+                    "B) temp = a; a = b; b = temp;",
+                    "C) a = temp; temp = b; b = a;",
+                    "D) b = temp; temp = a; a = b;"
+                ],
+                "correct": 1,
+                "explanation": "We must save 'a' in a temp variable before overwriting it with 'b', then assign the saved value to 'b'."
+            },
+            {
+                "id": 4,
+                "difficulty": "hard",
+                "question": "How many swaps are performed to reverse an array of size N?",
+                "options": [
+                    "A) N swaps",
+                    "B) N / 2 swaps",
+                    "C) N - 1 swaps",
+                    "D) N^2 swaps"
+                ],
+                "correct": 1,
+                "explanation": "We swap elements from the edges until start meets end in the middle, resulting in N/2 swaps."
+            },
+            {
+                "id": 5,
+                "difficulty": "medium",
+                "question": "What is the index of the last element in array `int arr[N]`?",
+                "options": [
+                    "A) N",
+                    "B) N + 1",
+                    "C) N - 1",
+                    "D) 0"
+                ],
+                "correct": 2,
+                "explanation": "C arrays use zero-based indexing, so a size N array has indices 0 to N-1."
+            }
         ],
         "logicHints": {
-                "approach": "Swap elements from edges moving towards the center.",
-                "keySteps": [
-                        "Initialize start = 0, end = 4",
-                        "While start < end, swap elements using a temp variable",
-                        "Increment start, decrement end"
-                ],
-                "pseudocode": "DECLARE arr[5] = [1, 2, 3, 4, 5]\nstart = 0\nend = 4\nWHILE start < end:\n  temp = arr[start]\n  arr[start] = arr[end]\n  arr[end] = temp\n  start = start + 1\n  end = end - 1"
+            "approach": "Swap elements from edges moving towards the center.",
+            "keySteps": [
+                "Initialize left = 0, right = N - 1",
+                "While left < right:",
+                "  temp = arr[left]; arr[left] = arr[right]; arr[right] = temp",
+                "  left++; right--",
+                "Print reversed array"
+            ],
+            "pseudocode": "DECLARE arr[5] = [1, 2, 3, 4, 5]\nstart = 0\nend = 4\nWHILE start < end:\n  temp = arr[start]\n  arr[start] = arr[end]\n  arr[end] = temp\n  start = start + 1\n  end = end - 1"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int arr[5] = {1, 2, 3, 4, 5};\n    int start = 0, end = 4;\n    \n    while (start < end) {\n        int temp = arr[start];\n        arr[start] = arr[end];\n        arr[end] = temp;\n        start++;\n        end--;\n    }\n    printf(\"Reversed array:\\n\");\n    for (int i = 0; i < 5; i++) {\n        printf(\"%d \", arr[i]);\n    }\n    printf(\"\\n\");\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "arrays-insert": {
         "id": "arrays-insert",
         "title": "Insert Element in Array",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "8 min",
+        "levelNum": 3,
+        "estimatedTime": "8 min",
         "concept": {
-                "summary": "Insert a new value at a given position, shifting items right.",
-                "whatIsIt": "Since array structures reside in contiguous memory, inserting an element at index `pos` requires shifting all elements at indices `pos` to `size-1` one slot to the right.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Shift right",
-                                "description": "Start from the last element (index size-1) and copy it to index i+1, shifting down to the target position."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Insert value",
-                                "description": "Place the new value in the now-vacant target slot: arr[pos] = value."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Increase size count",
-                                "description": "Increment the tracker representing the number of valid items in the array."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Shifting",
-                                "definition": "Moving array elements to adjacent index positions to make space or close gaps."
-                        }
-                ],
-                "realWorldExample": "Adding a new member in the middle of a waiting list, requiring everyone behind them to step back one spot.",
-                "timeComplexity": "O(n) worst-case",
-                "spaceComplexity": "O(1)",
-                "whenToUse": "To insert elements at specific sorted locations or list indexes.",
-                "commonMistakes": [
-                        "Shifting left-to-right (overwrites data)",
-                        "Inserting beyond the allocated capacity of the array (causes buffer overflow)"
-                ],
-                "diagramType": null
+            "summary": "Insert a new value at a given position, shifting items right.",
+            "whatIsIt": "Inserting an element at an arbitrary position in an array requires shifting all subsequent elements one slot to the right to make room. Because arrays have fixed contiguous storage, elements must be physically relocated to maintain order.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Verify capacity",
+                    "description": "Ensure the array has spare allocated capacity before inserting."
+                },
+                {
+                    "step": 2,
+                    "title": "Shift elements rightward",
+                    "description": "Loop index `i` backwards from `n - 1` down to `pos`: copy `arr[i + 1] = arr[i]`."
+                },
+                {
+                    "step": 3,
+                    "title": "Insert target element",
+                    "description": "Place the new value into the newly vacated position `arr[pos] = value`."
+                },
+                {
+                    "step": 4,
+                    "title": "Increment logical size",
+                    "description": "Increment the count of elements `n = n + 1`."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Rightward Shifting",
+                    "definition": "Moving array elements towards higher indices to vacate an insertion slot."
+                },
+                {
+                    "term": "Logical Size vs Capacity",
+                    "definition": "Logical size is the number of active elements; capacity is the total allocated memory."
+                },
+                {
+                    "term": "Insertion Index (pos)",
+                    "definition": "The zero-based position where the new value will reside."
+                },
+                {
+                    "term": "Contiguous Invariant",
+                    "definition": "Arrays cannot have holes; all active elements must remain adjacent in memory."
+                }
+            ],
+            "realWorldExample": "People standing in a queue stepping back one pace to let an elderly person merge into the line.",
+            "timeComplexity": "O(n) worst-case",
+            "spaceComplexity": "O(1)",
+            "whenToUse": "To insert elements at specific sorted locations or list indexes.",
+            "commonMistakes": [
+                "Shifting forward from `pos` to `n - 1`, which immediately overwrites and erases subsequent elements.",
+                "Inserting into a full array without verifying capacity, causing memory buffer overflow.",
+                "Off-by-one errors confusing 1-based human positions with 0-based array indices.",
+                "Forgetting to increment the array length variable `n++` after insertion."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "Why must we shift elements from right to left (back to front)?",
-                        "options": [
-                                "A) To run faster",
-                                "B) To avoid overwriting adjacent values before they are moved",
-                                "C) C doesn't support left-to-right loops",
-                                "D) To save memory"
-                        ],
-                        "correct": 1,
-                        "explanation": "If we shift left-to-right, the element at pos overwrites pos+1, which then overwrites pos+2, causing loss of data."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "What is the worst-case time complexity of inserting into an array of size N?",
-                        "options": [
-                                "A) O(1)",
-                                "B) O(N)",
-                                "C) O(N^2)",
-                                "D) O(log N)"
-                        ],
-                        "correct": 1,
-                        "explanation": "Inserting at index 0 requires shifting all N elements, which takes O(N) operations."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "In which index is insertion fastest (O(1) complexity)?",
-                        "options": [
-                                "A) Index 0",
-                                "B) The middle index",
-                                "C) The very end of the array",
-                                "D) Any index"
-                        ],
-                        "correct": 2,
-                        "explanation": "Inserting at the end requires no shifting, making it an O(1) operation."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "medium",
-                        "question": "What happens if we insert an element when the array is already at its max declared capacity?",
-                        "options": [
-                                "A) It resizes automatically",
-                                "B) Memory corruption / Out of Bounds crash",
-                                "C) The compiler flags it",
-                                "D) The element is ignored"
-                        ],
-                        "correct": 1,
-                        "explanation": "Standard C arrays have fixed size. Accessing elements beyond capacity leads to undefined behavior or crashes."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "hard",
-                        "question": "What is the shift direction for array insertion?",
-                        "options": [
-                                "A) Shift Left",
-                                "B) Shift Right",
-                                "C) Swap Left",
-                                "D) No shift needed"
-                        ],
-                        "correct": 1,
-                        "explanation": "We shift elements to the right (higher indices) to clear a slot."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "Why must we shift elements from right to left (back to front)?",
+                "options": [
+                    "A) To run faster",
+                    "B) To avoid overwriting adjacent values before they are moved",
+                    "C) C doesn't support left-to-right loops",
+                    "D) To save memory"
+                ],
+                "correct": 1,
+                "explanation": "If we shift left-to-right, the element at pos overwrites pos+1, which then overwrites pos+2, causing loss of data."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "What is the worst-case time complexity of inserting into an array of size N?",
+                "options": [
+                    "A) O(1)",
+                    "B) O(N)",
+                    "C) O(N^2)",
+                    "D) O(log N)"
+                ],
+                "correct": 1,
+                "explanation": "Inserting at index 0 requires shifting all N elements, which takes O(N) operations."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "In which index is insertion fastest (O(1) complexity)?",
+                "options": [
+                    "A) Index 0",
+                    "B) The middle index",
+                    "C) The very end of the array",
+                    "D) Any index"
+                ],
+                "correct": 2,
+                "explanation": "Inserting at the end requires no shifting, making it an O(1) operation."
+            },
+            {
+                "id": 4,
+                "difficulty": "medium",
+                "question": "What happens if we insert an element when the array is already at its max declared capacity?",
+                "options": [
+                    "A) It resizes automatically",
+                    "B) Memory corruption / Out of Bounds crash",
+                    "C) The compiler flags it",
+                    "D) The element is ignored"
+                ],
+                "correct": 1,
+                "explanation": "Standard C arrays have fixed size. Accessing elements beyond capacity leads to undefined behavior or crashes."
+            },
+            {
+                "id": 5,
+                "difficulty": "hard",
+                "question": "What is the shift direction for array insertion?",
+                "options": [
+                    "A) Shift Left",
+                    "B) Shift Right",
+                    "C) Swap Left",
+                    "D) No shift needed"
+                ],
+                "correct": 1,
+                "explanation": "We shift elements to the right (higher indices) to clear a slot."
+            }
         ],
         "logicHints": {
-                "approach": "Shift elements from the end to the right, then write the element.",
-                "keySteps": [
-                        "Loop i from size-1 down to pos",
-                        "Copy arr[i] to arr[i+1]",
-                        "Set arr[pos] = new_value"
-                ],
-                "pseudocode": "DECLARE arr[6] = [10, 20, 30, 40, 50, 0] // capacity 6, size 5\npos = 2\nval = 99\nFOR i = 4 DOWNTO pos:\n  arr[i+1] = arr[i]\narr[pos] = val\nsize = 6"
+            "approach": "Shift elements from the end to the right, then write the element.",
+            "keySteps": [
+                "Input position pos and new value",
+                "For i from N-1 down to pos: arr[i+1] = arr[i]",
+                "arr[pos] = value",
+                "N = N + 1",
+                "Display updated array"
+            ],
+            "pseudocode": "DECLARE arr[6] = [10, 20, 30, 40, 50, 0] // capacity 6, size 5\npos = 2\nval = 99\nFOR i = 4 DOWNTO pos:\n  arr[i+1] = arr[i]\narr[pos] = val\nsize = 6"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int arr[6] = {10, 20, 30, 40, 50};\n    int size = 5;\n    int pos = 2;\n    int val = 99;\n    \n    for (int i = size - 1; i >= pos; i--) {\n        arr[i + 1] = arr[i];\n    }\n    arr[pos] = val;\n    size++;\n    \n    printf(\"After insertion:\\n\");\n    for (int i = 0; i < size; i++) {\n        printf(\"%d \", arr[i]);\n    }\n    printf(\"\\n\");\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "arrays-delete": {
         "id": "arrays-delete",
         "title": "Delete Element from Array",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "8 min",
+        "levelNum": 3,
+        "estimatedTime": "8 min",
         "concept": {
-                "summary": "Remove an element at a given index, shifting elements left.",
-                "whatIsIt": "Deletion overwrites the target slot, then shifts all subsequent elements to the left by one position to maintain contiguous storage.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Target index",
-                                "description": "Identify index pos to delete."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Shift left",
-                                "description": "Loop from pos to size-2. Copy arr[i+1] to arr[i] to overwrite the deleted slot."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Decrement size",
-                                "description": "Reduce the logical size variable of the array."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Logical Size",
-                                "definition": "The number of elements currently stored and active, as opposed to the physical array capacity."
-                        }
-                ],
-                "realWorldExample": "Removing a line item from a grocery bill spreadsheet, causing all rows below to shift up.",
-                "timeComplexity": "O(n)",
-                "spaceComplexity": "O(1)",
-                "whenToUse": "To remove elements from specific slots in a list.",
-                "commonMistakes": [
-                        "Forgetting to decrement size tracker, leaving a duplicate element at the end",
-                        "Off-by-one errors in left-shifting loops"
-                ],
-                "diagramType": null
+            "summary": "Remove an element at a given index, shifting elements left.",
+            "whatIsIt": "Deleting an element from an array removes the target item and shifts all subsequent elements one slot to the left to close the gap. The array's logical size is decremented by 1 while preserving the contiguous sequence.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Validate target position",
+                    "description": "Confirm `pos >= 0` and `pos < n` to prevent invalid memory operations."
+                },
+                {
+                    "step": 2,
+                    "title": "Shift elements leftward",
+                    "description": "Loop index `i` forward from `pos` up to `n - 2`: copy `arr[i] = arr[i + 1]`."
+                },
+                {
+                    "step": 3,
+                    "title": "Decrement logical size",
+                    "description": "Decrease the count of active elements `n = n - 1`."
+                },
+                {
+                    "step": 4,
+                    "title": "Ignore abandoned tail",
+                    "description": "The old last element at index `n` is now inactive and ignored by loops."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Leftward Shifting",
+                    "definition": "Copying subsequent elements to lower indices to collapse an empty slot."
+                },
+                {
+                    "term": "Logical Deletion",
+                    "definition": "Decreasing element count so the removed item is excluded from all future operations."
+                },
+                {
+                    "term": "O(n) Deletion Time",
+                    "definition": "Worst-case deletion at index 0 requires shifting all remaining `n - 1` elements."
+                },
+                {
+                    "term": "Boundary Validation",
+                    "definition": "Guarding against negative indices or indices beyond active array length."
+                }
+            ],
+            "realWorldExample": "A person leaving a queue at the bank: everyone behind them steps forward one step to close the space.",
+            "timeComplexity": "O(n)",
+            "spaceComplexity": "O(1)",
+            "whenToUse": "To remove elements from specific slots in a list.",
+            "commonMistakes": [
+                "Shifting backwards, which clones elements rather than deleting the target.",
+                "Loop condition running up to `n - 1` accessing `arr[i + 1]` out of bounds when `i = n - 1`.",
+                "Forgetting to decrement `n--`, which leaves duplicate values visible at the end of the array.",
+                "Failing to check for empty array before attempting deletion."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What is the shift direction during deletion?",
-                        "options": [
-                                "A) Shift Right",
-                                "B) Shift Left",
-                                "C) Split",
-                                "D) Swapping"
-                        ],
-                        "correct": 1,
-                        "explanation": "We shift elements to the left (lower indices) to fill the vacated slot."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "What is the time complexity of deleting the first element in an array of size N?",
-                        "options": [
-                                "A) O(1)",
-                                "B) O(N)",
-                                "C) O(N^2)",
-                                "D) O(log N)"
-                        ],
-                        "correct": 1,
-                        "explanation": "Deleting the first element (index 0) requires shifting all remaining N-1 elements, taking linear O(N) time."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "Which index can be deleted in O(1) time?",
-                        "options": [
-                                "A) Index 0",
-                                "B) The last index (size - 1)",
-                                "C) The middle index",
-                                "D) None"
-                        ],
-                        "correct": 1,
-                        "explanation": "Deleting the last element requires no shifting. We just decrement the size variable, taking O(1) time."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "medium",
-                        "question": "Why is a duplicate of the last element sometimes left behind after deleting?",
-                        "options": [
-                                "A) C compiler copy bug",
-                                "B) The loop shifts values left, but doesn't erase the old last slot. Decrementing size hides it.",
-                                "C) Memory leak",
-                                "D) Array expansion"
-                        ],
-                        "correct": 1,
-                        "explanation": "Left shifting overwrites index positions. The last cell is copied to the second-to-last cell, but its original value remains unless overwritten. Decrementing the size correctly ignores it."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "hard",
-                        "question": "What is the boundary for the deletion shift loop for array of size N?",
-                        "options": [
-                                "A) i from pos to N-1",
-                                "B) i from pos to N-2",
-                                "C) i from N-1 down to pos",
-                                "D) i from N-2 down to pos"
-                        ],
-                        "correct": 1,
-                        "explanation": "Since we copy `arr[i+1]` to `arr[i]`, the loop index `i` must go up to `N-2` so that `i+1` is `N-1` (the last valid element)."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What is the shift direction during deletion?",
+                "options": [
+                    "A) Shift Right",
+                    "B) Shift Left",
+                    "C) Split",
+                    "D) Swapping"
+                ],
+                "correct": 1,
+                "explanation": "We shift elements to the left (lower indices) to fill the vacated slot."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "What is the time complexity of deleting the first element in an array of size N?",
+                "options": [
+                    "A) O(1)",
+                    "B) O(N)",
+                    "C) O(N^2)",
+                    "D) O(log N)"
+                ],
+                "correct": 1,
+                "explanation": "Deleting the first element (index 0) requires shifting all remaining N-1 elements, taking linear O(N) time."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "Which index can be deleted in O(1) time?",
+                "options": [
+                    "A) Index 0",
+                    "B) The last index (size - 1)",
+                    "C) The middle index",
+                    "D) None"
+                ],
+                "correct": 1,
+                "explanation": "Deleting the last element requires no shifting. We just decrement the size variable, taking O(1) time."
+            },
+            {
+                "id": 4,
+                "difficulty": "medium",
+                "question": "Why is a duplicate of the last element sometimes left behind after deleting?",
+                "options": [
+                    "A) C compiler copy bug",
+                    "B) The loop shifts values left, but doesn't erase the old last slot. Decrementing size hides it.",
+                    "C) Memory leak",
+                    "D) Array expansion"
+                ],
+                "correct": 1,
+                "explanation": "Left shifting overwrites index positions. The last cell is copied to the second-to-last cell, but its original value remains unless overwritten. Decrementing the size correctly ignores it."
+            },
+            {
+                "id": 5,
+                "difficulty": "hard",
+                "question": "What is the boundary for the deletion shift loop for array of size N?",
+                "options": [
+                    "A) i from pos to N-1",
+                    "B) i from pos to N-2",
+                    "C) i from N-1 down to pos",
+                    "D) i from N-2 down to pos"
+                ],
+                "correct": 1,
+                "explanation": "Since we copy `arr[i+1]` to `arr[i]`, the loop index `i` must go up to `N-2` so that `i+1` is `N-1` (the last valid element)."
+            }
         ],
         "logicHints": {
-                "approach": "Overwrite the deletion slot by shifting subsequent elements left.",
-                "keySteps": [
-                        "Start loop i from pos to size - 2",
-                        "Set arr[i] = arr[i+1]",
-                        "Decrement size"
-                ],
-                "pseudocode": "DECLARE arr[5] = [10, 20, 30, 40, 50]\npos = 2\nFOR i = pos TO 3:\n  arr[i] = arr[i+1]\nsize = 4"
+            "approach": "Overwrite the deletion slot by shifting subsequent elements left.",
+            "keySteps": [
+                "Input deletion position pos",
+                "For i from pos to N-2: arr[i] = arr[i+1]",
+                "N = N - 1",
+                "Display updated array"
+            ],
+            "pseudocode": "DECLARE arr[5] = [10, 20, 30, 40, 50]\npos = 2\nFOR i = pos TO 3:\n  arr[i] = arr[i+1]\nsize = 4"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int arr[5] = {10, 20, 30, 40, 50};\n    int size = 5;\n    int pos = 2;\n    \n    for (int i = pos; i < size - 1; i++) {\n        arr[i] = arr[i + 1];\n    }\n    size--;\n    \n    printf(\"After deletion:\\n\");\n    for (int i = 0; i < size; i++) {\n        printf(\"%d \", arr[i]);\n    }\n    printf(\"\\n\");\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "arrays-add-two": {
         "id": "arrays-add-two",
         "title": "Element-wise Array Addition",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "6 min",
+        "levelNum": 3,
+        "estimatedTime": "6 min",
         "concept": {
-                "summary": "Add corresponding elements of two source arrays.",
-                "whatIsIt": "Given two arrays A and B of the same size, we compute a third array C where each element C[i] is the sum of A[i] and B[i]. This is a simple linear vector operation.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Iterate index",
-                                "description": "Loop i from 0 to size-1."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Sum corresponding cells",
-                                "description": "Set C[i] = A[i] + B[i]."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Output result",
-                                "description": "Print or return array C."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Vector Addition",
-                                "definition": "Adding corresponding coordinates or components of two sequences."
-                        }
-                ],
-                "realWorldExample": "Adding two spreadsheets of monthly expenses (Jan + Feb) category by category.",
-                "timeComplexity": "O(n)",
-                "spaceComplexity": "O(n) for the output array",
-                "whenToUse": "To perform bulk component additions on parallel data.",
-                "commonMistakes": [
-                        "Adding indices together instead of elements, e.g. C[i] = A[i] + i",
-                        "Mixing loop indices and getting index out of bounds"
-                ],
-                "diagramType": null
+            "summary": "Add corresponding elements of two source arrays.",
+            "whatIsIt": "Element-wise addition combines two arrays of equal length by adding elements at matching indices: `C[i] = A[i] + B[i]`. It represents the 1-dimensional foundation of vector addition in graphics, physics, and machine learning.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Confirm dimensions",
+                    "description": "Ensure both input arrays `A` and `B` have identical length `n`."
+                },
+                {
+                    "step": 2,
+                    "title": "Allocate result array",
+                    "description": "Declare array `C` with capacity of at least `n` elements."
+                },
+                {
+                    "step": 3,
+                    "title": "Loop and sum",
+                    "description": "Iterate `i` from 0 to `n - 1`, computing `C[i] = A[i] + B[i]` on each step."
+                },
+                {
+                    "step": 4,
+                    "title": "Display resultant array",
+                    "description": "Print elements of `C` representing the combined vector."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Element-Wise Operation",
+                    "definition": "Applying a mathematical operator independently between corresponding index pairs of arrays."
+                },
+                {
+                    "term": "Vector Addition",
+                    "definition": "Summing matching coordinate components `(x1+x2, y1+y2, z1+z2)`."
+                },
+                {
+                    "term": "Resultant Array",
+                    "definition": "A separate destination array holding the computed sums."
+                },
+                {
+                    "term": "Parallel Traversal",
+                    "definition": "Advancing through multiple arrays using a single unified loop counter `i`."
+                }
+            ],
+            "realWorldExample": "Adding monthly salary and bonus arrays together to calculate the total pay slip for each employee.",
+            "timeComplexity": "O(n)",
+            "spaceComplexity": "O(n) for the output array",
+            "whenToUse": "To perform bulk component additions on parallel data.",
+            "commonMistakes": [
+                "Mismatched array sizes: accessing indices beyond the shorter array's allocated length.",
+                "Overwriting array `A` when original input data needs to be preserved.",
+                "Integer overflow when adding large values near `INT_MAX`.",
+                "Forgetting to allocate memory for result array `C` before writing to it."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What is the result of adding arrays A = {1, 2} and B = {10, 20}?",
-                        "options": [
-                                "A) {11, 22}",
-                                "B) {1, 2, 10, 20}",
-                                "C) {12, 21}",
-                                "D) {33}"
-                        ],
-                        "correct": 0,
-                        "explanation": "A[0]+B[0] = 1+10 = 11. A[1]+B[1] = 2+20 = 22. So {11, 22}."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "What is the time complexity of adding two arrays of size N?",
-                        "options": [
-                                "A) O(1)",
-                                "B) O(N)",
-                                "C) O(N^2)",
-                                "D) O(log N)"
-                        ],
-                        "correct": 1,
-                        "explanation": "We iterate N times, doing 1 addition per step. This takes O(N) time."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "Do C arrays support direct addition like `C = A + B;`?",
-                        "options": [
-                                "A) Yes, C natively supports array math",
-                                "B) No, you must iterate and add element-wise",
-                                "C) Yes, using <array.h> library",
-                                "D) Only double arrays support this"
-                        ],
-                        "correct": 1,
-                        "explanation": "C does not have built-in array algebra. You must write a loop to add corresponding elements."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "hard",
-                        "question": "If you perform C[i] = A[i] + B[i] and array C is smaller than N, what occurs?",
-                        "options": [
-                                "A) C auto-grows",
-                                "B) Buffer overflow / memory corruption",
-                                "C) Output is truncated automatically",
-                                "D) Compilation error"
-                        ],
-                        "correct": 1,
-                        "explanation": "Writing beyond array C's boundary will corrupt neighboring variables, causing unstable behavior."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "medium",
-                        "question": "Which loop adds arrays A and B of size 3?",
-                        "options": [
-                                "A) for(i=0; i<3; i++) C[i] = A[i] + B[i]",
-                                "B) for(i=1; i<=3; i++) C[i] = A[i] + B[i]",
-                                "C) for(i=0; i<3; i++) C = A + B",
-                                "D) for(i=0; i<=3; i++) C[i] = A[i] + B[i]"
-                        ],
-                        "correct": 0,
-                        "explanation": "Indices must go from 0 to 2, which matches option A."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What is the result of adding arrays A = {1, 2} and B = {10, 20}?",
+                "options": [
+                    "A) {11, 22}",
+                    "B) {1, 2, 10, 20}",
+                    "C) {12, 21}",
+                    "D) {33}"
+                ],
+                "correct": 0,
+                "explanation": "A[0]+B[0] = 1+10 = 11. A[1]+B[1] = 2+20 = 22. So {11, 22}."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "What is the time complexity of adding two arrays of size N?",
+                "options": [
+                    "A) O(1)",
+                    "B) O(N)",
+                    "C) O(N^2)",
+                    "D) O(log N)"
+                ],
+                "correct": 1,
+                "explanation": "We iterate N times, doing 1 addition per step. This takes O(N) time."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "Do C arrays support direct addition like `C = A + B;`?",
+                "options": [
+                    "A) Yes, C natively supports array math",
+                    "B) No, you must iterate and add element-wise",
+                    "C) Yes, using <array.h> library",
+                    "D) Only double arrays support this"
+                ],
+                "correct": 1,
+                "explanation": "C does not have built-in array algebra. You must write a loop to add corresponding elements."
+            },
+            {
+                "id": 4,
+                "difficulty": "hard",
+                "question": "If you perform C[i] = A[i] + B[i] and array C is smaller than N, what occurs?",
+                "options": [
+                    "A) C auto-grows",
+                    "B) Buffer overflow / memory corruption",
+                    "C) Output is truncated automatically",
+                    "D) Compilation error"
+                ],
+                "correct": 1,
+                "explanation": "Writing beyond array C's boundary will corrupt neighboring variables, causing unstable behavior."
+            },
+            {
+                "id": 5,
+                "difficulty": "medium",
+                "question": "Which loop adds arrays A and B of size 3?",
+                "options": [
+                    "A) for(i=0; i<3; i++) C[i] = A[i] + B[i]",
+                    "B) for(i=1; i<=3; i++) C[i] = A[i] + B[i]",
+                    "C) for(i=0; i<3; i++) C = A + B",
+                    "D) for(i=0; i<=3; i++) C[i] = A[i] + B[i]"
+                ],
+                "correct": 0,
+                "explanation": "Indices must go from 0 to 2, which matches option A."
+            }
         ],
         "logicHints": {
-                "approach": "Loop from 0 to size-1, add elements, and store in output.",
-                "keySteps": [
-                        "Loop i from 0 to 2",
-                        "Set C[i] = A[i] + B[i]"
-                ],
-                "pseudocode": "DECLARE A[3] = [1, 2, 3]\nDECLARE B[3] = [10, 20, 30]\nFOR i = 0 TO 2:\n  C[i] = A[i] + B[i]\nPRINT C"
+            "approach": "Loop from 0 to size-1, add elements, and store in output.",
+            "keySteps": [
+                "Read size N and elements of array A and B",
+                "Declare array C of size N",
+                "For i from 0 to N-1: C[i] = A[i] + B[i]",
+                "Print elements of array C"
+            ],
+            "pseudocode": "DECLARE A[3] = [1, 2, 3]\nDECLARE B[3] = [10, 20, 30]\nFOR i = 0 TO 2:\n  C[i] = A[i] + B[i]\nPRINT C"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int A[3] = {1, 2, 3};\n    int B[3] = {10, 20, 30};\n    int C[3];\n    \n    for (int i = 0; i < 3; i++) {\n        C[i] = A[i] + B[i];\n    }\n    printf(\"Result array: \");\n    for (int i = 0; i < 3; i++) {\n        printf(\"%d \", C[i]);\n    }\n    printf(\"\\n\");\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "arrays-subtract-two": {
         "id": "arrays-subtract-two",
         "title": "Element-wise Array Subtraction",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "6 min",
+        "levelNum": 3,
+        "estimatedTime": "6 min",
         "concept": {
-                "summary": "Subtract corresponding elements of one array from another.",
-                "whatIsIt": "Similar to addition, we compute `C[i] = A[i] - B[i]` for each index `i`. This represents subtraction of N-dimensional vectors.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Loop indices",
-                                "description": "Loop i from 0 to size-1."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Subtract values",
-                                "description": "Set C[i] = A[i] - B[i]."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Display result",
-                                "description": "Output the final difference array C."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Vector Subtraction",
-                                "definition": "Subtracting corresponding coordinates of two sequences."
-                        }
-                ],
-                "realWorldExample": "Calculating stock inventory changes by subtracting sold counts from initial counts category-wise.",
-                "timeComplexity": "O(n)",
-                "spaceComplexity": "O(n) for the output array",
-                "whenToUse": "To obtain differences between parallel datasets.",
-                "commonMistakes": [
-                        "Swapping the operand order: A[i] - B[i] is not equal to B[i] - A[i]",
-                        "Off-by-one boundary bugs"
-                ],
-                "diagramType": null
+            "summary": "Subtract corresponding elements of one array from another.",
+            "whatIsIt": "Element-wise subtraction computes the difference between corresponding items in two arrays: `C[i] = A[i] - B[i]`. Because subtraction is non-commutative (`A - B != B - A`), the operand order must be strictly preserved.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Verify array sizes",
+                    "description": "Confirm both input arrays `A` and `B` share matching element counts."
+                },
+                {
+                    "step": 2,
+                    "title": "Iterate across indices",
+                    "description": "Loop index `i` from 0 to `n - 1`."
+                },
+                {
+                    "step": 3,
+                    "title": "Compute difference",
+                    "description": "Calculate `C[i] = A[i] - B[i]` and store into the result array."
+                },
+                {
+                    "step": 4,
+                    "title": "Output results",
+                    "description": "Display the resulting array of difference values."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Non-Commutative Operation",
+                    "definition": "An operation where changing the order of operands alters the result (`A - B != B - A`)."
+                },
+                {
+                    "term": "Component-Wise Difference",
+                    "definition": "Subtracting corresponding scalar components between two vector sets."
+                },
+                {
+                    "term": "Signed Integer Output",
+                    "definition": "Differences can be negative; formatting must accommodate minus signs."
+                },
+                {
+                    "term": "Parallel Processing",
+                    "definition": "Operating on multiple sequences simultaneously within a single loop."
+                }
+            ],
+            "realWorldExample": "Subtracting monthly expenses from monthly revenues to compute net profit for each month of the year.",
+            "timeComplexity": "O(n)",
+            "spaceComplexity": "O(n) for the output array",
+            "whenToUse": "To obtain differences between parallel datasets.",
+            "commonMistakes": [
+                "Reversing the subtraction order `B[i] - A[i]`, inverting the signs of all answers.",
+                "Out-of-bounds loop boundary reading uninitialized memory past the array end.",
+                "Printing unsigned integers `%u` when differences are negative.",
+                "Forgetting to initialize loop counter `i = 0`."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What is the element-wise difference of A = {20, 30} and B = {5, 10} (A - B)?",
-                        "options": [
-                                "A) {15, 20}",
-                                "B) {-15, -20}",
-                                "C) {25, 40}",
-                                "D) {15, 15}"
-                        ],
-                        "correct": 0,
-                        "explanation": "20-5 = 15. 30-10 = 20. Thus {15, 20}."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "Is matrix or array subtraction commutative (i.e. is A - B == B - A)?",
-                        "options": [
-                                "A) Yes, subtraction is always commutative",
-                                "B) No, the signs are flipped",
-                                "C) Only for positive values",
-                                "D) Only if arrays are sorted"
-                        ],
-                        "correct": 1,
-                        "explanation": "No, subtraction is not commutative. A - B is the negative of B - A."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "What is the time complexity of subtracting N elements element-wise?",
-                        "options": [
-                                "A) O(1)",
-                                "B) O(N)",
-                                "C) O(N^2)",
-                                "D) O(log N)"
-                        ],
-                        "correct": 1,
-                        "explanation": "We perform N operations in a single loop, leading to linear O(N) complexity."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "medium",
-                        "question": "What is the primary danger when subtracting unsigned integer arrays?",
-                        "options": [
-                                "A) Underflow wrapping to huge positive numbers",
-                                "B) Compilation error",
-                                "C) Memory leak",
-                                "D) Divide by zero"
-                        ],
-                        "correct": 0,
-                        "explanation": "Unsigned values cannot hold negative numbers. If A[i] < B[i], the subtraction underflows and wraps around to a very large positive number."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "hard",
-                        "question": "How do you declare array C to hold the results of subtracting two 10-element int arrays?",
-                        "options": [
-                                "A) `int C;`",
-                                "B) `int C[10];`",
-                                "C) `int C[20];`",
-                                "D) `float C[10];`"
-                        ],
-                        "correct": 1,
-                        "explanation": "The output array C must have the same size (10 elements) and type (int) as the source arrays."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What is the element-wise difference of A = {20, 30} and B = {5, 10} (A - B)?",
+                "options": [
+                    "A) {15, 20}",
+                    "B) {-15, -20}",
+                    "C) {25, 40}",
+                    "D) {15, 15}"
+                ],
+                "correct": 0,
+                "explanation": "20-5 = 15. 30-10 = 20. Thus {15, 20}."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "Is matrix or array subtraction commutative (i.e. is A - B == B - A)?",
+                "options": [
+                    "A) Yes, subtraction is always commutative",
+                    "B) No, the signs are flipped",
+                    "C) Only for positive values",
+                    "D) Only if arrays are sorted"
+                ],
+                "correct": 1,
+                "explanation": "No, subtraction is not commutative. A - B is the negative of B - A."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "What is the time complexity of subtracting N elements element-wise?",
+                "options": [
+                    "A) O(1)",
+                    "B) O(N)",
+                    "C) O(N^2)",
+                    "D) O(log N)"
+                ],
+                "correct": 1,
+                "explanation": "We perform N operations in a single loop, leading to linear O(N) complexity."
+            },
+            {
+                "id": 4,
+                "difficulty": "medium",
+                "question": "What is the primary danger when subtracting unsigned integer arrays?",
+                "options": [
+                    "A) Underflow wrapping to huge positive numbers",
+                    "B) Compilation error",
+                    "C) Memory leak",
+                    "D) Divide by zero"
+                ],
+                "correct": 0,
+                "explanation": "Unsigned values cannot hold negative numbers. If A[i] < B[i], the subtraction underflows and wraps around to a very large positive number."
+            },
+            {
+                "id": 5,
+                "difficulty": "hard",
+                "question": "How do you declare array C to hold the results of subtracting two 10-element int arrays?",
+                "options": [
+                    "A) `int C;`",
+                    "B) `int C[10];`",
+                    "C) `int C[20];`",
+                    "D) `float C[10];`"
+                ],
+                "correct": 1,
+                "explanation": "The output array C must have the same size (10 elements) and type (int) as the source arrays."
+            }
         ],
         "logicHints": {
-                "approach": "Loop through indices and calculate A[i] - B[i].",
-                "keySteps": [
-                        "Loop i from 0 to 2",
-                        "Set C[i] = A[i] - B[i]"
-                ],
-                "pseudocode": "DECLARE A[3] = [20, 25, 30]\nDECLARE B[3] = [5, 10, 15]\nFOR i = 0 TO 2:\n  C[i] = A[i] - B[i]\nPRINT C"
+            "approach": "Loop through indices and calculate A[i] - B[i].",
+            "keySteps": [
+                "Read size N and elements of arrays A and B",
+                "For i from 0 to N-1: C[i] = A[i] - B[i]",
+                "Display array C"
+            ],
+            "pseudocode": "DECLARE A[3] = [20, 25, 30]\nDECLARE B[3] = [5, 10, 15]\nFOR i = 0 TO 2:\n  C[i] = A[i] - B[i]\nPRINT C"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int A[3] = {20, 25, 30};\n    int B[3] = {5, 10, 15};\n    int C[3];\n    \n    for (int i = 0; i < 3; i++) {\n        C[i] = A[i] - B[i];\n    }\n    printf(\"Result array: \");\n    for (int i = 0; i < 3; i++) {\n        printf(\"%d \", C[i]);\n    }\n    printf(\"\\n\");\n    return 0;\n}\n",
         "flowDiagramType": null
-},
-"arrays-2d-matrix": {
+    },
+    "arrays-2d-matrix": {
         "id": "arrays-2d-matrix",
         "title": "2D Arrays (Matrix)",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "12 min",
+        "levelNum": 3,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A 2D array is an array of arrays, representing a grid or matrix with rows and columns.",
-            "whatIsIt": "A 2D array stores elements in a grid structure. You access elements using two indices: row index and column index, e.g., `matrix[row][col]`. Internally, C stores 2D arrays in row-major order (row by row) in contiguous memory.",
+            "whatIsIt": "A 2D array is a matrix structured into rows and columns, stored in memory in row-major order. In C, `arr[i][j]` accesses the element at row `i` and column `j` using nested loops to process tabular data.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Declare matrix",
-                    "description": "dataType name[rows][cols]; e.g., int mat[3][4]; reserves 3 rows and 4 columns."
+                    "title": "Declare dimensions",
+                    "description": "Define dimensions with `int matrix[ROWS][COLS];` allocating `ROWS * COLS` contiguous cells."
                 },
                 {
                     "step": 2,
-                    "title": "Access elements",
-                    "description": "Use two indices: mat[1][2] is row index 1, col index 2 (the 2nd row, 3rd column)."
+                    "title": "Outer row loop",
+                    "description": "Outer loop iterates row index `i` from 0 to `ROWS - 1`."
                 },
                 {
                     "step": 3,
-                    "title": "Nested loops to print",
-                    "description": "Outer loop runs through rows, inner loop through columns."
+                    "title": "Inner column loop",
+                    "description": "Inner loop iterates column index `j` from 0 to `COLS - 1`."
+                },
+                {
+                    "step": 4,
+                    "title": "Row linebreak",
+                    "description": "Print `\\n` after each completed row to display the matrix in a clean 2D grid."
                 }
             ],
             "keyTerms": [
                 {
                     "term": "Row-Major Order",
-                    "definition": "Storing elements of a 2D array row by row sequentially in memory."
+                    "definition": "C stores 2D arrays row-by-row in linear contiguous RAM: `row 0` followed by `row 1`."
+                },
+                {
+                    "term": "Nested Iteration",
+                    "definition": "Using an outer loop for rows and an inner loop for columns."
+                },
+                {
+                    "term": "Matrix Coordinates",
+                    "definition": "Identifying elements via pair `(i, j)` where `i` is row index and `j` is column index."
+                },
+                {
+                    "term": "Base Offset Calculation",
+                    "definition": "Address formula `base + (i * COLS + j) * sizeof(type)` used by compiler."
                 }
             ],
-            "realWorldExample": "A chess board, spreadsheet cells (row numbers and column letters), or pixel grids in digital images.",
+            "realWorldExample": "A spreadsheet table or chessboard with 8 rows and 8 columns of squares.",
             "timeComplexity": "O(1) access",
             "spaceComplexity": "O(rows * cols)",
             "whenToUse": "When representing grids, tables, coordinates, or mathematical matrices.",
             "commonMistakes": [
-                "Swapping row and column indices, e.g., accessing mat[col][row] instead of mat[row][col]",
-                "Forgetting that indices start at 0 for both rows and columns"
+                "Swapping row and column indices `matrix[j][i]` causing out-of-bounds crashes on non-square matrices.",
+                "Omission of column dimension in function parameters (must write `void func(int mat[][COLS])`).",
+                "Missing `\\n` newline after completing each row, printing the entire 2D grid on a single horizontal line.",
+                "Confusing total array elements (`ROWS * COLS`) with individual loop boundary limits."
             ],
             "diagramType": null
         },
@@ -4932,539 +5644,650 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create nested loops to print a 2D array row by row, adding a newline after each row.",
             "keySteps": [
-                "Step 1: Write outer loop row `i` from 0 to `rows-1`",
-                "Step 2: Write inner loop col `j` from 0 to `cols-1`",
-                "Step 3: Print `mat[i][j]` followed by a space",
-                "Step 4: Print `\\n` after inner loop ends"
+                "Read row count R and col count C",
+                "For i from 0 to R-1:",
+                "  For j from 0 to C-1: read matrix[i][j]",
+                "For i from 0 to R-1:",
+                "  For j from 0 to C-1: print matrix[i][j]",
+                "  Print newline"
             ],
             "pseudocode": "FOR i = 0 TO rows - 1:\n  FOR j = 0 TO cols - 1:\n    PRINT mat[i][j]\n  PRINT newline"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int matrix[2][3] = {\n        {1, 2, 3},\n        {4, 5, 6}\n    };\n    \n    printf(\"Matrix elements:\\n\");\n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 3; j++) {\n            printf(\"%d \", matrix[i][j]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n",
         "flowDiagramType": null
     },
-        "matrix-addition": {
+    "matrix-addition": {
         "id": "matrix-addition",
         "title": "Matrix Addition",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "8 min",
+        "levelNum": 3,
+        "estimatedTime": "8 min",
         "concept": {
-                "summary": "Add corresponding elements of two 2D matrices of the same dimensions.",
-                "whatIsIt": "Adding matrices requires visiting each cell (row `i`, column `j`) and computing `C[i][j] = A[i][j] + B[i][j]`. This necessitates nested loops.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Outer loop rows",
-                                "description": "Loop row index i from 0 to rows - 1."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Inner loop cols",
-                                "description": "Loop col index j from 0 to cols - 1."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Add cells",
-                                "description": "Set C[i][j] = A[i][j] + B[i][j]."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Matrix",
-                                "definition": "A rectangular grid of numbers organized in rows and columns."
-                        }
-                ],
-                "realWorldExample": "Summing up sales grids of two store branches where rows represent items and columns represent days.",
-                "timeComplexity": "O(rows * cols)",
-                "spaceComplexity": "O(rows * cols)",
-                "whenToUse": "To add two dimensional grids element-wise.",
-                "commonMistakes": [
-                        "Confusing row indices and col indices, e.g. using A[i][i]",
-                        "Mismatching loop bounds"
-                ],
-                "diagramType": null
+            "summary": "Add corresponding elements of two 2D matrices of the same dimensions.",
+            "whatIsIt": "Matrix addition adds two matrices of identical row and column counts by summing corresponding elements: `C[i][j] = A[i][j] + B[i][j]`. It teaches nested-loop matrix manipulation and dimensional compatibility rules.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Validate dimensions",
+                    "description": "Verify both matrices have matching dimensions `m x n`."
+                },
+                {
+                    "step": 2,
+                    "title": "Row traversal",
+                    "description": "Outer loop runs `i` from 0 to `rows - 1`."
+                },
+                {
+                    "step": 3,
+                    "title": "Column traversal & sum",
+                    "description": "Inner loop runs `j` from 0 to `cols - 1`, assigning `C[i][j] = A[i][j] + B[i][j]`."
+                },
+                {
+                    "step": 4,
+                    "title": "Format matrix output",
+                    "description": "Display rows with clean tabular spacing and newlines."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Conformal Matrices",
+                    "definition": "Matrices having the exact same number of rows and columns, required for addition."
+                },
+                {
+                    "term": "Matrix Element Sum",
+                    "definition": "Adding scalar values at matching row and column coordinates."
+                },
+                {
+                    "term": "Double Nested Loop",
+                    "definition": "Two nested loops traversing `rows` and `cols`."
+                },
+                {
+                    "term": "Tabular Output Formatting",
+                    "definition": "Using `%4d` to ensure matrix columns line up evenly in console output."
+                }
+            ],
+            "realWorldExample": "Combining pixel brightness values of two video frames for image blending and transparency effects.",
+            "timeComplexity": "O(rows * cols)",
+            "spaceComplexity": "O(rows * cols)",
+            "whenToUse": "To add two dimensional grids element-wise.",
+            "commonMistakes": [
+                "Attempting to add matrices with differing row or column dimensions.",
+                "Inverting loop limits: running row loop to `cols` and column loop to `rows`.",
+                "Missing `\\n` after completing each row when printing the sum matrix.",
+                "Writing `C[i][j] = A[i] + B[j]` instead of `A[i][j] + B[i][j]`."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What is the requirement for two matrices to be added?",
-                        "options": [
-                                "A) They must be square matrices",
-                                "B) They must have the same row and column dimensions",
-                                "C) Columns of first must equal rows of second",
-                                "D) Any matrices can be added"
-                        ],
-                        "correct": 1,
-                        "explanation": "Matrix addition is element-wise, so the two matrices must have identical dimensions."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "How many additions are performed during addition of two 3x3 matrices?",
-                        "options": [
-                                "A) 3 additions",
-                                "B) 6 additions",
-                                "C) 9 additions",
-                                "D) 27 additions"
-                        ],
-                        "correct": 2,
-                        "explanation": "For a 3x3 matrix, there are 3 * 3 = 9 cells, so we perform exactly 9 additions."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "What is the correct way to declare a 2x2 integer matrix in C?",
-                        "options": [
-                                "A) `int mat[2, 2];`",
-                                "B) `int mat[2][2];`",
-                                "C) `matrix mat(2, 2);`",
-                                "D) `int mat[4];`"
-                        ],
-                        "correct": 1,
-                        "explanation": "C represents 2D arrays using brackets for each dimension: `int mat[rows][cols];`."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "medium",
-                        "question": "What is the time complexity of adding two matrices of size R x C?",
-                        "options": [
-                                "A) O(R)",
-                                "B) O(C)",
-                                "C) O(R * C)",
-                                "D) O(R^2)"
-                        ],
-                        "correct": 2,
-                        "explanation": "We visit R * C total locations using nested loops, which takes O(R * C) time."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "hard",
-                        "question": "What is the result cell C[0][1] if A = {{1, 2}, {3, 4}} and B = {{5, 6}, {7, 8}}?",
-                        "options": [
-                                "A) 6",
-                                "B) 8",
-                                "C) 10",
-                                "D) 12"
-                        ],
-                        "correct": 1,
-                        "explanation": "C[0][1] = A[0][1] + B[0][1] = 2 + 6 = 8."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What is the requirement for two matrices to be added?",
+                "options": [
+                    "A) They must be square matrices",
+                    "B) They must have the same row and column dimensions",
+                    "C) Columns of first must equal rows of second",
+                    "D) Any matrices can be added"
+                ],
+                "correct": 1,
+                "explanation": "Matrix addition is element-wise, so the two matrices must have identical dimensions."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "How many additions are performed during addition of two 3x3 matrices?",
+                "options": [
+                    "A) 3 additions",
+                    "B) 6 additions",
+                    "C) 9 additions",
+                    "D) 27 additions"
+                ],
+                "correct": 2,
+                "explanation": "For a 3x3 matrix, there are 3 * 3 = 9 cells, so we perform exactly 9 additions."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "What is the correct way to declare a 2x2 integer matrix in C?",
+                "options": [
+                    "A) `int mat[2, 2];`",
+                    "B) `int mat[2][2];`",
+                    "C) `matrix mat(2, 2);`",
+                    "D) `int mat[4];`"
+                ],
+                "correct": 1,
+                "explanation": "C represents 2D arrays using brackets for each dimension: `int mat[rows][cols];`."
+            },
+            {
+                "id": 4,
+                "difficulty": "medium",
+                "question": "What is the time complexity of adding two matrices of size R x C?",
+                "options": [
+                    "A) O(R)",
+                    "B) O(C)",
+                    "C) O(R * C)",
+                    "D) O(R^2)"
+                ],
+                "correct": 2,
+                "explanation": "We visit R * C total locations using nested loops, which takes O(R * C) time."
+            },
+            {
+                "id": 5,
+                "difficulty": "hard",
+                "question": "What is the result cell C[0][1] if A = {{1, 2}, {3, 4}} and B = {{5, 6}, {7, 8}}?",
+                "options": [
+                    "A) 6",
+                    "B) 8",
+                    "C) 10",
+                    "D) 12"
+                ],
+                "correct": 1,
+                "explanation": "C[0][1] = A[0][1] + B[0][1] = 2 + 6 = 8."
+            }
         ],
         "logicHints": {
-                "approach": "Use nested loops to iterate rows and columns, adding elements.",
-                "keySteps": [
-                        "Loop i from 0 to 1 (rows)",
-                        "Loop j from 0 to 1 (columns)",
-                        "Set C[i][j] = A[i][j] + B[i][j]"
-                ],
-                "pseudocode": "FOR i = 0 TO 1:\n  FOR j = 0 TO 1:\n    C[i][j] = A[i][j] + B[i][j]"
+            "approach": "Use nested loops to iterate rows and columns, adding elements.",
+            "keySteps": [
+                "Verify both matrices have dimensions R x C",
+                "For i from 0 to R-1:",
+                "  For j from 0 to C-1:",
+                "    C[i][j] = A[i][j] + B[i][j]",
+                "Display matrix C with row newlines"
+            ],
+            "pseudocode": "FOR i = 0 TO 1:\n  FOR j = 0 TO 1:\n    C[i][j] = A[i][j] + B[i][j]"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int A[2][2] = {{1, 2}, {3, 4}};\n    int B[2][2] = {{5, 6}, {7, 8}};\n    int C[2][2];\n    \n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 2; j++) {\n            C[i][j] = A[i][j] + B[i][j];\n        }\n    }\n    printf(\"Sum Matrix:\\n\");\n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 2; j++) {\n            printf(\"%d \", C[i][j]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "matrix-subtraction": {
         "id": "matrix-subtraction",
         "title": "Matrix Subtraction",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "8 min",
+        "levelNum": 3,
+        "estimatedTime": "8 min",
         "concept": {
-                "summary": "Subtract corresponding elements of two 2D matrices.",
-                "whatIsIt": "Element-wise matrix subtraction. The cell value at row `i`, col `j` of matrix B is subtracted from the corresponding cell of matrix A.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Outer loop rows",
-                                "description": "Loop row index i from 0 to rows - 1."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Inner loop cols",
-                                "description": "Loop col index j from 0 to cols - 1."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Subtract cells",
-                                "description": "Set C[i][j] = A[i][j] - B[i][j]."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Matrix Subtraction",
-                                "definition": "Calculating difference values cell by cell on parallel grid coordinates."
-                        }
-                ],
-                "realWorldExample": "Calculating changes in inventory layouts between two consecutive months.",
-                "timeComplexity": "O(rows * cols)",
-                "spaceComplexity": "O(rows * cols)",
-                "whenToUse": "To find differences in parallel matrices of identical sizes.",
-                "commonMistakes": [
-                        "Mismatched loops resulting in out of bounds indexing",
-                        "Subtracting B from A when A - B was expected"
-                ],
-                "diagramType": null
+            "summary": "Subtract corresponding elements of two 2D matrices.",
+            "whatIsIt": "Matrix subtraction subtracts the second matrix from the first matrix element by element: `C[i][j] = A[i][j] - B[i][j]`. Both matrices must have identical dimensions for the subtraction to be defined.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Dimension check",
+                    "description": "Ensure both matrices have identical row count `m` and column count `n`."
+                },
+                {
+                    "step": 2,
+                    "title": "Outer loop across rows",
+                    "description": "Iterate row counter `i` from 0 to `m - 1`."
+                },
+                {
+                    "step": 3,
+                    "title": "Inner loop across columns",
+                    "description": "Iterate column counter `j` from 0 to `n - 1`, computing `C[i][j] = A[i][j] - B[i][j]`."
+                },
+                {
+                    "step": 4,
+                    "title": "Print difference grid",
+                    "description": "Print each row of differences separated by tabs or spaces with a newline."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Component Difference",
+                    "definition": "Subtracting corresponding entries across equal-sized grids."
+                },
+                {
+                    "term": "Operand Order Sensitivity",
+                    "definition": "Matrix subtraction is non-commutative: `A - B != B - A`."
+                },
+                {
+                    "term": "Matrix Dimensions (m x n)",
+                    "definition": "The number of rows `m` and columns `n` defining matrix shape."
+                },
+                {
+                    "term": "Tabular Display",
+                    "definition": "Formatting negative and positive numbers in aligned columns."
+                }
+            ],
+            "realWorldExample": "Subtracting a background reference image from a live security camera frame to detect moving objects.",
+            "timeComplexity": "O(rows * cols)",
+            "spaceComplexity": "O(rows * cols)",
+            "whenToUse": "To find differences in parallel matrices of identical sizes.",
+            "commonMistakes": [
+                "Swapping matrices `B[i][j] - A[i][j]`, flipping the signs of all resulting elements.",
+                "Confusing row and column loop boundaries in nested loops.",
+                "Forgetting newline `\\n` between rows.",
+                "Using single loops for 2D matrix traversal without mapping linear indices."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What is the cell result C[1][0] if A = {{5, 6}, {7, 8}} and B = {{1, 2}, {3, 4}} (A - B)?",
-                        "options": [
-                                "A) 4",
-                                "B) 2",
-                                "C) 3",
-                                "D) 7"
-                        ],
-                        "correct": 0,
-                        "explanation": "C[1][0] = A[1][0] - B[1][0] = 7 - 3 = 4."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "What is the space complexity of matrix subtraction of size R x C?",
-                        "options": [
-                                "A) O(1) if in-place",
-                                "B) O(R * C) if writing to new matrix",
-                                "C) Both A and B are correct",
-                                "D) O(R + C)"
-                        ],
-                        "correct": 2,
-                        "explanation": "If the result is written in-place, the auxiliary space is O(1). If written to a new matrix, it is O(R * C)."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "Do dimensions need to match for matrix subtraction?",
-                        "options": [
-                                "A) No, columns are added with padding",
-                                "B) Yes, row and column counts must be exactly equal",
-                                "C) Only row counts need to match",
-                                "D) Only column counts need to match"
-                        ],
-                        "correct": 1,
-                        "explanation": "Subtraction is cell-by-cell, meaning dimensions must align exactly."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "hard",
-                        "question": "What occurs if you write nested loops for subtraction as `C[j][i] = A[j][i] - B[j][i]` where outer loop is `i` and inner is `j`?",
-                        "options": [
-                                "A) Compilation fails",
-                                "B) Reverses column-major access, slower cache hit rate, but correct results",
-                                "C) Results are transposed",
-                                "D) Division by zero"
-                        ],
-                        "correct": 1,
-                        "explanation": "It iterates correctly but access patterns are column-major, which violates caching locality in C's row-major memory format."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "medium",
-                        "question": "Which operator performs subtraction in C?",
-                        "options": [
-                                "A) `_`",
-                                "B) `-`",
-                                "C) `/`",
-                                "D) `%`"
-                        ],
-                        "correct": 1,
-                        "explanation": "The minus operator `-` is used for arithmetic subtraction in C."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What is the cell result C[1][0] if A = {{5, 6}, {7, 8}} and B = {{1, 2}, {3, 4}} (A - B)?",
+                "options": [
+                    "A) 4",
+                    "B) 2",
+                    "C) 3",
+                    "D) 7"
+                ],
+                "correct": 0,
+                "explanation": "C[1][0] = A[1][0] - B[1][0] = 7 - 3 = 4."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "What is the space complexity of matrix subtraction of size R x C?",
+                "options": [
+                    "A) O(1) if in-place",
+                    "B) O(R * C) if writing to new matrix",
+                    "C) Both A and B are correct",
+                    "D) O(R + C)"
+                ],
+                "correct": 2,
+                "explanation": "If the result is written in-place, the auxiliary space is O(1). If written to a new matrix, it is O(R * C)."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "Do dimensions need to match for matrix subtraction?",
+                "options": [
+                    "A) No, columns are added with padding",
+                    "B) Yes, row and column counts must be exactly equal",
+                    "C) Only row counts need to match",
+                    "D) Only column counts need to match"
+                ],
+                "correct": 1,
+                "explanation": "Subtraction is cell-by-cell, meaning dimensions must align exactly."
+            },
+            {
+                "id": 4,
+                "difficulty": "hard",
+                "question": "What occurs if you write nested loops for subtraction as `C[j][i] = A[j][i] - B[j][i]` where outer loop is `i` and inner is `j`?",
+                "options": [
+                    "A) Compilation fails",
+                    "B) Reverses column-major access, slower cache hit rate, but correct results",
+                    "C) Results are transposed",
+                    "D) Division by zero"
+                ],
+                "correct": 1,
+                "explanation": "It iterates correctly but access patterns are column-major, which violates caching locality in C's row-major memory format."
+            },
+            {
+                "id": 5,
+                "difficulty": "medium",
+                "question": "Which operator performs subtraction in C?",
+                "options": [
+                    "A) `_`",
+                    "B) `-`",
+                    "C) `/`",
+                    "D) `%`"
+                ],
+                "correct": 1,
+                "explanation": "The minus operator `-` is used for arithmetic subtraction in C."
+            }
         ],
         "logicHints": {
-                "approach": "Iterate cells using nested loops and subtract values.",
-                "keySteps": [
-                        "Loop i from 0 to 1",
-                        "Loop j from 0 to 1",
-                        "Set C[i][j] = A[i][j] - B[i][j]"
-                ],
-                "pseudocode": "FOR i = 0 TO 1:\n  FOR j = 0 TO 1:\n    C[i][j] = A[i][j] - B[i][j]"
+            "approach": "Iterate cells using nested loops and subtract values.",
+            "keySteps": [
+                "Input rows R, cols C and elements of A and B",
+                "For i from 0 to R-1:",
+                "  For j from 0 to C-1: C[i][j] = A[i][j] - B[i][j]",
+                "Print matrix C"
+            ],
+            "pseudocode": "FOR i = 0 TO 1:\n  FOR j = 0 TO 1:\n    C[i][j] = A[i][j] - B[i][j]"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int A[2][2] = {{5, 6}, {7, 8}};\n    int B[2][2] = {{1, 2}, {3, 4}};\n    int C[2][2];\n    \n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 2; j++) {\n            C[i][j] = A[i][j] - B[i][j];\n        }\n    }\n    printf(\"Difference Matrix:\\n\");\n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 2; j++) {\n            printf(\"%d \", C[i][j]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "matrix-multiplication": {
         "id": "matrix-multiplication",
         "title": "Matrix Multiplication",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "15 min",
+        "levelNum": 3,
+        "estimatedTime": "15 min",
         "concept": {
-                "summary": "Multiply two matrices using row-by-column dot products.",
-                "whatIsIt": "Multiplication is defined only if columns in Matrix A equal rows in Matrix B. If A is of size R1 x C1 and B is size C1 x C2, result matrix C has size R1 x C2. To calculate each cell C[i][j], accumulate the product of elements in row `i` of A and column `j` of B.",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Nested loops for cell coordinates",
-                                "description": "Outer loop i through rows of A, inner loop j through columns of B."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Initialize cell sum",
-                                "description": "Set C[i][j] = 0 before accumulating the dot product."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Third loop for product accumulation",
-                                "description": "Loop k through columns of A (or rows of B) and calculate C[i][j] += A[i][k] * B[k][j]."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Dot Product",
-                                "definition": "The sum of products of corresponding entries of two sequences of numbers."
-                        }
-                ],
-                "realWorldExample": "Calculating total revenues for multiple products: multiplying a product quantity grid by price tables.",
-                "timeComplexity": "O(R1 * C1 * C2)",
-                "spaceComplexity": "O(R1 * C2)",
-                "whenToUse": "To perform linear transformations, coordinate rotations, or systems equations solving.",
-                "commonMistakes": [
-                        "Forgetting to initialize C[i][j] to 0",
-                        "Multiplying matrices with incompatible dimensions"
-                ],
-                "diagramType": null
+            "summary": "Multiply two matrices using row-by-column dot products.",
+            "whatIsIt": "Matrix multiplication calculates the dot product of rows from the first matrix `A(m x k)` with columns from the second matrix `B(k x n)` to yield `C(m x n)`. The number of columns in `A` must strictly equal the number of rows in `B`.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Validate inner dimensions",
+                    "description": "Confirm `colsA == rowsB`; if not, matrix multiplication is mathematically impossible."
+                },
+                {
+                    "step": 2,
+                    "title": "Outer loops for row and column",
+                    "description": "Loop `i` from 0 to `rowsA - 1` and `j` from 0 to `colsB - 1`."
+                },
+                {
+                    "step": 3,
+                    "title": "Innermost dot-product loop",
+                    "description": "Initialize `sum = 0`, then loop `k` from 0 to `colsA - 1`: accumulate `sum += A[i][k] * B[k][j]`."
+                },
+                {
+                    "step": 4,
+                    "title": "Store and format output",
+                    "description": "Assign `C[i][j] = sum`, and display the resulting `m x n` matrix."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Dot Product",
+                    "definition": "Sum of element-wise products between a row vector and a column vector."
+                },
+                {
+                    "term": "Dimension Compatibility",
+                    "definition": "Multiplication requires `cols(A) == rows(B)`; resultant matrix has shape `rows(A) x cols(B)`."
+                },
+                {
+                    "term": "Triple Nested Loop",
+                    "definition": "Three nested loops (i, j, k) yielding standard O(n^3) matrix multiplication complexity."
+                },
+                {
+                    "term": "Accumulator Initialization",
+                    "definition": "Setting `sum = 0` before the innermost `k` loop for each `C[i][j]` cell."
+                }
+            ],
+            "realWorldExample": "3D computer graphics transformations: multiplying rotation, scale, and translation matrices to position 3D models.",
+            "timeComplexity": "O(R1 * C1 * C2)",
+            "spaceComplexity": "O(R1 * C2)",
+            "whenToUse": "To perform linear transformations, coordinate rotations, or systems equations solving.",
+            "commonMistakes": [
+                "Multiplying element-wise `A[i][j] * B[i][j]` instead of row-by-column dot products.",
+                "Forgetting to reset `sum = 0` inside the `j` loop before the `k` loop runs.",
+                "Using wrong loop boundary limits in the `k` loop (must run to `colsA` or `rowsB`).",
+                "Attempting multiplication when `colsA != rowsB` without validation."
+            ],
+            "diagramType": null
         },
         "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "What is the requirement to multiply Matrix A (size R1 x C1) and Matrix B (size R2 x C2)?",
-                        "options": [
-                                "A) R1 must equal R2",
-                                "B) C1 must equal R2",
-                                "C) C1 must equal C2",
-                                "D) R1 must equal C2"
-                        ],
-                        "correct": 1,
-                        "explanation": "The number of columns in the first matrix must equal the number of rows in the second matrix."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "What are the dimensions of the product of a 3x2 matrix and a 2x4 matrix?",
-                        "options": [
-                                "A) 3x4",
-                                "B) 2x2",
-                                "C) 3x2",
-                                "D) 2x4"
-                        ],
-                        "correct": 0,
-                        "explanation": "If A is R1 x C1 and B is R2 x C2 (with C1 == R2), the product has size R1 x C2 (3 x 4)."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "How many nested loops are required to multiply two matrices of size N x N?",
-                        "options": [
-                                "A) One",
-                                "B) Two",
-                                "C) Three",
-                                "D) Four"
-                        ],
-                        "correct": 2,
-                        "explanation": "We need two loops to iterate rows and columns of the output matrix, and a third loop to calculate the dot product sum."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "hard",
-                        "question": "What is the time complexity of multiplying two N x N matrices?",
-                        "options": [
-                                "A) O(N)",
-                                "B) O(N^2)",
-                                "C) O(N^3)",
-                                "D) O(2^N)"
-                        ],
-                        "correct": 2,
-                        "explanation": "Because we use three nested loops running N times, the complexity is cubic: O(N^3)."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "medium",
-                        "question": "What is the cell C[0][0] if A = {{1, 2}, {3, 4}} and B = {{5, 6}, {7, 8}}?",
-                        "options": [
-                                "A) 5",
-                                "B) 19",
-                                "C) 22",
-                                "D) 12"
-                        ],
-                        "correct": 1,
-                        "explanation": "C[0][0] = A[0][0]*B[0][0] + A[0][1]*B[1][0] = 1*5 + 2*7 = 5 + 14 = 19."
-                }
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "What is the requirement to multiply Matrix A (size R1 x C1) and Matrix B (size R2 x C2)?",
+                "options": [
+                    "A) R1 must equal R2",
+                    "B) C1 must equal R2",
+                    "C) C1 must equal C2",
+                    "D) R1 must equal C2"
+                ],
+                "correct": 1,
+                "explanation": "The number of columns in the first matrix must equal the number of rows in the second matrix."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "What are the dimensions of the product of a 3x2 matrix and a 2x4 matrix?",
+                "options": [
+                    "A) 3x4",
+                    "B) 2x2",
+                    "C) 3x2",
+                    "D) 2x4"
+                ],
+                "correct": 0,
+                "explanation": "If A is R1 x C1 and B is R2 x C2 (with C1 == R2), the product has size R1 x C2 (3 x 4)."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "How many nested loops are required to multiply two matrices of size N x N?",
+                "options": [
+                    "A) One",
+                    "B) Two",
+                    "C) Three",
+                    "D) Four"
+                ],
+                "correct": 2,
+                "explanation": "We need two loops to iterate rows and columns of the output matrix, and a third loop to calculate the dot product sum."
+            },
+            {
+                "id": 4,
+                "difficulty": "hard",
+                "question": "What is the time complexity of multiplying two N x N matrices?",
+                "options": [
+                    "A) O(N)",
+                    "B) O(N^2)",
+                    "C) O(N^3)",
+                    "D) O(2^N)"
+                ],
+                "correct": 2,
+                "explanation": "Because we use three nested loops running N times, the complexity is cubic: O(N^3)."
+            },
+            {
+                "id": 5,
+                "difficulty": "medium",
+                "question": "What is the cell C[0][0] if A = {{1, 2}, {3, 4}} and B = {{5, 6}, {7, 8}}?",
+                "options": [
+                    "A) 5",
+                    "B) 19",
+                    "C) 22",
+                    "D) 12"
+                ],
+                "correct": 1,
+                "explanation": "C[0][0] = A[0][0]*B[0][0] + A[0][1]*B[1][0] = 1*5 + 2*7 = 5 + 14 = 19."
+            }
         ],
         "logicHints": {
-                "approach": "Write a triple nested loop to accumulate products.",
-                "keySteps": [
-                        "Loop i from 0 to 1 (rows of A)",
-                        "Loop j from 0 to 1 (cols of B)",
-                        "Set C[i][j] = 0",
-                        "Loop k from 0 to 1 (cols of A): C[i][j] += A[i][k] * B[k][j]"
-                ],
-                "pseudocode": "FOR i = 0 TO 1:\n  FOR j = 0 TO 1:\n    C[i][j] = 0\n    FOR k = 0 TO 1:\n      C[i][j] = C[i][j] + A[i][k] * B[k][j]"
+            "approach": "Write a triple nested loop to accumulate products.",
+            "keySteps": [
+                "Check if colsA == rowsB; abort if false",
+                "For i from 0 to rowsA-1:",
+                "  For j from 0 to colsB-1:",
+                "    sum = 0",
+                "    For k from 0 to colsA-1: sum += A[i][k] * B[k][j]",
+                "    C[i][j] = sum",
+                "Display matrix C"
+            ],
+            "pseudocode": "FOR i = 0 TO 1:\n  FOR j = 0 TO 1:\n    C[i][j] = 0\n    FOR k = 0 TO 1:\n      C[i][j] = C[i][j] + A[i][k] * B[k][j]"
         },
         "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int A[2][2] = {{1, 2}, {3, 4}};\n    int B[2][2] = {{5, 6}, {7, 8}};\n    int C[2][2];\n    \n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 2; j++) {\n            C[i][j] = 0;\n            for (int k = 0; k < 2; k++) {\n                C[i][j] += A[i][k] * B[k][j];\n            }\n        }\n    }\n    printf(\"Product Matrix:\\n\");\n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 2; j++) {\n            printf(\"%d \", C[i][j]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n",
         "flowDiagramType": null
-},
+    },
     "matrix-transpose": {
         "id": "matrix-transpose",
         "title": "Matrix Transpose",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "8 min",
+        "levelNum": 3,
+        "estimatedTime": "8 min",
         "concept": {
-                "summary": "Flip a matrix over its diagonal, switching its row and column indices.",
-                "whatIsIt": "Transposing changes rows into columns. For a matrix of size R x C, the transpose matrix has dimensions C x R, and the element at index [i][j] moves to [j][i].",
-                "howItWorks": [
-                        {
-                                "step": 1,
-                                "title": "Nested loop rows",
-                                "description": "Loop row index i from 0 to rows - 1."
-                        },
-                        {
-                                "step": 2,
-                                "title": "Nested loop cols",
-                                "description": "Loop col index j from 0 to cols - 1."
-                        },
-                        {
-                                "step": 3,
-                                "title": "Copy swapped coordinates",
-                                "description": "Set transpose[j][i] = matrix[i][j]."
-                        }
-                ],
-                "keyTerms": [
-                        {
-                                "term": "Transpose",
-                                "definition": "Swapping row index and column index coordinates of all grid elements."
-                        }
-                ],
-                "realWorldExample": "Converting spreadsheet rows to columns (for example, switching dates from columns to rows).",
-                "timeComplexity": "O(rows * cols)",
-                "spaceComplexity": "O(rows * cols)",
-                "whenToUse": "In graphic rendering algorithms, coordinate mapping, or linear algebra equations.",
-                "commonMistakes": [
-                        "Using square dimensions limits in non-square matrices, leading to crashes",
-                        "Trying to transpose in-place on a non-square matrix without resizing memory"
-                ],
-                "diagramType": null
-        },
-        "quiz": [
-                {
-                        "id": 1,
-                        "difficulty": "easy",
-                        "question": "If matrix A has dimensions 3x5, what are the dimensions of its transpose?",
-                        "options": [
-                                "A) 3x5",
-                                "B) 5x3",
-                                "C) 3x3",
-                                "D) 5x5"
-                        ],
-                        "correct": 1,
-                        "explanation": "Transposing swaps rows and columns, turning a 3x5 matrix into a 5x3 matrix."
-                },
-                {
-                        "id": 2,
-                        "difficulty": "medium",
-                        "question": "If element A[1][3] has value 8, which index will hold this value in the transpose matrix?",
-                        "options": [
-                                "A) [1][3]",
-                                "B) [3][1]",
-                                "C) [0][3]",
-                                "D) [3][3]"
-                        ],
-                        "correct": 1,
-                        "explanation": "The element at [row][col] is placed at [col][row] in the transpose. So [1][3] goes to [3][1]."
-                },
-                {
-                        "id": 3,
-                        "difficulty": "easy",
-                        "question": "What is the transpose of a symmetric matrix?",
-                        "options": [
-                                "A) The negative of the matrix",
-                                "B) The exact same matrix",
-                                "C) An identity matrix",
-                                "D) A column vector"
-                        ],
-                        "correct": 1,
-                        "explanation": "A symmetric matrix is equal to its transpose by definition (A == A^T)."
-                },
-                {
-                        "id": 4,
-                        "difficulty": "hard",
-                        "question": "What is the time complexity of transposing a matrix of size R x C?",
-                        "options": [
-                                "A) O(1)",
-                                "B) O(R)",
-                                "C) O(R * C)",
-                                "D) O((R * C)^2)"
-                        ],
-                        "correct": 2,
-                        "explanation": "Every element of the grid must be copied to its transposed location, requiring linear time O(R * C)."
-                },
-                {
-                        "id": 5,
-                        "difficulty": "medium",
-                        "question": "To perform an in-place transpose of a square matrix, how do you adjust the column loop?",
-                        "options": [
-                                "A) j from 0 to rows-1",
-                                "B) j from i+1 to rows-1",
-                                "C) j from 0 to i",
-                                "D) j from rows-1 down to 0"
-                        ],
-                        "correct": 1,
-                        "explanation": "To transpose in-place, we swap elements on one side of the diagonal (j from i+1 to N-1). Swapping both sides swaps elements back to their original spots."
-                }
-        ],
-        "logicHints": {
-                "approach": "Iterate cells and map value at [i][j] to output [j][i].",
-                "keySteps": [
-                        "Loop i from 0 to 1 (rows)",
-                        "Loop j from 0 to 2 (columns)",
-                        "Set T[j][i] = A[i][j]"
-                ],
-                "pseudocode": "FOR i = 0 TO 1:\n  FOR j = 0 TO 2:\n    T[j][i] = A[i][j]"
-        },
-        "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int A[2][3] = {\n        {1, 2, 3},\n        {4, 5, 6}\n    };\n    int T[3][2];\n    \n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 3; j++) {\n            T[j][i] = A[i][j];\n        }\n    }\n    printf(\"Transposed Matrix:\\n\");\n    for (int i = 0; i < 3; i++) {\n        for (int j = 0; j < 2; j++) {\n            printf(\"%d \", T[i][j]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n",
-        "flowDiagramType": null
-},
-"strings-operations": {
-        "id": "strings-operations",
-        "title": "String Operations",
-        "category": "Modular & Memory",
-        "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "12 min",
-        "concept": {
-            "summary": "Strings in C are character arrays terminated by a null character (\\0). String operations use the standard string.h library.",
-            "whatIsIt": "Unlike languages with a native \"String\" class, C represents strings as char arrays. The compiler automatically adds a null character `\\0` to mark the end of the string. So the word \"C\" takes 2 bytes: 'C' and '\\0'.",
+            "summary": "Flip a matrix over its diagonal, switching its row and column indices.",
+            "whatIsIt": "Transposing a matrix flips it over its main diagonal, switching its row and column indices: `T[j][i] = A[i][j]`. An `m x n` matrix becomes an `n x m` transposed matrix.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Declare string",
-                    "description": "char str[] = \"Hello\"; — size is automatically 6 (5 letters + \\0)."
+                    "title": "Determine transposed size",
+                    "description": "If original matrix is `m x n`, transpose `T` has dimensions `n x m`."
                 },
                 {
                     "step": 2,
-                    "title": "String functions",
-                    "description": "strlen(str) gets length (excluding \\0). strcpy(dest, src) copies. strcat(dest, src) concatenates. strcmp(s1, s2) compares."
+                    "title": "Traverse original matrix",
+                    "description": "Loop `i` from 0 to `m - 1` and `j` from 0 to `n - 1`."
+                },
+                {
+                    "step": 3,
+                    "title": "Map inverted coordinates",
+                    "description": "Assign `T[j][i] = A[i][j]`."
+                },
+                {
+                    "step": 4,
+                    "title": "Print transposed matrix",
+                    "description": "Display `T` using `n` rows and `m` columns."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Null Character (\\0)",
-                    "definition": "ASCII value 0. Crucial because it marks the end of a string in memory."
+                    "term": "Main Diagonal",
+                    "definition": "The line of cells from top-left to bottom-right where row index equals column index `i == j`."
+                },
+                {
+                    "term": "Inverted Dimensions",
+                    "definition": "Rows become columns and columns become rows (`m x n` -> `n x m`)."
+                },
+                {
+                    "term": "Symmetric Matrix",
+                    "definition": "A square matrix equal to its own transpose (`A[i][j] == A[j][i]`)."
+                },
+                {
+                    "term": "Index Inversion",
+                    "definition": "Swapping subscript positions from `(i, j)` to `(j, i)`."
+                }
+            ],
+            "realWorldExample": "Rotating a spreadsheet table so horizontal rows of dates become vertical columns.",
+            "timeComplexity": "O(rows * cols)",
+            "spaceComplexity": "O(rows * cols)",
+            "whenToUse": "In graphic rendering algorithms, coordinate mapping, or linear algebra equations.",
+            "commonMistakes": [
+                "In-place transpose on non-square matrices causing memory corruption and out-of-bounds writes.",
+                "Swapping elements twice when doing in-place square transpose, returning back to the original matrix.",
+                "Printing transpose using original row/column dimensions instead of inverted bounds.",
+                "Allocating `m x n` for transpose when it requires `n x m` memory."
+            ],
+            "diagramType": null
+        },
+        "quiz": [
+            {
+                "id": 1,
+                "difficulty": "easy",
+                "question": "If matrix A has dimensions 3x5, what are the dimensions of its transpose?",
+                "options": [
+                    "A) 3x5",
+                    "B) 5x3",
+                    "C) 3x3",
+                    "D) 5x5"
+                ],
+                "correct": 1,
+                "explanation": "Transposing swaps rows and columns, turning a 3x5 matrix into a 5x3 matrix."
+            },
+            {
+                "id": 2,
+                "difficulty": "medium",
+                "question": "If element A[1][3] has value 8, which index will hold this value in the transpose matrix?",
+                "options": [
+                    "A) [1][3]",
+                    "B) [3][1]",
+                    "C) [0][3]",
+                    "D) [3][3]"
+                ],
+                "correct": 1,
+                "explanation": "The element at [row][col] is placed at [col][row] in the transpose. So [1][3] goes to [3][1]."
+            },
+            {
+                "id": 3,
+                "difficulty": "easy",
+                "question": "What is the transpose of a symmetric matrix?",
+                "options": [
+                    "A) The negative of the matrix",
+                    "B) The exact same matrix",
+                    "C) An identity matrix",
+                    "D) A column vector"
+                ],
+                "correct": 1,
+                "explanation": "A symmetric matrix is equal to its transpose by definition (A == A^T)."
+            },
+            {
+                "id": 4,
+                "difficulty": "hard",
+                "question": "What is the time complexity of transposing a matrix of size R x C?",
+                "options": [
+                    "A) O(1)",
+                    "B) O(R)",
+                    "C) O(R * C)",
+                    "D) O((R * C)^2)"
+                ],
+                "correct": 2,
+                "explanation": "Every element of the grid must be copied to its transposed location, requiring linear time O(R * C)."
+            },
+            {
+                "id": 5,
+                "difficulty": "medium",
+                "question": "To perform an in-place transpose of a square matrix, how do you adjust the column loop?",
+                "options": [
+                    "A) j from 0 to rows-1",
+                    "B) j from i+1 to rows-1",
+                    "C) j from 0 to i",
+                    "D) j from rows-1 down to 0"
+                ],
+                "correct": 1,
+                "explanation": "To transpose in-place, we swap elements on one side of the diagonal (j from i+1 to N-1). Swapping both sides swaps elements back to their original spots."
+            }
+        ],
+        "logicHints": {
+            "approach": "Iterate cells and map value at [i][j] to output [j][i].",
+            "keySteps": [
+                "Read matrix A with rows R and cols C",
+                "For i from 0 to R-1:",
+                "  For j from 0 to C-1:",
+                "    T[j][i] = A[i][j]",
+                "Print matrix T with C rows and R cols"
+            ],
+            "pseudocode": "FOR i = 0 TO 1:\n  FOR j = 0 TO 2:\n    T[j][i] = A[i][j]"
+        },
+        "referenceSolution": "#include <stdio.h>\n\nint main() {\n    int A[2][3] = {\n        {1, 2, 3},\n        {4, 5, 6}\n    };\n    int T[3][2];\n    \n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 3; j++) {\n            T[j][i] = A[i][j];\n        }\n    }\n    printf(\"Transposed Matrix:\\n\");\n    for (int i = 0; i < 3; i++) {\n        for (int j = 0; j < 2; j++) {\n            printf(\"%d \", T[i][j]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n",
+        "flowDiagramType": null
+    },
+    "strings-operations": {
+        "id": "strings-operations",
+        "title": "String Operations",
+        "category": "Modular & Memory",
+        "level": "intermediate",
+        "levelNum": 3,
+        "estimatedTime": "12 min",
+        "concept": {
+            "summary": "Strings in C are character arrays terminated by a null character (\\0). String operations use the standard string.h library.",
+            "whatIsIt": "In C, strings are null-terminated character arrays ending with the null byte `\\0`. Standard operations include computing length (`strlen`), copying (`strcpy`), concatenating (`strcat`), and lexicographical comparison (`strcmp`) from `<string.h>`.",
+            "howItWorks": [
+                {
+                    "step": 1,
+                    "title": "Allocate buffer with null room",
+                    "description": "Declare character array with size at least `length + 1` to accommodate `\\0`."
+                },
+                {
+                    "step": 2,
+                    "title": "Read string safely",
+                    "description": "Read using `fgets(str, sizeof(str), stdin)` to prevent buffer overflows."
+                },
+                {
+                    "step": 3,
+                    "title": "Perform string operation",
+                    "description": "Use `<string.h>` functions or manual loops terminating at `str[i] == '\\0'`."
+                },
+                {
+                    "step": 4,
+                    "title": "Ensure null termination",
+                    "description": "Always guarantee the destination string concludes with `\\0`."
+                }
+            ],
+            "keyTerms": [
+                {
+                    "term": "Null Terminator ('\\0')",
+                    "definition": "ASCII value 0 marking the end of a string in C; without it, functions read into garbage memory."
                 },
                 {
                     "term": "Buffer Overflow",
-                    "definition": "Writing more characters to a string than its allocated array size, corrupting memory."
+                    "definition": "Writing characters beyond allocated array capacity, causing crashes and security exploits."
+                },
+                {
+                    "term": "String Length vs Array Size",
+                    "definition": "Length is count of characters before `\\0`; size is total allocated bytes in memory."
+                },
+                {
+                    "term": "Lexicographical Comparison",
+                    "definition": "Comparing strings character-by-character based on ASCII values using `strcmp()`."
                 }
             ],
-            "realWorldExample": "A train. The cabins are characters, and the last cabin has a sign saying \"END OF TRAIN\" (\\0).",
+            "realWorldExample": "A train with a special caboose at the end: the caboose (`\\0`) tells everyone the train is finished.",
             "timeComplexity": "O(n) for length/copy",
             "spaceComplexity": "O(n)",
             "whenToUse": "Working with text, names, commands, and console outputs.",
             "commonMistakes": [
-                "Forgetting the null character when declaring character-by-character: char str[3] = {'a', 'b'}; (no \\0)",
-                "Using == to compare strings in C — strcmp(s1, s2) == 0 must be used instead"
+                "Using `==` to compare strings (`str1 == str2` compares memory addresses, not string contents; use `strcmp`).",
+                "Using dangerous `gets()`, which allows buffer overflow attacks; use `fgets()` instead.",
+                "Forgetting `+ 1` space for the null terminator when allocating string arrays.",
+                "Missing null terminator after manual character array manipulation, causing `printf(\"%s\")` to print garbage."
             ],
             "diagramType": null
         },
@@ -5538,9 +6361,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Demonstrate strlen, strcpy, and strcmp on sample strings.",
             "keySteps": [
-                "Step 1: Include <string.h>",
-                "Step 2: Compare two strings using strcmp",
-                "Step 3: Print their lengths using strlen"
+                "Declare char array with size N + 1",
+                "Read string using fgets",
+                "Demonstrate strlen, strcpy, strcat, or strcmp",
+                "Display results"
             ],
             "pseudocode": "INCLUDE string library\nDECLARE s1 = \"Apple\", s2 = \"Banana\"\nPRINT strlen(s1)\nIF strcmp(s1, s2) == 0: PRINT \"Equal\"\nELSE: PRINT \"Not equal\""
         },
@@ -5552,40 +6376,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Vowel Counting",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "10 min",
+        "levelNum": 3,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Iterate through a string character by character to count the number of vowels (a, e, i, o, u).",
-            "whatIsIt": "To find vowels in a string, you look at each character from the beginning. If the character matches a vowel (case-insensitively), you increment a counter. You stop when you hit the null character `\\0`.",
+            "whatIsIt": "Counting vowels in a string scans each character to detect 'a', 'e', 'i', 'o', 'u' (both lowercase and uppercase). It teaches character traversal, conditional filtering, and the use of `<ctype.h>` functions like `tolower()`.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Loop through string",
-                    "description": "Use while (str[i] != '\\0') or for loop up to strlen."
+                    "title": "Initialize vowel counter",
+                    "description": "Set `vowelCount = 0`."
                 },
                 {
                     "step": 2,
-                    "title": "Check character",
-                    "description": "Check if character is a, e, i, o, u or their uppercase versions."
+                    "title": "Iterate to null terminator",
+                    "description": "Loop index `i` through string while `str[i] != '\\0'`."
                 },
                 {
                     "step": 3,
-                    "title": "Increment",
-                    "description": "If yes, add 1 to a counter."
+                    "title": "Case-insensitive check",
+                    "description": "Convert `c = tolower(str[i])` and check if `c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u'`."
+                },
+                {
+                    "step": 4,
+                    "title": "Increment and display",
+                    "description": "Increment `vowelCount++` on match, and print total count when loop finishes."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Vowel",
-                    "definition": "The characters A, E, I, O, U (case-insensitive)."
+                    "term": "Character Traversal",
+                    "definition": "Visiting each character sequentially until reaching the null terminator `\\0`."
+                },
+                {
+                    "term": "Case Normalization",
+                    "definition": "Using `tolower()` or `toupper()` from `<ctype.h>` to simplify conditional checks."
+                },
+                {
+                    "term": "Vowel Set",
+                    "definition": "The letters A, E, I, O, U in the Latin alphabet."
+                },
+                {
+                    "term": "Compound Disjunction",
+                    "definition": "Using `||` (logical OR) to test against multiple character matches."
                 }
             ],
-            "realWorldExample": "A spelling checker or text analyzer scanning a document to extract letter distribution metrics.",
+            "realWorldExample": "A text readability analyzer or word game counting vowels to determine syllable counts.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Basic character manipulation exercises and text parsing applications.",
             "commonMistakes": [
-                "Checking only lowercase vowels and missing uppercase vowels",
-                "Not checking for the null terminator, leading to reading past string boundary"
+                "Checking only lowercase vowels and missing uppercase vowels like 'A' or 'E'.",
+                "Comparing characters using double quotes `\"a\"` (string pointer) instead of single quotes `'a'` (char literal).",
+                "Reading strings with `scanf(\"%s\")` which stops at the first space; use `fgets()` to read full sentences.",
+                "Looping beyond the null terminator into unallocated memory."
             ],
             "diagramType": null
         },
@@ -5659,10 +6503,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create a loop that visits each character. Test if it matches a, e, i, o, u (both lower and upper). Increment count.",
             "keySteps": [
-                "Step 1: Set count = 0, i = 0",
-                "Step 2: While str[i] != \\0, inspect str[i]",
-                "Step 3: If str[i] matches any vowel, count++",
-                "Step 4: Increment i, repeat"
+                "Read string input using fgets",
+                "Set count = 0",
+                "For each character until '\\0':",
+                "  Convert to lowercase using tolower()",
+                "  If char is 'a','e','i','o','u': count++",
+                "Print count"
             ],
             "pseudocode": "SET count = 0, i = 0\nWHILE str[i] != '\\0':\n  IF str[i] is vowel: count++\n  i++\nPRINT count"
         },
@@ -5674,48 +6520,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Pointer Basics",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "12 min",
+        "levelNum": 3,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "Pointers are variables that store the memory address of another variable.",
-            "whatIsIt": "Every variable is stored in a specific box in your computer's memory, and every box has a number (address). A pointer is a variable that stores that box's address, rather than the value inside. It allows you to read/edit variables indirectly.",
+            "whatIsIt": "A pointer is a variable that stores the direct memory address of another variable. Pointers are C's most powerful feature, enabling dynamic memory allocation (`malloc`), pass-by-reference function mutation, and efficient linked data structures.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Declare pointer",
-                    "description": "int *ptr; — the asterisk * says ptr is a pointer to an int."
+                    "title": "Declare pointer variable",
+                    "description": "Write `type *ptr;` where asterisk denotes that `ptr` stores a memory address of that type."
                 },
                 {
                     "step": 2,
-                    "title": "Get address",
-                    "description": "ptr = &x; — the ampersand & returns the address of x."
+                    "title": "Address-of operator (&)",
+                    "description": "Assign a variable's address using `ptr = &var;`."
                 },
                 {
                     "step": 3,
-                    "title": "Dereference",
-                    "description": "*ptr retrieves or edits the value at ptr's address."
+                    "title": "Dereference operator (*)",
+                    "description": "Access or modify the value at that address using `*ptr` (e.g., `*ptr = 50;` changes `var`)."
+                },
+                {
+                    "step": 4,
+                    "title": "Pass-by-reference",
+                    "description": "Pass `&var` to functions to allow the function to directly alter the caller's variable."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Pointer",
-                    "definition": "A variable holding a memory address."
+                    "term": "Memory Address (&)",
+                    "definition": "The hexadecimal byte location in RAM where a variable is stored."
                 },
                 {
-                    "term": "& (Address-of)",
-                    "definition": "Operator that returns the memory address of a variable."
+                    "term": "Dereference Operator (*)",
+                    "definition": "Follows a pointer to read or write the actual value stored at the referenced memory address."
                 },
                 {
-                    "term": "* (Dereference)",
-                    "definition": "Operator that accesses the value stored at the address pointed to."
+                    "term": "Null Pointer (NULL)",
+                    "definition": "A pointer assigned to address 0, signifying it points to nothing valid."
+                },
+                {
+                    "term": "Wild / Dangling Pointer",
+                    "definition": "An uninitialized pointer or pointer referencing deallocated memory, causing segmentation faults."
                 }
             ],
-            "realWorldExample": "A URL link (pointer) pointing to a web page (variable value). The link itself is just text (an address), but clicking it (dereferencing) takes you to the actual web page content.",
+            "realWorldExample": "A house address written on a piece of paper: the paper isn't the house, but it tells you exactly where the house is located.",
             "timeComplexity": "O(1)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Dynamic memory allocation, passing arguments by reference (to modify them in functions), building nodes for data structures.",
             "commonMistakes": [
-                "Dereferencing an uninitialized pointer (wild pointer), causing crashes (segmentation fault)",
-                "Confusing *ptr (value at address) with ptr (the address itself)"
+                "Dereferencing uninitialized pointers (`int *p; *p = 10;`) causing instant segmentation faults.",
+                "Confusing `*` in declarations (`int *p`) with `*` in dereferencing expressions (`*p = 5`).",
+                "Assigning variable value instead of address (`p = var` instead of `p = &var`).",
+                "Returning a pointer to a local stack variable from a function, which becomes invalid upon return."
             ],
             "diagramType": null
         },
@@ -5789,10 +6647,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Declare an int, get its address using &, store in pointer, modify using *ptr, print value.",
             "keySteps": [
-                "Step 1: Declare `int x = 5` and pointer `int *p = &x`",
-                "Step 2: Print address `p` and value `*p`",
-                "Step 3: Modify `*p = 10`",
-                "Step 4: Check if `x` changed to 10"
+                "Declare int var = 10 and int *ptr",
+                "Assign ptr = &var",
+                "Print var value and ptr address",
+                "Modify *ptr = 20 and show var updated",
+                "Demonstrate pointer arithmetic"
             ],
             "pseudocode": "DECLARE x = 5\nDECLARE p = address of x\nPRINT address p and value *p\nSET *p = 10\nPRINT x (should be 10)"
         },
@@ -5804,34 +6663,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Factorial (Iterative)",
         "category": "Modular & Memory",
         "level": "intermediate",
-        "levelNum": 3,"estimatedTime": "5 min",
+        "levelNum": 3,
+        "estimatedTime": "5 min",
         "concept": {
             "summary": "Compute the factorial of a number using a loop.",
-            "whatIsIt": "n! = 1 * 2 * 3 * ... * n. For example, 4! = 1 * 2 * 3 * 4 = 24.",
+            "whatIsIt": "Iterative factorial computes `n! = 1 * 2 * 3 * ... * n` using an explicit loop and accumulator variable. It runs in O(n) time and O(1) space, avoiding the call-stack memory overhead and stack-overflow risks of recursion.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Initialize fact = 1",
-                    "description": "Must start at 1, not 0."
+                    "title": "Handle base cases",
+                    "description": "If `n == 0` or `n == 1`, return 1 immediately by mathematical definition."
                 },
                 {
                     "step": 2,
+                    "title": "Initialize accumulator",
+                    "description": "Declare `long long fact = 1;` (must start at 1, not 0)."
+                },
+                {
+                    "step": 3,
                     "title": "Loop and multiply",
-                    "description": "Loop i from 1 to n, multiply fact by i."
+                    "description": "Iterate `i` from 2 up to `n`, multiplying `fact *= i` on each pass."
+                },
+                {
+                    "step": 4,
+                    "title": "Return computed product",
+                    "description": "Print or return `fact`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Iterative Factorial",
-                    "definition": "Multiplying sequential integers using a loop."
+                    "term": "Factorial (n!)",
+                    "definition": "The product of all positive integers less than or equal to n, with 0! defined as 1."
+                },
+                {
+                    "term": "Iterative Loop",
+                    "definition": "Repeating calculations using explicit loop constructs (`for`, `while`) with O(1) auxiliary space."
+                },
+                {
+                    "term": "Integer Overflow",
+                    "definition": "Factorials grow extremely rapidly; 13! overflows 32-bit `int`, requiring `long long`."
+                },
+                {
+                    "term": "Base Case (0! = 1)",
+                    "definition": "The mathematical identity where the empty product equals 1."
                 }
             ],
-            "realWorldExample": "Calculating the number of ways to arrange objects in a line.",
+            "realWorldExample": "Calculating the number of ways to arrange books on a shelf: 5 books have 5! = 120 possible arrangements.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "General factorial calculations (more efficient than recursion).",
             "commonMistakes": [
-                "Initializing factorial variable to 0 (multiplication by 0 always results in 0)."
+                "Initializing `fact = 0`, which makes every subsequent multiplication zero.",
+                "Using standard 32-bit `int` which overflows at `n = 13` (use `long long` or `unsigned long long`).",
+                "Negative number inputs: factorial of negative numbers is undefined in basic arithmetic.",
+                "Off-by-one loop limit `i < n` instead of `i <= n` missing the final factor."
             ],
             "diagramType": null
         },
@@ -5905,8 +6790,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Start fact = 1. Loop i from 1 to n, set fact = fact * i.",
             "keySteps": [
-                "fact = 1",
-                "FOR i = 1 to n: fact = fact * i"
+                "Read integer n",
+                "If n < 0, print error (undefined for negative)",
+                "Set fact = 1",
+                "For i from 1 to n: fact *= i",
+                "Print fact"
             ],
             "pseudocode": "fact = 1\nFOR i = 1 TO n:\n  fact = fact * i\nRETURN fact"
         },
@@ -5918,34 +6806,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Recursion (Fibonacci)",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "12 min",
+        "levelNum": 4,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "Compute Fibonacci numbers recursively. F(n) = F(n-1) + F(n-2) with base cases F(0)=0 and F(1)=1.",
-            "whatIsIt": "The Fibonacci sequence is 0, 1, 1, 2, 3, 5, 8, 13... where each number is the sum of the previous two. A recursive function calculates this by calling itself twice.",
+            "whatIsIt": "Recursive Fibonacci computes the n-th Fibonacci number where `F(n) = F(n-1) + F(n-2)`. Each recursive call splits into two child subproblems, forming a binary recursion tree that illustrates divide-and-conquer logic and call stack mechanics.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Base cases",
-                    "description": "If n is 0 return 0. If n is 1 return 1."
+                    "title": "Define base conditions",
+                    "description": "If `n <= 0` return 0; if `n == 1` return 1, stopping infinite recursion."
                 },
                 {
                     "step": 2,
-                    "title": "Recursive step",
-                    "description": "Return fib(n-1) + fib(n-2)."
+                    "title": "Divide into subproblems",
+                    "description": "In the recursive step, invoke `fib(n - 1)` and `fib(n - 2)`."
+                },
+                {
+                    "step": 3,
+                    "title": "Push stack frames",
+                    "description": "The CPU pushes separate activation records on the call stack for each branch."
+                },
+                {
+                    "step": 4,
+                    "title": "Unwind and combine",
+                    "description": "Once base cases return, the stack unwinds, adding the two sub-results together."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Fibonacci Sequence",
-                    "definition": "A sequence where F(n) = F(n-1) + F(n-2)."
+                    "term": "Base Case",
+                    "definition": "The condition under which a recursive function returns directly without making further recursive calls."
+                },
+                {
+                    "term": "Recursive Tree",
+                    "definition": "A branching visualization of recursive sub-calls demonstrating tree-like expansion."
+                },
+                {
+                    "term": "Overlapping Subproblems",
+                    "definition": "Naive recursion computes identical values (like `fib(3)`) repeatedly, causing O(2^n) exponential blowup."
+                },
+                {
+                    "term": "Call Stack Overflow",
+                    "definition": "Exhausting system stack memory when recursive depth exceeds stack limits."
                 }
             ],
-            "realWorldExample": "Branching patterns in plants, petals on flowers, and spiral shells follow Fibonacci numbers.",
+            "realWorldExample": "Branching tree limbs: a parent branch splits into two smaller branches, each of which splits again.",
             "timeComplexity": "O(2^n)",
             "spaceComplexity": "O(n)",
             "whenToUse": "Excellent for teaching double recursion, though iterative or dynamic programming approaches are much faster for large values.",
             "commonMistakes": [
-                "Calculating high values of n, which causes the program to hang due to exponential O(2^n) time complexity"
+                "Missing or incomplete base case causing infinite recursion and segmentation fault (stack overflow).",
+                "Calling with large values of n (e.g. n > 40): naive recursion takes minutes/hours due to O(2^n) complexity.",
+                "Negative argument inputs causing infinite downward recursion.",
+                "Forgetting to return the result of the recursive calls (`return fib(n-1) + fib(n-2);`)."
             ],
             "diagramType": null
         },
@@ -6019,9 +6933,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create a recursive function with base cases for n=0 and n=1, returning their respective values. Else return the sum of recursive calls for n-1 and n-2.",
             "keySteps": [
-                "Step 1: Check n == 0 -> return 0",
-                "Step 2: Check n == 1 -> return 1",
-                "Step 3: Else return fib(n-1) + fib(n-2)"
+                "Define function fib(n)",
+                "If n <= 0, return 0; if n == 1, return 1",
+                "Return fib(n-1) + fib(n-2)",
+                "In main(), read n and print fib(n)"
             ],
             "pseudocode": "FUNCTION fib(n):\n  IF n == 0: RETURN 0\n  IF n == 1: RETURN 1\n  RETURN fib(n-1) + fib(n-2)"
         },
@@ -6033,34 +6948,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Factorial (Recursive)",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "8 min",
+        "levelNum": 4,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Compute the factorial of a number recursively.",
-            "whatIsIt": "A recursive definition: fact(n) = n * fact(n-1) with base case fact(0) = 1.",
+            "whatIsIt": "Recursive factorial calculates `n!` using the recurrence relation `n! = n * (n - 1)!` with base condition `0! = 1`. Each function invocation suspends its execution on the system call stack until the subproblem is fully evaluated.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Base case",
-                    "description": "if n == 0 return 1"
+                    "title": "Check base case",
+                    "description": "If `n <= 1`, return 1 immediately without further recursive calls."
                 },
                 {
                     "step": 2,
                     "title": "Recursive call",
-                    "description": "return n * fact(n-1)"
+                    "description": "Invoke `factorial(n - 1)` to evaluate the subproblem of size `n - 1`."
+                },
+                {
+                    "step": 3,
+                    "title": "Stack frame accumulation",
+                    "description": "Each paused call frame retains its local `n` value on the call stack."
+                },
+                {
+                    "step": 4,
+                    "title": "Unwind and multiply",
+                    "description": "As base returns, multiply `n * subresult` and return to the previous caller."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Base Case",
-                    "definition": "Stopping condition."
+                    "term": "Recursive Invariant",
+                    "definition": "Reducing the problem instance toward the base condition with every recursive step."
+                },
+                {
+                    "term": "Activation Record / Frame",
+                    "definition": "A block of stack memory storing local parameters and the return instruction address."
+                },
+                {
+                    "term": "Stack Unwinding",
+                    "definition": "The phase when base cases resolve and pending operations execute in reverse call order."
+                },
+                {
+                    "term": "Linear Recursion",
+                    "definition": "A recursive pattern where each function invocation makes at most one recursive call."
                 }
             ],
-            "realWorldExample": "Permutations calculations.",
+            "realWorldExample": "Russian Matryoshka nesting dolls: opening doll n reveals doll n-1 until you reach the solid baby doll at the core.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(n)",
             "whenToUse": "To demonstrate stack-based recursion.",
             "commonMistakes": [
-                "Missing base case, causing stack overflow."
+                "Omitting base case `n <= 1`, causing infinite downward recursion into negative numbers.",
+                "Integer overflow: `long long` overflows around `n = 20`, while standard `int` overflows at `n = 13`.",
+                "Passing `n` instead of `n - 1` to recursive call, freezing execution in an infinite loop.",
+                "Negative number inputs causing stack overflow unless guarded by an initial validation check."
             ],
             "diagramType": null
         },
@@ -6134,8 +7075,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create a recursive function. If n is 0, return 1. Otherwise, return n * factorial(n-1).",
             "keySteps": [
-                "if n == 0 -> return 1",
-                "else return n * factorial(n-1)"
+                "Define function factorial(n)",
+                "If n <= 1, return 1",
+                "Return n * factorial(n - 1)",
+                "In main(), read n, validate non-negative, and display result"
             ],
             "pseudocode": "FUNCTION fact(n):\n  IF n == 0: RETURN 1\n  RETURN n * fact(n - 1)"
         },
@@ -6147,34 +7090,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Towers of Hanoi",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "15 min",
+        "levelNum": 4,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "A classic mathematical puzzle solved recursively. Move n disks from source peg to destination peg using an auxiliary peg.",
-            "whatIsIt": "Move disks one by one. A larger disk can never lie on top of a smaller disk. Move n-1 disks to aux peg, move the nth disk to destination, then move n-1 disks from aux to destination.",
+            "whatIsIt": "Towers of Hanoi is a classic mathematical puzzle where n disks must be transferred from a source peg to a destination peg using an auxiliary peg. Only one disk can move at a time, and a larger disk can never be placed atop a smaller disk.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Base case",
-                    "description": "If n == 1, move disk directly."
+                    "title": "Base case (n = 1)",
+                    "description": "If `n == 1`, move disk 1 directly from source to destination peg."
                 },
                 {
                     "step": 2,
-                    "title": "Recursive calls",
-                    "description": "Hanoi(n-1, source, aux, dest); move remaining disk; Hanoi(n-1, aux, dest, source);"
+                    "title": "Move n - 1 disks to auxiliary",
+                    "description": "Recursively move `n - 1` disks from source to auxiliary peg using destination as helper."
+                },
+                {
+                    "step": 3,
+                    "title": "Move n-th disk",
+                    "description": "Directly move the largest n-th disk from source to destination peg."
+                },
+                {
+                    "step": 4,
+                    "title": "Move n - 1 disks to destination",
+                    "description": "Recursively move `n - 1` disks from auxiliary to destination peg using source as helper."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Hanoi Pegs",
-                    "definition": "Source, Auxiliary, and Destination poles."
+                    "term": "Auxiliary Peg",
+                    "definition": "The intermediate holding peg used temporarily during disk transfers."
+                },
+                {
+                    "term": "Divide and Conquer",
+                    "definition": "Breaking an n-disk problem into two smaller (n-1)-disk problems and one single-disk move."
+                },
+                {
+                    "term": "Optimal Move Count (2^n - 1)",
+                    "definition": "The exact minimum number of individual moves required to solve an n-disk puzzle."
+                },
+                {
+                    "term": "Peg Role Rotation",
+                    "definition": "Alternating source, auxiliary, and destination parameters between recursive call levels."
                 }
             ],
-            "realWorldExample": "Recursion explanation standard, CPU stack execution models.",
+            "realWorldExample": "Backing cars out of a narrow one-lane driveway using a temporary side garage to let the innermost car leave.",
             "timeComplexity": "O(2^n)",
             "spaceComplexity": "O(n)",
             "whenToUse": "Excellent for showing recursive call trees and divide-and-conquer strategy.",
             "commonMistakes": [
-                "Wrong peg parameter ordering in recursive calls."
+                "Swapping peg parameters in recursive calls, causing disks to be moved to the wrong pegs.",
+                "Missing the base condition `if (n == 0) return;` or `if (n == 1) ...`.",
+                "Placing a larger disk on a smaller disk by violating the recursive decomposition rules.",
+                "Trying to solve iteratively with loops, which is far more complex than the 3-line recursive solution."
             ],
             "diagramType": null
         },
@@ -6248,10 +7217,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Write recursive function with source, destination, aux peg parameters.",
             "keySteps": [
-                "If n == 1, print move source -> destination",
-                "Call hanoi(n-1, source, aux, dest)",
-                "Print move source -> destination",
-                "Call hanoi(n-1, aux, dest, source)"
+                "Define hanoi(n, source, destination, auxiliary)",
+                "If n == 0, return",
+                "hanoi(n-1, source, auxiliary, destination)",
+                "Print move: source -> destination",
+                "hanoi(n-1, auxiliary, destination, source)"
             ],
             "pseudocode": "FUNCTION hanoi(n, source, dest, aux):\n  IF n == 1: PRINT move source to dest\n  ELSE:\n    hanoi(n-1, source, aux, dest)\n    PRINT move source to dest\n    hanoi(n-1, aux, dest, source)"
         },
@@ -6263,29 +7233,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Linear Search",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "8 min",
+        "levelNum": 4,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Scan all elements sequentially to find the target.",
-            "whatIsIt": "Simplest searching method checking index by index.",
+            "whatIsIt": "Linear search sequentially checks each element of an array from start to finish until the target key is found or the end of the array is reached. It requires no sorting, works on any data collection, and runs in O(n) time and O(1) space.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Sequential search",
-                    "description": "if arr[i] == target return i."
+                    "title": "Start at index 0",
+                    "description": "Set loop counter `i = 0` to begin at the array's first position."
+                },
+                {
+                    "step": 2,
+                    "title": "Compare with target key",
+                    "description": "Check if `arr[i] == key` on each iteration."
+                },
+                {
+                    "step": 3,
+                    "title": "Early termination on match",
+                    "description": "If match is found, return the current index `i` immediately without checking further."
+                },
+                {
+                    "step": 4,
+                    "title": "Return sentinel on failure",
+                    "description": "If the loop finishes without finding the key, return `-1` to indicate not found."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Linear Search",
-                    "definition": "Sequential lookup."
+                    "term": "Sequential Scan",
+                    "definition": "Visiting elements one by one in chronological order from beginning to end."
+                },
+                {
+                    "term": "Target Key",
+                    "definition": "The specific search value being queried within the dataset."
+                },
+                {
+                    "term": "Sentinel Value (-1)",
+                    "definition": "A conventional return value indicating that the search key was absent from the array."
+                },
+                {
+                    "term": "Worst-Case Complexity O(n)",
+                    "definition": "When the key is in the last slot or not present at all, requiring n comparisons."
                 }
             ],
-            "realWorldExample": "Searching for a name on a page.",
+            "realWorldExample": "Looking for a specific book on an unsorted shelf by reading titles one-by-one from left to right.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Unsorted arrays.",
             "commonMistakes": [
-                "Exiting loop early."
+                "Returning `-1` inside the loop body on the first mismatch instead of after the loop completes.",
+                "Running loop condition `i <= n` causing an out-of-bounds read past the array end.",
+                "Assuming the array must be sorted (linear search works on both unsorted and sorted data).",
+                "Not handling duplicate keys when only the first or all occurrences are required."
             ],
             "diagramType": null
         },
@@ -6359,8 +7360,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Loop and compare.",
             "keySteps": [
-                "Loop index",
-                "Check target"
+                "Input array and search key",
+                "For i from 0 to N-1:",
+                "  If arr[i] == key: return i",
+                "If loop completes without match: return -1"
             ],
             "pseudocode": "FOR i = 0 TO n-1: IF arr[i] == target: RETURN i"
         },
@@ -6372,29 +7375,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Binary Search",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "10 min",
+        "levelNum": 4,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Search a sorted array by repeatedly dividing the search space in half.",
-            "whatIsIt": "Quick logarithmic lookup on sorted elements.",
+            "whatIsIt": "Binary search finds a target key in a sorted array by repeatedly dividing the search space in half. Comparing the target with the middle element eliminates 50% of the remaining search space in each step, achieving O(log n) efficiency.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Check mid",
-                    "description": "Compare mid to target, adjust bounds."
+                    "title": "Set search boundaries",
+                    "description": "Initialize `low = 0` and `high = n - 1` marking the active search window."
+                },
+                {
+                    "step": 2,
+                    "title": "Compute middle index",
+                    "description": "Calculate `mid = low + (high - low) / 2` to safely avoid integer overflow."
+                },
+                {
+                    "step": 3,
+                    "title": "Compare target with middle",
+                    "description": "If `arr[mid] == key`, return `mid`. If `key < arr[mid]`, search left `high = mid - 1`. If `key > arr[mid]`, search right `low = mid + 1`."
+                },
+                {
+                    "step": 4,
+                    "title": "Loop until exhausted",
+                    "description": "Repeat while `low <= high`; if `low > high`, key is not present, return `-1`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Binary Search",
-                    "definition": "Divide and conquer search."
+                    "term": "Search Space Halving",
+                    "definition": "Discarding half of the remaining items with each comparison, yielding O(log n) time."
+                },
+                {
+                    "term": "Sorted Precondition",
+                    "definition": "Binary search strictly requires data to be sorted in advance; it fails on unsorted arrays."
+                },
+                {
+                    "term": "Midpoint Calculation Overflow",
+                    "definition": "Using `(low + high) / 2` can overflow `INT_MAX`; `low + (high - low) / 2` is safe."
+                },
+                {
+                    "term": "Logarithmic Time O(log n)",
+                    "definition": "Searching 1,000,000 elements requires at most 20 comparisons (2^20 > 1,000,000)."
                 }
             ],
-            "realWorldExample": "Looking up telephone number directory.",
+            "realWorldExample": "Opening a printed dictionary to the middle: if you see 'M' and need 'T', you ignore the entire front half.",
             "timeComplexity": "O(log n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Sorted arrays.",
             "commonMistakes": [
-                "Using on unsorted array."
+                "Running binary search on an unsorted array, producing unpredictable, incorrect results.",
+                "Integer overflow bug: `(low + high) / 2` overflows when `low + high > 2,147,483,647`.",
+                "Loop boundary bug: using `mid` instead of `mid - 1` or `mid + 1`, causing infinite loops when key is missing.",
+                "Using `low < high` instead of `low <= high`, missing targets located at boundary elements."
             ],
             "diagramType": null
         },
@@ -6468,8 +7502,14 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Adjust low/high indexes.",
             "keySteps": [
-                "Find mid",
-                "Adjust low/high"
+                "Sort array if not already sorted",
+                "Initialize low = 0, high = N - 1",
+                "While low <= high:",
+                "  mid = low + (high - low) / 2",
+                "  If arr[mid] == key: return mid",
+                "  Else if key < arr[mid]: high = mid - 1",
+                "  Else: low = mid + 1",
+                "Return -1"
             ],
             "pseudocode": "WHILE low <= high: mid = low + (high-low)/2"
         },
@@ -6481,24 +7521,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Bubble Sort",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "12 min",
+        "levelNum": 4,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "Sorts an array by repeatedly swapping adjacent elements if they are in the wrong order.",
-            "whatIsIt": "Bubble sort steps through the array. It compares adjacent items and swaps them. The largest elements bubble up to the end of the array first.",
+            "whatIsIt": "Bubble sort repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order. With each complete pass, the largest unsorted element 'bubbles up' to its correct final position at the end of the array.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Nested Loops",
-                    "description": "Loop through array n times. Compare arr[j] and arr[j+1] and swap if arr[j] > arr[j+1]."
+                    "title": "Outer pass loop",
+                    "description": "Run outer loop `i` from 0 to `n - 2` across `n - 1` passes."
+                },
+                {
+                    "step": 2,
+                    "title": "Inner adjacent comparisons",
+                    "description": "Run inner loop `j` from 0 to `n - i - 2`, comparing `arr[j]` with `arr[j + 1]`."
+                },
+                {
+                    "step": 3,
+                    "title": "Swap on inversion",
+                    "description": "If `arr[j] > arr[j + 1]`, swap them using a temporary variable."
+                },
+                {
+                    "step": 4,
+                    "title": "Optimized early exit",
+                    "description": "Track swaps with a boolean flag; if no swaps occurred during a pass, array is sorted, break early."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Bubble Sort",
-                    "definition": "Comparison-based sorting algorithm."
+                    "term": "Adjacent Swapping",
+                    "definition": "Comparing and exchanging consecutive pairs `(arr[j], arr[j+1])` throughout the array."
+                },
+                {
+                    "term": "Stable Sort",
+                    "definition": "Preserves the relative original order of elements that have equal comparison keys."
+                },
+                {
+                    "term": "Adaptive Optimization",
+                    "definition": "Using a `swapped` flag to achieve O(n) best-case runtime on already-sorted arrays."
+                },
+                {
+                    "term": "In-Place Sorting",
+                    "definition": "Rearranges elements within the original array using O(1) auxiliary memory."
                 }
             ],
-            "realWorldExample": "Sorting cards by comparing adjacent cards and placing the larger one on the right.",
+            "realWorldExample": "Bubbles rising in a carbonated soda: larger bubbles rise quickly to the surface, followed by smaller ones.",
             "timeComplexity": {
                 "best": "O(n)",
                 "average": "O(n²)",
@@ -6507,7 +7575,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "Small datasets or when teaching sorting concepts.",
             "commonMistakes": [
-                "Running loops unnecessarily when array is already sorted (can optimize with a swap flag)."
+                "Inner loop limit `j < n - 1` without `- i`, redundantly re-comparing already sorted elements at the tail.",
+                "Forgetting the `swapped` optimization flag, forcing O(n^2) runtime even on already sorted arrays.",
+                "Comparing with out-of-bounds index `arr[j+1]` when inner loop runs up to `n - 1`.",
+                "Inverting comparison operator `<` causing unintentional descending sort order."
             ],
             "diagramType": null
         },
@@ -6581,8 +7652,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Compare adjacent elements and swap them if they are in the incorrect order.",
             "keySteps": [
-                "Outer loop for passes",
-                "Inner loop for adjacent comparisons"
+                "For i from 0 to N-2:",
+                "  swapped = 0",
+                "  For j from 0 to N-i-2:",
+                "    If arr[j] > arr[j+1]: swap(arr[j], arr[j+1]); swapped = 1",
+                "  If swapped == 0: break",
+                "Array is sorted"
             ],
             "pseudocode": "FOR i = 0 TO n-1:\n  swapped = False\n  FOR j = 0 TO n-i-2:\n    IF arr[j] > arr[j+1]: swap(arr[j], arr[j+1]), swapped = True\n  IF NOT swapped: BREAK"
         },
@@ -6594,29 +7669,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Selection Sort",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "12 min",
+        "levelNum": 4,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "Find the minimum element from the unsorted part and swap it with the first unsorted element.",
-            "whatIsIt": "Select the smallest element from the unsorted subarray and swap it with the element at the beginning of the unsorted subarray.",
+            "whatIsIt": "Selection sort divides the array into a sorted prefix and an unsorted suffix. In each pass, it finds the smallest element in the unsorted suffix and swaps it with the first unsorted element, growing the sorted prefix by one.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Find min and swap",
-                    "description": "Find min index in range [i, n-1] and swap with position i."
+                    "title": "Track unsorted boundary",
+                    "description": "Outer loop index `i` runs from 0 to `n - 2`, marking the start of the unsorted portion."
+                },
+                {
+                    "step": 2,
+                    "title": "Find minimum element",
+                    "description": "Assume `min_idx = i`, then scan `j` from `i + 1` to `n - 1` to find the smallest value."
+                },
+                {
+                    "step": 3,
+                    "title": "Single swap per pass",
+                    "description": "If `min_idx != i`, swap `arr[i]` with `arr[min_idx]`."
+                },
+                {
+                    "step": 4,
+                    "title": "Repeat until sorted",
+                    "description": "Each pass places exactly one element in its final sorted position with minimal memory writes (at most n swaps)."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Selection Sort",
-                    "definition": "In-place comparison sort."
+                    "term": "Minimum Selection",
+                    "definition": "Scanning the unsorted subarray to locate the minimum value."
+                },
+                {
+                    "term": "Minimal Memory Writes (O(n))",
+                    "definition": "Makes at most n swaps, ideal when writing to EEPROM or flash memory is expensive."
+                },
+                {
+                    "term": "Unstable Sort",
+                    "definition": "Long-range swaps can alter the relative order of duplicate elements."
+                },
+                {
+                    "term": "Quadratic Comparisons (O(n^2))",
+                    "definition": "Always performs n*(n-1)/2 comparisons regardless of initial array ordering."
                 }
             ],
-            "realWorldExample": "Selecting the smallest book on a shelf, putting it at the start, then selecting the next smallest.",
+            "realWorldExample": "Selecting the shortest student in a group to stand first in line, then selecting the next shortest, and repeating.",
             "timeComplexity": "O(n²)",
             "spaceComplexity": "O(1)",
             "whenToUse": "When reducing the number of write operations (swaps) is critical.",
             "commonMistakes": [
-                "Swapping elements inside the inner loop rather than at the end of the pass."
+                "Swapping immediately inside the inner loop whenever a smaller value is found, degenerating into bubble sort.",
+                "Inner loop starting at 0 instead of `i + 1`, re-checking already sorted items.",
+                "Outer loop running to `n` instead of `n - 1`, doing an unnecessary pass for a 1-element subarray.",
+                "Assuming selection sort is adaptive (it always takes O(n^2) comparisons even if sorted)."
             ],
             "diagramType": null
         },
@@ -6690,8 +7796,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Find the smallest item in the unsorted portion and swap it to its sorted place.",
             "keySteps": [
-                "Find min index",
-                "Swap min index with outer index"
+                "For i from 0 to N-2:",
+                "  min_idx = i",
+                "  For j from i+1 to N-1:",
+                "    If arr[j] < arr[min_idx]: min_idx = j",
+                "  If min_idx != i: swap(arr[i], arr[min_idx])",
+                "Display sorted array"
             ],
             "pseudocode": "FOR i = 0 TO n-2:\n  min_idx = i\n  FOR j = i+1 TO n-1:\n    IF arr[j] < arr[min_idx]: min_idx = j\n  swap(arr[i], arr[min_idx])"
         },
@@ -6703,24 +7813,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Insertion Sort",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "12 min",
+        "levelNum": 4,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "Build the sorted array one element at a time by inserting each element into its sorted place.",
-            "whatIsIt": "Insert the current key in the sorted portion to the left by shifting larger items to the right.",
+            "whatIsIt": "Insertion sort builds the final sorted array one item at a time by picking the next element and shifting larger preceding elements rightward to insert it into its correct relative position. It mirrors how people naturally sort playing cards in hand.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Shift and insert",
-                    "description": "Store current element in key, shift left elements > key, and insert key."
+                    "title": "Assume first element sorted",
+                    "description": "Start loop at index `i = 1`, treating `arr[0]` as a trivial 1-element sorted subarray."
+                },
+                {
+                    "step": 2,
+                    "title": "Extract key element",
+                    "description": "Store `key = arr[i]` into a temporary variable to vacate slot `i`."
+                },
+                {
+                    "step": 3,
+                    "title": "Shift larger elements right",
+                    "description": "Scan backwards `j = i - 1`; while `j >= 0` and `arr[j] > key`, shift `arr[j + 1] = arr[j]`."
+                },
+                {
+                    "step": 4,
+                    "title": "Insert key into slot",
+                    "description": "Place `key` into the cleared position `arr[j + 1] = key`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Insertion Sort",
-                    "definition": "Adaptive, stable sorting algorithm."
+                    "term": "Online Algorithm",
+                    "definition": "Can sort data incrementally as it receives new elements in real time without having entire dataset upfront."
+                },
+                {
+                    "term": "Rightward Shifting",
+                    "definition": "Moving sorted elements one position right to create space for the key element."
+                },
+                {
+                    "term": "Adaptive O(n) Best Case",
+                    "definition": "Runs in linear O(n) time with zero shifts if the input array is already sorted."
+                },
+                {
+                    "term": "Stable In-Place Sort",
+                    "definition": "Maintains relative order of equal keys without allocating auxiliary array buffers."
                 }
             ],
-            "realWorldExample": "Inserting a new folder alphabetically into an existing stack of folders.",
+            "realWorldExample": "Sorting a hand of playing cards: as each card is dealt, you slide it between the cards where it belongs.",
             "timeComplexity": {
                 "best": "O(n)",
                 "average": "O(n²)",
@@ -6729,7 +7867,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(1)",
             "whenToUse": "Small arrays or mostly sorted inputs.",
             "commonMistakes": [
-                "Incorrect bounds check in shifting loop."
+                "Using swaps instead of shifts, performing 3x more memory write operations than necessary.",
+                "Not decrementing `j--` inside the while loop, triggering an infinite loop.",
+                "Overwriting `arr[j+1]` before saving `key = arr[i]` in temporary storage.",
+                "Loop condition index underflow: missing `j >= 0` check leading to negative index access `arr[-1]`."
             ],
             "diagramType": null
         },
@@ -6803,8 +7944,13 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Insert the key into the sorted array to its left by shifting larger elements one index to the right.",
             "keySteps": [
-                "Store key",
-                "Shift left-hand elements"
+                "For i from 1 to N-1:",
+                "  key = arr[i]",
+                "  j = i - 1",
+                "  While j >= 0 and arr[j] > key:",
+                "    arr[j + 1] = arr[j]",
+                "    j = j - 1",
+                "  arr[j + 1] = key"
             ],
             "pseudocode": "FOR i = 1 TO n-1:\n  key = arr[i]\n  j = i-1\n  WHILE j >= 0 AND arr[j] > key:\n    arr[j+1] = arr[j]\n    j = j-1\n  arr[j+1] = key"
         },
@@ -6816,39 +7962,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Merge Sort",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "15 min",
+        "levelNum": 4,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "A divide-and-conquer algorithm that recursively splits the array in half, sorts each half, and merges them.",
-            "whatIsIt": "Splits the array into left and right halves, recursively sorts them, then merges the sorted halves using a helper array.",
+            "whatIsIt": "Merge sort is a divide-and-conquer algorithm that recursively splits an array into two equal halves until single-element subarrays remain, then merges the sorted halves back together in order. It guarantees O(n log n) runtime in all cases.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Split",
-                    "description": "Find mid index: mid = (low + high) / 2."
+                    "title": "Divide step",
+                    "description": "Compute midpoint `mid = left + (right - left) / 2` to split array into two equal halves."
                 },
                 {
                     "step": 2,
-                    "title": "Recursively Sort",
-                    "description": "Call mergeSort on left half and right half."
+                    "title": "Conquer recursively",
+                    "description": "Call `mergeSort(arr, left, mid)` and `mergeSort(arr, mid + 1, right)`."
                 },
                 {
                     "step": 3,
-                    "title": "Merge",
-                    "description": "Merge the two sorted subarrays back together in sorted order."
+                    "title": "Merge two sorted halves",
+                    "description": "Use two pointers `i` and `j` to compare elements from left and right halves, placing smaller into temp array."
+                },
+                {
+                    "step": 4,
+                    "title": "Copy back to original",
+                    "description": "Copy merged elements from temporary array back into `arr[left...right]`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Merge Sort",
-                    "definition": "Stable, divide-and-conquer sorting algorithm."
+                    "term": "Divide and Conquer",
+                    "definition": "Breaking a problem into smaller identical subproblems, solving recursively, and combining solutions."
+                },
+                {
+                    "term": "Guaranteed O(n log n)",
+                    "definition": "Performs O(n log n) comparisons in best, average, and worst cases with no degenerate inputs."
+                },
+                {
+                    "term": "Auxiliary Memory O(n)",
+                    "definition": "Requires temporary buffer memory of size n to merge subarrays."
+                },
+                {
+                    "term": "Stable Sorting",
+                    "definition": "Never swaps non-adjacent elements across equal keys, preserving original input order."
                 }
             ],
-            "realWorldExample": "Two workers sorting smaller stacks of documents separately, then merging their results into a single sorted pile.",
+            "realWorldExample": "Sorting two pre-sorted stacks of exam papers into a single alphabetical pile by comparing top papers.",
             "timeComplexity": "O(n log n)",
             "spaceComplexity": "O(n) auxiliary space",
             "whenToUse": "When stable sorting is required on large datasets.",
             "commonMistakes": [
-                "Forgetting to allocate auxiliary memory or failing to free it, causing memory leaks."
+                "Failing to copy remaining elements from either the left or right subarray after the main merge loop finishes.",
+                "Memory leak: dynamically allocating temp buffers inside merge without freeing them.",
+                "Base case omission: missing `if (left >= right) return;` causing infinite recursive stack overflow.",
+                "Midpoint overflow: using `(left + right) / 2` instead of `left + (right - left) / 2`."
             ],
             "diagramType": null
         },
@@ -6922,9 +8089,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Divide array into halves, sort recursively, and merge them.",
             "keySteps": [
-                "Find mid",
-                "Recurse left/right",
-                "Merge sorted arrays"
+                "mergeSort(arr, left, right):",
+                "  If left < right:",
+                "    mid = left + (right - left) / 2",
+                "    mergeSort(arr, left, mid)",
+                "    mergeSort(arr, mid + 1, right)",
+                "    merge(arr, left, mid, right)"
             ],
             "pseudocode": "mergeSort(arr, l, r):\n  IF l < r:\n    mid = l + (r-l)/2\n    mergeSort(arr, l, mid)\n    mergeSort(arr, mid+1, r)\n    merge(arr, l, mid, r)"
         },
@@ -6936,38 +8106,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Quick Sort",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "18 min",
+        "levelNum": 4,
+        "estimatedTime": "18 min",
         "concept": {
             "summary": "Pick an element as pivot, partition the array around the pivot, and recursively sort the partitions.",
-            "whatIsIt": "In-place sorting algorithm that partitions arrays: elements smaller than pivot are moved before it, and larger elements after it.",
+            "whatIsIt": "Quick sort is a high-speed divide-and-conquer algorithm that selects a pivot element and partitions the array so all elements smaller than pivot go left and larger go right. It then sorts partitions recursively with low memory overhead.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Pick Pivot",
-                    "description": "Usually the last element."
+                    "title": "Choose pivot",
+                    "description": "Select pivot element (e.g., last element `arr[high]`, first, or random)."
                 },
                 {
                     "step": 2,
-                    "title": "Partition",
-                    "description": "Rearrange array so smaller elements go left, larger go right."
+                    "title": "Partition array",
+                    "description": "Scan array and swap elements so all values `<= pivot` are placed left of a boundary pointer `i`."
                 },
                 {
                     "step": 3,
-                    "title": "Recurse",
-                    "description": "Sort sub-arrays left and right of pivot."
+                    "title": "Place pivot in position",
+                    "description": "Swap pivot into its final sorted position at `i + 1`, returning partition index `pi`."
+                },
+                {
+                    "step": 4,
+                    "title": "Recurse on partitions",
+                    "description": "Recursively call `quickSort(arr, low, pi - 1)` and `quickSort(arr, pi + 1, high)`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Pivot",
-                    "definition": "The target element used to split arrays."
+                    "term": "Pivot Element",
+                    "definition": "The reference value used to partition array into smaller and larger subarrays."
                 },
                 {
-                    "term": "Partitioning",
-                    "definition": "Rearranging elements relative to pivot."
+                    "term": "Lomuto Partitioning",
+                    "definition": "Standard partitioning scheme using two pointers moving in the same direction."
+                },
+                {
+                    "term": "In-Place Partition",
+                    "definition": "Rearranges elements with O(1) auxiliary space and O(log n) call stack space."
+                },
+                {
+                    "term": "Worst-Case O(n^2)",
+                    "definition": "Degrades to quadratic time when pivot consistently produces unbalanced partitions (e.g. sorted input with last element pivot)."
                 }
             ],
-            "realWorldExample": "Organizing files by placing all folders starting with letters A-M on the left shelf and N-Z on the right shelf.",
+            "realWorldExample": "Organizing students by height: pick student X as reference; everyone shorter moves left, everyone taller moves right.",
             "timeComplexity": {
                 "best": "O(n log n)",
                 "average": "O(n log n)",
@@ -6976,7 +8160,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(log n) recursion stack",
             "whenToUse": "General purpose sorting (has excellent cache locality).",
             "commonMistakes": [
-                "Choosing a bad pivot (e.g. sorted array with last element pivot leads to worst-case O(n²))."
+                "Including the pivot index `pi` in recursive calls (`quickSort(arr, low, pi)`), creating infinite recursion.",
+                "Choosing poor pivots on sorted inputs causing worst-case O(n^2) degradation.",
+                "Partition pointer off-by-one errors when elements match the pivot value.",
+                "Unstable sorting: quicksort can swap non-adjacent identical keys across the pivot."
             ],
             "diagramType": null
         },
@@ -7050,8 +8237,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Select pivot, partition around it, call quicksort recursively on sub-arrays.",
             "keySteps": [
-                "Partition: swap elements based on comparison to pivot",
-                "Recurse on left/right partitions"
+                "quickSort(arr, low, high):",
+                "  If low < high:",
+                "    pi = partition(arr, low, high)",
+                "    quickSort(arr, low, pi - 1)",
+                "    quickSort(arr, pi + 1, high)"
             ],
             "pseudocode": "quickSort(arr, low, high):\n  IF low < high:\n    p = partition(arr, low, high)\n    quickSort(arr, low, p-1)\n    quickSort(arr, p+1, high)"
         },
@@ -7063,34 +8253,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Shell Sort",
         "category": "Algorithms & Recursion",
         "level": "intermediate",
-        "levelNum": 4,"estimatedTime": "12 min",
+        "levelNum": 4,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "An extension of insertion sort that compares elements separated by a gap that decreases over time.",
-            "whatIsIt": "Allows swapping of far-apart elements to resolve large inversions quickly, refining the array using smaller gap sizes.",
+            "whatIsIt": "Shell sort is an optimization of insertion sort that allows exchanges of elements separated by diminishing gap intervals. By comparing widely spaced items first, elements move long distances rapidly, making the final gap=1 insertion pass blisteringly fast.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Gap sequence",
-                    "description": "Initialize gap size (usually n/2). Perform gapped insertion sorts."
+                    "title": "Initialize gap sequence",
+                    "description": "Start with a large gap interval `gap = n / 2` (or Knuth sequence)."
                 },
                 {
                     "step": 2,
-                    "title": "Reduce gap",
-                    "description": "Halve gap size on each iteration until gap becomes 1."
+                    "title": "Gapped insertion sort",
+                    "description": "Perform insertion sort on elements spaced `gap` positions apart."
+                },
+                {
+                    "step": 3,
+                    "title": "Diminish gap",
+                    "description": "Reduce the gap interval on each outer pass using `gap = gap / 2`."
+                },
+                {
+                    "step": 4,
+                    "title": "Final insertion pass",
+                    "description": "When `gap == 1`, perform a standard insertion sort on the nearly-sorted array, which runs in near O(n) time."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Shell Sort",
-                    "definition": "In-place comparison sort using gaps."
+                    "term": "Gap Interval",
+                    "definition": "The stride or spacing between elements compared and swapped during a pass."
+                },
+                {
+                    "term": "Diminishing Increment Sort",
+                    "definition": "Successively shrinking the gap until it reaches 1."
+                },
+                {
+                    "term": "Subarray Interleaving",
+                    "definition": "Sorting multiple interleaved subarrays simultaneously defined by the gap stride."
+                },
+                {
+                    "term": "Nearly-Sorted Efficiency",
+                    "definition": "Insertion sort achieves linear O(n) performance on pre-sorted data, which Shell sort exploits."
                 }
             ],
-            "realWorldExample": "Sorting a line of people by first organizing groups standing far apart, then narrowing group intervals.",
+            "realWorldExample": "Rough sorting construction materials into broad zones before finely arranging individual bricks on shelves.",
             "timeComplexity": "O(n log² n) to O(n²)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Medium sized datasets where memory stack space is limited.",
             "commonMistakes": [
-                "Wrong loop index conditions in insertion steps."
+                "Failing to reduce gap down to 1, leaving the array incompletely sorted.",
+                "Using wrong stride increment inside inner loops (`j++` instead of `j -= gap`).",
+                "Setting initial gap larger than array size.",
+                "Assuming Shell sort is stable (long-distance gap swaps break stability)."
             ],
             "diagramType": null
         },
@@ -7164,8 +8380,14 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Perform insertion sort on elements separated by gap. Decrement gap by /2.",
             "keySteps": [
-                "Loop gap = n/2; gap > 0; gap /= 2",
-                "Compare elements separated by gap"
+                "For gap = N / 2; gap > 0; gap /= 2:",
+                "  For i from gap to N-1:",
+                "    temp = arr[i]",
+                "    j = i",
+                "    While j >= gap and arr[j - gap] > temp:",
+                "      arr[j] = arr[j - gap]",
+                "      j -= gap",
+                "    arr[j] = temp"
             ],
             "pseudocode": "FOR gap = n/2 DOWNTO 1:\n  FOR i = gap TO n-1:\n    key = arr[i]\n    j = i\n    WHILE j >= gap AND arr[j-gap] > key:\n      arr[j] = arr[j-gap]\n      j = j - gap\n    arr[j] = key"
         },
@@ -7177,39 +8399,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Infix to Postfix",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "18 min",
+        "levelNum": 5,
+        "estimatedTime": "18 min",
         "concept": {
             "summary": "Convert an infix expression (e.g. A+B) to a postfix expression (e.g. AB+) using a stack.",
-            "whatIsIt": "Infix expressions place operator between operands. Postfix (Reverse Polish) places operator after operands, which is easier for computers to evaluate without parentheses rules.",
+            "whatIsIt": "Infix to postfix conversion translates human-readable mathematical formulas (like `A + B * C`) into Reverse Polish Notation (`A B C * +`). This eliminates parentheses and operator ambiguity, allowing computers to evaluate complex expressions in a single linear pass using a stack.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Read tokens",
-                    "description": "Iterate infix expression left to right."
+                    "title": "Scan tokens left-to-right",
+                    "description": "Read operands and operators sequentially from the input infix string."
                 },
                 {
                     "step": 2,
-                    "title": "Apply rules",
-                    "description": "If operand, print it. If (, push to stack. If ), pop until (. If operator, pop operators with higher/equal precedence, then push operator."
+                    "title": "Output operands directly",
+                    "description": "Append alphanumeric operands (numbers/variables) directly to the postfix output."
+                },
+                {
+                    "step": 3,
+                    "title": "Stack operators by precedence",
+                    "description": "Pop operators from stack to output while they have higher or equal precedence than incoming operator, then push incoming operator."
+                },
+                {
+                    "step": 4,
+                    "title": "Handle parentheses and flush",
+                    "description": "Push '(' to stack; upon ')', pop to output until '(' is reached. Flush remaining stack at end."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Infix Notation",
-                    "definition": "Operators in between operands (A + B)."
+                    "term": "Reverse Polish Notation (RPN)",
+                    "definition": "Postfix notation where operators follow their operands, requiring no parentheses for precedence."
                 },
                 {
-                    "term": "Postfix Notation",
-                    "definition": "Operators after operands (A B +)."
+                    "term": "Operator Precedence",
+                    "definition": "Hierarchy determining operation order: `^` (highest) > `*`, `/` > `+`, `-` (lowest)."
+                },
+                {
+                    "term": "Operator Associativity",
+                    "definition": "Left-to-right evaluation for `+`, `-`, `*`, `/` vs right-to-left for power `^`."
+                },
+                {
+                    "term": "Stack Unwinding on Closure",
+                    "definition": "Popping operators until matching open parenthesis is encountered."
                 }
             ],
-            "realWorldExample": "Compilers convert mathematical statements to postfix format to evaluate expressions using a hardware stack.",
+            "realWorldExample": "HP scientific calculators, compiler syntax parsers, and PostScript printing engines.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(n)",
             "whenToUse": "Building expression evaluators and compilers.",
             "commonMistakes": [
-                "Incorrect precedence mapping for operators.",
-                "Not popping remaining stack elements at end of input."
+                "Forgetting to pop and output remaining stack operators after scanning the entire infix string.",
+                "Appending parenthesis characters '(' or ')' to the postfix output string.",
+                "Incorrect precedence logic: popping on `<` instead of `<=` for left-associative operators.",
+                "Stack underflow when encountering unmatched closing parentheses."
             ],
             "diagramType": null
         },
@@ -7283,8 +8526,13 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create operator stack. Push/pop based on character scanned and precedence rules.",
             "keySteps": [
-                "For each char: if operand, append to output",
-                "If op, pop stack to output while precedence(stackTop) >= precedence(char); push char"
+                "Initialize operator stack",
+                "Scan each character of infix expression:",
+                "  If operand: append to output",
+                "  If '(': push to stack",
+                "  If ')': pop stack to output until '('",
+                "  If operator: pop higher/equal precedence to output, push current",
+                "Pop remaining operators to output"
             ],
             "pseudocode": "FOR each char c in expression:\n  IF c is operand: PRINT c\n  ELSE IF c is '(': PUSH '('\n  ELSE IF c is ')': POP until '('\n  ELSE: POP higher precedence ops, then PUSH c"
         },
@@ -7296,38 +8544,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Singly Linked List",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "A Singly Linked List is a linear data structure where elements are stored in nodes, and each node points to the next node.",
-            "whatIsIt": "Unlike arrays, linked list elements are not stored in contiguous memory. Each node consists of a data field and a pointer to the next node. The list starts with a pointer to the first node, called the Head.",
+            "whatIsIt": "A singly linked list is a linear collection of data nodes where each node contains a value and a pointer (`next`) pointing to the following node. Nodes are dynamically allocated in heap memory, allowing the list to grow and shrink without contiguous memory limitations.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Define Node structure",
-                    "description": "struct Node { int data; struct Node* next; };"
+                    "title": "Define node structure",
+                    "description": "Declare `struct Node { int data; struct Node *next; };`."
                 },
                 {
                     "step": 2,
-                    "title": "Allocate node",
-                    "description": "Create nodes dynamically using malloc: struct Node* newNode = malloc(sizeof(struct Node));"
+                    "title": "Allocate head node",
+                    "description": "Create new nodes using `malloc(sizeof(struct Node))` and set `head` pointer."
                 },
                 {
                     "step": 3,
-                    "title": "Link nodes",
-                    "description": "Set newNode->next = head; head = newNode;"
+                    "title": "Link consecutive nodes",
+                    "description": "Set each node's `next` pointer to point to the address of the succeeding node."
+                },
+                {
+                    "step": 4,
+                    "title": "Terminate with NULL",
+                    "description": "Set the `next` pointer of the final node to `NULL` to mark the end of the list."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Node",
-                    "definition": "The basic building block, holding data and a link to the next node."
+                    "term": "Head Pointer",
+                    "definition": "A pointer referencing the first node in the list; losing head orphans the entire list in memory."
                 },
                 {
-                    "term": "Head",
-                    "definition": "A pointer to the first node in the linked list."
+                    "term": "Dynamic Node Allocation (`malloc`)",
+                    "definition": "Allocating individual node memory from the system heap at runtime."
+                },
+                {
+                    "term": "Next Pointer",
+                    "definition": "A pointer field holding the address of the subsequent node in memory."
+                },
+                {
+                    "term": "Null Termination",
+                    "definition": "The last node's `next` pointer holds `NULL` indicating the boundary of the list."
                 }
             ],
-            "realWorldExample": "A scavenger hunt where each clue tells you what to do and points you to the location of the next clue.",
+            "realWorldExample": "A scavenger hunt: each clue written on a piece of paper gives you the location of the next clue.",
             "timeComplexity": {
                 "best": "O(1) insertion",
                 "average": "O(n) search",
@@ -7336,8 +8598,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(n)",
             "whenToUse": "When dynamic size allocation is needed and frequent insertions/deletions are performed at the beginning or end.",
             "commonMistakes": [
-                "Memory leaks by not freeing nodes with free() when deleting.",
-                "Dereferencing a NULL pointer (e.g. accessing head->next when head is NULL)."
+                "Losing the head pointer by reassigning `head = head->next` during traversal, causing memory leaks.",
+                "Dereferencing `NULL` pointers when attempting to read `temp->next` on an empty list.",
+                "Failing to check if `malloc()` returned `NULL` when memory is exhausted.",
+                "Forgetting to call `free()` on removed nodes, creating persistent memory leaks."
             ],
             "diagramType": "linked-list"
         },
@@ -7411,9 +8675,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create a Node struct, allocate memory, initialize data and next pointer.",
             "keySteps": [
-                "struct Node with data and struct Node* next",
-                "Create nodes with malloc",
-                "Link them and print"
+                "Define struct Node",
+                "Create new node with malloc(), set data and next = NULL",
+                "Insert at head: new_node->next = head; head = new_node",
+                "Traverse: curr = head; while curr != NULL: process curr->data; curr = curr->next"
             ],
             "pseudocode": "STRUCT Node:\n  data: Integer\n  next: Pointer to Node"
         },
@@ -7425,29 +8690,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Doubly Linked List",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "A Doubly Linked List is a linked list where each node contains pointers to both the next and the previous nodes.",
-            "whatIsIt": "It allows traversal in both forward and backward directions, at the expense of extra memory for a second pointer.",
+            "whatIsIt": "A doubly linked list is a linked data structure where each node contains two pointers: `next` referencing the successor and `prev` referencing the predecessor. This allows bidirectional traversal and O(1) node deletion when a node reference is given.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Define structure",
-                    "description": "struct Node { int data; struct Node* prev; struct Node* next; };"
+                    "title": "Define bidirectional node",
+                    "description": "Declare `struct Node { int data; struct Node *prev; struct Node *next; };`."
+                },
+                {
+                    "step": 2,
+                    "title": "Connect forward link",
+                    "description": "Assign `newNode->next = current->next` to establish the forward path."
+                },
+                {
+                    "step": 3,
+                    "title": "Connect backward link",
+                    "description": "Assign `newNode->prev = current` and update neighbor's `prev` pointer."
+                },
+                {
+                    "step": 4,
+                    "title": "Handle boundary ends",
+                    "description": "Head's `prev` and tail's `next` must point to `NULL` to signify list terminations."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "prev pointer",
-                    "definition": "Points to the previous node in the list."
+                    "term": "Predecessor Pointer (`prev`)",
+                    "definition": "A pointer referencing the preceding node in the list sequence."
+                },
+                {
+                    "term": "Successor Pointer (`next`)",
+                    "definition": "A pointer referencing the subsequent node in the list sequence."
+                },
+                {
+                    "term": "Bidirectional Traversal",
+                    "definition": "The capability to traverse elements forward from head or backward from tail."
+                },
+                {
+                    "term": "O(1) Local Deletion",
+                    "definition": "A node can remove itself in constant time by linking its `prev` and `next` neighbors directly."
                 }
             ],
-            "realWorldExample": "Web browser navigation history (forward and back buttons).",
+            "realWorldExample": "Browser Back and Forward navigation buttons, or an interactive music playlist where you can skip to next or previous song.",
             "timeComplexity": "O(1) insertion/deletion at endpoints",
             "spaceComplexity": "O(n)",
             "whenToUse": "When bidirectional navigation is required.",
             "commonMistakes": [
-                "Forgetting to update both next and prev pointers during node insertion/deletion."
+                "Updating `next` but forgetting to update `prev`, breaking backward traversal links.",
+                "Dereferencing `NULL` pointer when modifying `temp->prev` on the first node or `temp->next` on the last node.",
+                "Memory leak by deleting a node without freeing its allocated heap memory.",
+                "Overwriting pointers in the wrong sequence, severing the link to the rest of the list."
             ],
             "diagramType": "linked-list"
         },
@@ -7521,8 +8817,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Add prev pointer to Node struct and set it correctly when linking nodes.",
             "keySteps": [
-                "node->prev = previousNode",
-                "node->next = nextNode"
+                "Define struct Node with prev, data, next",
+                "Create node with malloc()",
+                "Link newNode->next = head; if head != NULL: head->prev = newNode; head = newNode",
+                "Traverse forward via next, or backward via prev"
             ],
             "pseudocode": "STRUCT Node:\n  data: Integer\n  prev: Pointer to Node\n  next: Pointer to Node"
         },
@@ -7534,29 +8832,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Circular Linked List",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "12 min",
+        "levelNum": 5,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A circular linked list is one where the last node points back to the first node.",
-            "whatIsIt": "There is no NULL at the end of the list. Traversal loops back to the head node.",
+            "whatIsIt": "A circular linked list is a sequence of nodes where the last node points back to the first node (head) instead of `NULL`. This circular structure makes it ideal for round-robin scheduling, cyclical buffers, and continuous playlist loops.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Point last to head",
-                    "description": "lastNode->next = head;"
+                    "title": "Circular head link",
+                    "description": "A single-node circular list points to itself: `head->next = head`."
+                },
+                {
+                    "step": 2,
+                    "title": "Insert new node",
+                    "description": "Find the last node and update its `next` pointer to point to the new node."
+                },
+                {
+                    "step": 3,
+                    "title": "Maintain loop invariant",
+                    "description": "Set the new node's `next` pointer to point back to `head`."
+                },
+                {
+                    "step": 4,
+                    "title": "Traverse with do-while",
+                    "description": "Use `do { ... } while (curr != head);` to visit every node and terminate upon returning to the start."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Circular Link",
-                    "definition": "Pointer from tail to head node."
+                    "term": "Circular Reference",
+                    "definition": "The tail node connects directly to the head node with no `NULL` terminator."
+                },
+                {
+                    "term": "Do-While Traversal",
+                    "definition": "Essential traversal loop ensuring the body runs before checking if pointer returned to head."
+                },
+                {
+                    "term": "Tail Pointer Optimization",
+                    "definition": "Maintaining a pointer to the tail provides O(1) access to both tail and head (`tail->next`)."
+                },
+                {
+                    "term": "Round-Robin Cycle",
+                    "definition": "Continuous cyclical rotation through a set of resources or scheduled processes."
                 }
             ],
-            "realWorldExample": "A multiplayer game where turn cycle goes from player 1 to 2 to 3, then loops back to player 1.",
+            "realWorldExample": "CPU Round-Robin process scheduling or multiplayer games rotating turns in a circle endlessly.",
             "timeComplexity": "O(n) traversal",
             "spaceComplexity": "O(n)",
             "whenToUse": "Resource sharing schedules (Round Robin CPU scheduling).",
             "commonMistakes": [
-                "Infinite loops during traversal by not checking when the loop visits the head node a second time."
+                "Using `while (curr != NULL)` which creates an infinite loop because a circular list has no `NULL`.",
+                "Failing to update the last node's `next` pointer when inserting a new head node.",
+                "Deleting the only remaining node without resetting `head = NULL`.",
+                "Losing list reference by advancing head without maintaining circularity."
             ],
             "diagramType": "linked-list"
         },
@@ -7630,8 +8959,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Track head pointer and loop until `curr->next == head`.",
             "keySteps": [
-                "Initialize curr = head",
-                "Use do-while loop: curr = curr->next; while (curr != head);"
+                "Create node; if list empty: head = node; node->next = head",
+                "If not empty: traverse to tail where tail->next == head",
+                "tail->next = newNode; newNode->next = head",
+                "Traverse: curr = head; do { print curr->data; curr = curr->next; } while(curr != head);"
             ],
             "pseudocode": "curr = head\nDO:\n  PRINT curr.data\n  curr = curr.next\nWHILE curr != head"
         },
@@ -7643,34 +8974,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Reverse Linked List",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "Reverse the direction of pointers in a singly linked list so the tail becomes the head.",
-            "whatIsIt": "Given 1->2->3->NULL, change pointers to NULL<-1<-2<-3. Traversal order is reversed.",
+            "whatIsIt": "Reversing a singly linked list inverts the direction of all `next` pointers so the tail becomes the new head and head points to `NULL`. This is done iteratively in O(n) time and O(1) auxiliary space using three tracking pointers: prev, curr, and next.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Use three pointers",
-                    "description": "prev = NULL, curr = head, next = NULL."
+                    "title": "Initialize tracking pointers",
+                    "description": "Set `prev = NULL`, `curr = head`, and `next = NULL`."
                 },
                 {
                     "step": 2,
-                    "title": "Iterate and flip",
-                    "description": "Save next node: next = curr->next. Flip link: curr->next = prev. Shift: prev = curr, curr = next. Repeat."
+                    "title": "Save successor node",
+                    "description": "Before reversing the link, save `next = curr->next` to avoid losing the rest of the list."
+                },
+                {
+                    "step": 3,
+                    "title": "Reverse pointer direction",
+                    "description": "Redirect `curr->next = prev` to point backward."
+                },
+                {
+                    "step": 4,
+                    "title": "Advance and reassign head",
+                    "description": "Move `prev = curr` and `curr = next`; repeat until `curr == NULL`, then set `head = prev`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Pointer Reversal",
-                    "definition": "Redirecting node links to point to their previous nodes."
+                    "term": "Three-Pointer Technique",
+                    "definition": "Using `prev`, `curr`, and `next` pointers to safely manipulate references without data loss."
+                },
+                {
+                    "term": "In-Place Reversal",
+                    "definition": "Reversing pointers directly in memory without allocating new nodes or auxiliary memory."
+                },
+                {
+                    "term": "Link Redirection",
+                    "definition": "Changing `curr->next` to point to predecessor `prev`."
+                },
+                {
+                    "term": "New Head Assignment",
+                    "definition": "When `curr` reaches `NULL`, `prev` points to the new head of the reversed list."
                 }
             ],
-            "realWorldExample": "Undoing actions in a sequential queue or reversing history tracks.",
+            "realWorldExample": "Reversing an 'Undo' history stack into a 'Redo' chain in text editors.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "When node order needs to be permanently inverted in-place.",
             "commonMistakes": [
-                "Losing references to the rest of the list when flipping pointers: must store next first."
+                "Severing the list: changing `curr->next = prev` before saving `curr->next`, losing access to subsequent nodes.",
+                "Returning `curr` instead of `prev` (`curr` is always `NULL` upon loop termination).",
+                "Forgetting to terminate the old head node with `NULL`, creating cycles in the list.",
+                "Not handling empty or single-node lists gracefully."
             ],
             "diagramType": "linked-list"
         },
@@ -7745,7 +9102,11 @@ export const TUTOR_CURRICULUM = {
             "approach": "Maintain prev, curr, and next pointers. Flip links in-place.",
             "keySteps": [
                 "prev = NULL, curr = head",
-                "while curr: next = curr->next; curr->next = prev; prev = curr; curr = next;",
+                "While curr != NULL:",
+                "  next = curr->next",
+                "  curr->next = prev",
+                "  prev = curr",
+                "  curr = next",
                 "head = prev"
             ],
             "pseudocode": "prev = NULL, curr = head\nWHILE curr != NULL:\n  next = curr.next\n  curr.next = prev\n  prev = curr\n  curr = next\nhead = prev"
@@ -7758,29 +9119,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Linked List Length",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "8 min",
+        "levelNum": 5,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Count the number of nodes in a linked list.",
-            "whatIsIt": "Starts at the head node, traverses until reaching NULL, incrementing a counter.",
+            "whatIsIt": "Calculating the length of a linked list counts the total number of nodes by traversing from the head pointer until a `NULL` pointer is encountered. Unlike arrays, linked lists do not store pre-allocated capacity, requiring O(n) traversal to count elements.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Traverse and count",
-                    "description": "Initialize count = 0. Iterate curr = head to NULL, incrementing count."
+                    "title": "Initialize counter",
+                    "description": "Set `count = 0` to track the node tally."
+                },
+                {
+                    "step": 2,
+                    "title": "Set traversal pointer",
+                    "description": "Initialize temporary pointer `curr = head` to preserve the original head reference."
+                },
+                {
+                    "step": 3,
+                    "title": "Iterate and count",
+                    "description": "While `curr != NULL`, increment `count++` and advance `curr = curr->next`."
+                },
+                {
+                    "step": 4,
+                    "title": "Return total count",
+                    "description": "When `curr` becomes `NULL`, return `count` as the length of the list."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Traversal",
-                    "definition": "Visiting each node in a list sequentially."
+                    "term": "Linear Traversal",
+                    "definition": "Visiting each node in sequence from start to finish in O(n) time."
+                },
+                {
+                    "term": "Temporary Traversal Pointer",
+                    "definition": "A pointer used to walk the list without modifying the permanent `head` pointer."
+                },
+                {
+                    "term": "Null Termination Check",
+                    "definition": "Testing `curr != NULL` to ensure all valid nodes are counted before stopping."
+                },
+                {
+                    "term": "Dynamic Size",
+                    "definition": "Linked lists grow and shrink dynamically; length must be counted or cached."
                 }
             ],
-            "realWorldExample": "Measuring queue sizes in buffered network packets.",
+            "realWorldExample": "Counting train carriages by walking from the engine to the final caboose.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(1)",
             "whenToUse": "General list length inquiries.",
             "commonMistakes": [
-                "Infinite loops if next pointer links are corrupted."
+                "Modifying `head` directly (`head = head->next`) which permanently destroys the list.",
+                "Off-by-one error using `curr->next != NULL`, which stops one node too early and misses the tail node.",
+                "Infinite loop if the linked list contains a cycle/loop (requires Floyd's cycle detection).",
+                "Crash on empty list if not checking for `head == NULL`."
             ],
             "diagramType": "linked-list"
         },
@@ -7854,8 +9246,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Loop through the list, incrementing a counter variable until the current pointer becomes NULL.",
             "keySteps": [
-                "curr = head, count = 0",
-                "while curr: count++; curr = curr->next;"
+                "count = 0, curr = head",
+                "While curr != NULL:",
+                "  count++",
+                "  curr = curr->next",
+                "Return count"
             ],
             "pseudocode": "count = 0, curr = head\nWHILE curr != NULL:\n  count = count + 1\n  curr = curr.next\nRETURN count"
         },
@@ -7867,47 +9262,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Stack (Array Implementation)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "12 min",
+        "levelNum": 5,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A stack is a Last-In-First-Out (LIFO) data structure, implemented using a fixed-size array.",
-            "whatIsIt": "Operations occur at one end, called the Top. You can push (add item), pop (remove item), and peek (look at top item).",
+            "whatIsIt": "A stack is a Last-In, First-Out (LIFO) linear data structure where elements are added and removed exclusively from one end, called the top. An array implementation tracks the top element using an integer index, providing O(1) push and pop operations within fixed bounds.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Maintain index",
-                    "description": "int top = -1; tracking the current top index."
+                    "title": "Initialize top pointer",
+                    "description": "Set `top = -1` indicating an empty stack."
                 },
                 {
                     "step": 2,
-                    "title": "Push",
-                    "description": "Check overflow. top++; array[top] = value;"
+                    "title": "Push operation",
+                    "description": "Check if `top == MAX - 1` (overflow); if not, increment `top++` and store `stack[top] = val`."
                 },
                 {
                     "step": 3,
-                    "title": "Pop",
-                    "description": "Check underflow. value = array[top]; top--;"
+                    "title": "Pop operation",
+                    "description": "Check if `top == -1` (underflow); if not, retrieve `val = stack[top]` and decrement `top--`."
+                },
+                {
+                    "step": 4,
+                    "title": "Peek operation",
+                    "description": "Inspect `stack[top]` without modifying the top pointer."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "LIFO",
-                    "definition": "Last In First Out."
+                    "term": "LIFO (Last-In First-Out)",
+                    "definition": "The most recently inserted element is always the first one to be removed."
                 },
                 {
                     "term": "Stack Overflow",
-                    "definition": "Trying to push onto a full stack."
+                    "definition": "Attempting to push an element onto a stack that has reached its maximum array capacity."
                 },
                 {
                     "term": "Stack Underflow",
-                    "definition": "Trying to pop from an empty stack."
+                    "definition": "Attempting to pop or peek from an empty stack (`top == -1`)."
+                },
+                {
+                    "term": "Top Index Tracker",
+                    "definition": "An integer variable indexing the current topmost active element in the array."
                 }
             ],
-            "realWorldExample": "A stack of dinner plates. You add plates to the top, and remove plates from the top.",
+            "realWorldExample": "A stack of dinner plates in a cafeteria: plates are placed on top and removed from the top.",
             "timeComplexity": "O(1) for push and pop",
             "spaceComplexity": "O(max_size)",
             "whenToUse": "Function call management, undo systems, parsing bracket balances.",
             "commonMistakes": [
-                "Not checking for overflow before pushing, or underflow before popping."
+                "Pushing to a full stack without checking `top == MAX - 1`, causing buffer overflow.",
+                "Popping from an empty stack without checking `top == -1`, causing negative index memory access `stack[-1]`.",
+                "Incrementing `top` after assigning value instead of before in a 0-indexed array stack.",
+                "Confusing peek (read top) with pop (read and remove top)."
             ],
             "diagramType": null
         },
@@ -7981,8 +9389,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create stack struct containing array and top index indicator.",
             "keySteps": [
-                "Push: if top < MAX-1: top++; arr[top] = val",
-                "Pop: if top >= 0: val = arr[top]; top--; return val"
+                "Initialize top = -1, stack array of size MAX",
+                "push(x): if top == MAX-1: error overflow; else top++; stack[top] = x",
+                "pop(): if top == -1: error underflow; else val = stack[top]; top--; return val",
+                "peek(): return stack[top] if top != -1"
             ],
             "pseudocode": "PUSH(val):\n  IF top == MAX - 1: ERROR \"Overflow\"\n  ELSE: top = top + 1, arr[top] = val"
         },
@@ -7994,34 +9404,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Stack (Linked List)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "12 min",
+        "levelNum": 5,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A stack implemented using a linked list has no size limit (except memory).",
-            "whatIsIt": "Insertions (push) and deletions (pop) occur at the head of the list, which serves as the Top.",
+            "whatIsIt": "A linked list stack implements LIFO operations dynamically using heap-allocated nodes, allowing the stack to grow and shrink without a fixed capacity ceiling. Push and pop operations are performed exclusively at the head of the list in O(1) time.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Push",
-                    "description": "Insert new node at head."
+                    "title": "Initialize stack top",
+                    "description": "Set `struct Node *top = NULL;` representing an empty stack."
                 },
                 {
                     "step": 2,
-                    "title": "Pop",
-                    "description": "Remove head node."
+                    "title": "Push at head",
+                    "description": "Allocate node, set `newNode->data = val`, point `newNode->next = top`, and update `top = newNode`."
+                },
+                {
+                    "step": 3,
+                    "title": "Pop from head",
+                    "description": "Save `top->data`, advance `temp = top; top = top->next;`, and `free(temp)`."
+                },
+                {
+                    "step": 4,
+                    "title": "Check empty status",
+                    "description": "Stack is empty if `top == NULL`; dynamic stacks never experience overflow unless system RAM is exhausted."
                 }
             ],
             "keyTerms": [
                 {
                     "term": "Dynamic Stack",
-                    "definition": "Stack implementation that grows dynamically."
+                    "definition": "A stack that allocates nodes on demand from the heap, removing fixed array size limits."
+                },
+                {
+                    "term": "Head Push/Pop",
+                    "definition": "Operating exclusively at the head node ensures O(1) constant time for all stack operations."
+                },
+                {
+                    "term": "Node Deallocation (`free`)",
+                    "definition": "Releasing popped node memory back to the heap to prevent memory leaks."
+                },
+                {
+                    "term": "Heap Exhaustion",
+                    "definition": "The only scenario where push fails: when `malloc()` returns `NULL`."
                 }
             ],
-            "realWorldExample": "History navigation stack in browser.",
+            "realWorldExample": "Call stack in operating systems and runtimes: each function call pushes a stack frame to heap/stack memory dynamically.",
             "timeComplexity": "O(1) push and pop",
             "spaceComplexity": "O(n)",
             "whenToUse": "When the maximum stack size is unknown.",
             "commonMistakes": [
-                "Losing references to top node when popping."
+                "Memory leak: popping a node by reassigning `top = top->next` without calling `free()` on the removed node.",
+                "Dereferencing `NULL` pointer when calling pop on an empty stack without checking `top == NULL`.",
+                "Pushing to the tail of the linked list, which requires O(n) traversal instead of O(1) head insertion.",
+                "Not checking if `malloc()` returns `NULL` during push."
             ],
             "diagramType": "linked-list"
         },
@@ -8095,8 +9531,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Implement push by inserting at head, pop by deleting from head.",
             "keySteps": [
-                "Push: new->next = top; top = new;",
-                "Pop: temp = top; top = top->next; free(temp);"
+                "top = NULL",
+                "push(val): node = malloc(); node->data = val; node->next = top; top = node",
+                "pop(): if top == NULL: error underflow; temp = top; val = temp->data; top = top->next; free(temp); return val",
+                "isEmpty(): return top == NULL"
             ],
             "pseudocode": "PUSH(val):\n  new = new Node(val)\n  new.next = top\n  top = new"
         },
@@ -8108,29 +9546,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Push and Pop Logic",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "8 min",
+        "levelNum": 5,
+        "estimatedTime": "8 min",
         "concept": {
             "summary": "Deep dive into stack pointer boundaries and overflow/underflow checking.",
-            "whatIsIt": "Ensures data safety by preventing memory violations.",
+            "whatIsIt": "Push and Pop are the two fundamental mutator operations governing stack data structures. Push places a new element onto the top of the stack, while Pop removes and returns the topmost element, strictly enforcing LIFO ordering.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Checks",
-                    "description": "Before write, top < limit. Before read, top >= 0."
+                    "title": "Verify push precondition",
+                    "description": "Check whether stack is full before pushing to prevent overflow."
+                },
+                {
+                    "step": 2,
+                    "title": "Execute push mutation",
+                    "description": "Adjust top index/pointer and assign the incoming data element."
+                },
+                {
+                    "step": 3,
+                    "title": "Verify pop precondition",
+                    "description": "Check whether stack is empty before popping to prevent underflow."
+                },
+                {
+                    "step": 4,
+                    "title": "Execute pop mutation",
+                    "description": "Extract the top value, adjust top index/pointer, and return the extracted value."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Pointer Boundary",
-                    "definition": "The index limits of stack array."
+                    "term": "Push Operation",
+                    "definition": "Inserting an element onto the top of the stack."
+                },
+                {
+                    "term": "Pop Operation",
+                    "definition": "Removing and returning the most recently pushed element from the top."
+                },
+                {
+                    "term": "Precondition Verification",
+                    "definition": "Guarding against boundary violations (overflow on push, underflow on pop)."
+                },
+                {
+                    "term": "LIFO Invariant",
+                    "definition": "The fundamental ordering guarantee that last inserted is first removed."
                 }
             ],
-            "realWorldExample": "Stack protection mechanisms in runtime engines.",
+            "realWorldExample": "A spring-loaded PEZ candy dispenser: inserting candy pushes it down; opening the top pops the latest candy out.",
             "timeComplexity": "O(1)",
             "spaceComplexity": "O(1)",
             "whenToUse": "Basic memory-safety validations.",
             "commonMistakes": [
-                "Off-by-one errors when comparing top with MAX size."
+                "Popping from an empty stack causing crashes or returning garbage memory.",
+                "Decrementing the top pointer before reading the value during pop, discarding the wrong element.",
+                "Incrementing the top pointer after writing data in a 0-indexed array stack.",
+                "Forgetting to return the popped value to the calling function."
             ],
             "diagramType": null
         },
@@ -8204,7 +9673,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Implement strict overflow and underflow tests before operations.",
             "keySteps": [
-                "Check full/empty states explicitly"
+                "Ensure stack data structure initialized",
+                "Implement push(x) with overflow guard",
+                "Implement pop() with underflow guard",
+                "Demonstrate sequence of push and pop calls"
             ],
             "pseudocode": "IF top == MAX - 1: PRINT \"Full\""
         },
@@ -8216,39 +9688,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Balanced Parentheses",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "Check if braces in an expression are balanced using a stack.",
-            "whatIsIt": "An expression is balanced if open braces are matched with corresponding closing braces in correct order: e.g. \"{[()]}\" is balanced, but \"{[(])}\" is not.",
+            "whatIsIt": "Balanced parentheses validation uses a stack to verify that every opening bracket `(`, `{`, `[` has a corresponding, correctly nested closing bracket `)`, `}`, `]`. It is the foundational parsing mechanism used in compilers, text editors, and mathematical evaluators.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Process characters",
-                    "description": "If open bracket (, {, [, push to stack."
+                    "title": "Scan expression characters",
+                    "description": "Iterate through string characters from left to right."
                 },
                 {
                     "step": 2,
-                    "title": "Check matches",
-                    "description": "If close bracket, pop from stack. If popped bracket does not match, or stack is empty, return false."
+                    "title": "Push opening brackets",
+                    "description": "Whenever an opening bracket `(`, `{`, `[` is encountered, push it onto the stack."
                 },
                 {
                     "step": 3,
-                    "title": "End check",
-                    "description": "At the end, if stack is empty, return true."
+                    "title": "Match closing brackets",
+                    "description": "Upon meeting a closing bracket, check for underflow (unmatched closing) and verify popped bracket matches type."
+                },
+                {
+                    "step": 4,
+                    "title": "Inspect final stack",
+                    "description": "Expression is balanced if and only if the stack is completely empty after scanning."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Balance",
-                    "definition": "Symmetric enclosing brackets."
+                    "term": "Bracket Matching",
+                    "definition": "Verifying corresponding pairs of opening and closing delimiters: `()`, `{}`, `[]`."
+                },
+                {
+                    "term": "Nesting Invariant",
+                    "definition": "The most recently opened bracket must be the first one closed."
+                },
+                {
+                    "term": "Premature Underflow",
+                    "definition": "Encountering a closing bracket when the stack is empty indicates an extra closing bracket."
+                },
+                {
+                    "term": "Dangling Opening Brackets",
+                    "definition": "A non-empty stack at the end of the string indicates unclosed opening brackets."
                 }
             ],
-            "realWorldExample": "Compiler syntax parsers checking for missing closing brackets in source files.",
+            "realWorldExample": "C compiler checking code syntax: missing a closing brace `}` causes a syntax error at EOF.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(n)",
             "whenToUse": "Expression parsing and compiler design.",
             "commonMistakes": [
-                "Not checking if stack is empty before popping."
+                "Declaring the string valid when the stack still has unclosed brackets at the end (e.g. `((()` leaves 2 brackets on stack).",
+                "Crashing on underflow when string starts with a closing bracket like `)` without checking `isEmpty()`.",
+                "Mismatched bracket types: allowing `[)` to pass without checking if popped type matches closing type.",
+                "Failing to handle non-bracket characters like numbers or arithmetic operators."
             ],
             "diagramType": null
         },
@@ -8322,7 +9815,13 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Push open brackets to stack. Pop on close bracket and check matching types.",
             "keySteps": [
-                "Loop chars: if open -> push. If close -> pop and match. After loop, check top == -1"
+                "Initialize char stack",
+                "For each char c in string:",
+                "  If c in '(', '{', '[': push(c)",
+                "  Else if c in ')', '}', ']':",
+                "    If stack is empty: return false",
+                "    top = pop(); if not matching(top, c): return false",
+                "Return stack.isEmpty()"
             ],
             "pseudocode": "FOR char c in str:\n  IF c is open: PUSH c\n  ELSE IF c is close:\n    IF stack empty OR top doesn't match c: RETURN False\n    POP\nRETURN stack empty"
         },
@@ -8334,47 +9833,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Queue (Array Implementation)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "12 min",
+        "levelNum": 5,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A queue is a First-In-First-Out (FIFO) data structure implemented using an array.",
-            "whatIsIt": "Operations occur at both ends. Insertions occur at the Rear (enqueue), deletions at the Front (dequeue).",
+            "whatIsIt": "A queue is a First-In, First-Out (FIFO) linear data structure where elements are inserted at the rear and removed from the front. An array implementation tracks `front` and `rear` indices to manage enqueue and dequeue in O(1) time.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Maintain two indices",
-                    "description": "int front = 0, rear = -1;"
+                    "title": "Initialize front and rear",
+                    "description": "Set `front = 0` and `rear = -1` (or both -1) to signify an empty queue."
                 },
                 {
                     "step": 2,
-                    "title": "Enqueue",
-                    "description": "rear++; array[rear] = value;"
+                    "title": "Enqueue at rear",
+                    "description": "Check if `rear == MAX - 1` (overflow); if not, increment `rear++` and assign `queue[rear] = val`."
                 },
                 {
                     "step": 3,
-                    "title": "Dequeue",
-                    "description": "value = array[front]; front++;"
+                    "title": "Dequeue from front",
+                    "description": "Check if `front > rear` (underflow); if not, retrieve `queue[front]` and increment `front++`."
+                },
+                {
+                    "step": 4,
+                    "title": "Empty condition",
+                    "description": "Queue is empty when `front > rear` (or `front == -1`)."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "FIFO",
-                    "definition": "First In First Out."
+                    "term": "FIFO (First-In First-Out)",
+                    "definition": "The earliest inserted element is always the first one to be removed."
                 },
                 {
-                    "term": "Enqueue",
-                    "definition": "Add to rear."
+                    "term": "Front Index",
+                    "definition": "Pointer/index tracking the departure point where elements are dequeued."
                 },
                 {
-                    "term": "Dequeue",
-                    "definition": "Remove from front."
+                    "term": "Rear Index",
+                    "definition": "Pointer/index tracking the arrival point where new elements are enqueued."
+                },
+                {
+                    "term": "Linear False Overflow",
+                    "definition": "When `rear == MAX - 1` even though earlier slots vacated by dequeue are empty."
                 }
             ],
-            "realWorldExample": "A queue of people waiting in line at a ticket counter. First person in line is served first.",
+            "realWorldExample": "A queue of people at a ticket counter: the first person in line gets served and departs first.",
             "timeComplexity": "O(1) enqueue and dequeue",
             "spaceComplexity": "O(max_size)",
             "whenToUse": "Task scheduling, printer queues, handling stream inputs.",
             "commonMistakes": [
-                "Wasting space: front index moves rightward, making left positions unreachable unless circular queue logic is used."
+                "False overflow: a linear array queue fills up and rejects enqueues even if front slots are empty.",
+                "Dequeuing from an empty queue causing negative or out-of-bounds index access.",
+                "Forgetting to reset `front` and `rear` to -1 when the queue becomes empty.",
+                "Off-by-one error: checking `rear == MAX` instead of `rear == MAX - 1`."
             ],
             "diagramType": null
         },
@@ -8448,8 +9960,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Maintain front and rear pointers. Adjust them on enqueue and dequeue.",
             "keySteps": [
-                "Enqueue: check full, rear++, arr[rear] = val",
-                "Dequeue: check empty, val = arr[front], front++"
+                "Initialize front = 0, rear = -1, array of size MAX",
+                "enqueue(x): if rear == MAX-1: error overflow; else rear++; queue[rear] = x",
+                "dequeue(): if front > rear: error underflow; else val = queue[front]; front++; return val",
+                "isEmpty(): return front > rear"
             ],
             "pseudocode": "ENQUEUE(val):\n  IF rear == MAX-1: ERROR \"Full\"\n  ELSE: rear = rear + 1, arr[rear] = val"
         },
@@ -8461,38 +9975,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Queue (Linked List)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "12 min",
+        "levelNum": 5,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A dynamic queue with no fixed size limits, implemented using a linked list.",
-            "whatIsIt": "Keep pointers to both head (front) and tail (rear) nodes. Enqueue appends to tail. Dequeue deletes head.",
+            "whatIsIt": "A linked list queue provides a dynamic FIFO data structure with unlimited capacity by maintaining two pointers: `front` referencing the head node and `rear` referencing the tail node. Enqueue adds at rear and dequeue removes from front in O(1) time.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Enqueue",
-                    "description": "Append node to rear; rear = rear->next;"
+                    "title": "Initialize dual pointers",
+                    "description": "Set `front = NULL` and `rear = NULL` representing an empty queue."
                 },
                 {
                     "step": 2,
-                    "title": "Dequeue",
-                    "description": "Remove node from front; front = front->next;"
+                    "title": "Enqueue at tail",
+                    "description": "Allocate node; if empty, set `front = rear = node`; otherwise link `rear->next = node` and update `rear = node`."
+                },
+                {
+                    "step": 3,
+                    "title": "Dequeue from head",
+                    "description": "Save `front->data`, advance `front = front->next`, and `free()` old front node."
+                },
+                {
+                    "step": 4,
+                    "title": "Reset on empty",
+                    "description": "If `front` becomes `NULL`, set `rear = NULL` as well to prevent dangling pointers."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "front pointer",
-                    "definition": "Points to head node."
+                    "term": "Dual-Ended Pointers",
+                    "definition": "Maintaining separate pointers to both head (`front`) and tail (`rear`) enables O(1) operations at both ends."
                 },
                 {
-                    "term": "rear pointer",
-                    "definition": "Points to tail node."
+                    "term": "Dynamic FIFO Queue",
+                    "definition": "Allocates nodes as needed with no capacity ceiling."
+                },
+                {
+                    "term": "Dangling Rear Pointer",
+                    "definition": "Failing to set `rear = NULL` when the last node is dequeued leaves `rear` pointing to freed memory."
+                },
+                {
+                    "term": "O(1) Enqueue and Dequeue",
+                    "definition": "Constant-time insertions at rear and removals from front."
                 }
             ],
-            "realWorldExample": "Network packet buffers.",
+            "realWorldExample": "Print job spooler: documents submitted for printing queue up dynamically and print in submission order.",
             "timeComplexity": "O(1) operations",
             "spaceComplexity": "O(n)",
             "whenToUse": "Dynamic size queues.",
             "commonMistakes": [
-                "Forgetting to set front to NULL when the last element is dequeued."
+                "Forgetting to set `rear = NULL` when dequeuing the final node, creating a dangling pointer.",
+                "Memory leak by advancing `front` without freeing the dequeued node.",
+                "Dereferencing `NULL` front pointer when dequeuing from an empty queue.",
+                "Inverting operations: dequeuing from rear requires O(n) traversal in singly linked lists; always dequeue from front."
             ],
             "diagramType": "linked-list"
         },
@@ -8566,8 +10102,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create front and rear Node pointers. Set them to NULL. Modify both during inserts.",
             "keySteps": [
-                "Enqueue: tail->next = new; rear = new;",
-                "Dequeue: front = front->next"
+                "front = NULL, rear = NULL",
+                "enqueue(val): node = malloc(); node->data = val; node->next = NULL;",
+                "  if rear == NULL: front = rear = node; else rear->next = node; rear = node",
+                "dequeue(): if front == NULL: error underflow; temp = front; val = temp->data; front = front->next; if front == NULL: rear = NULL; free(temp); return val"
             ],
             "pseudocode": "ENQUEUE(val):\n  new = new Node(val)\n  IF rear == NULL: front = rear = new\n  ELSE: rear.next = new, rear = new"
         },
@@ -8579,29 +10117,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Circular Queue",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "A circular queue connects the end back to the start, reusing empty slots left by dequeues.",
-            "whatIsIt": "Solves the memory waste of linear queues. Array indices wrap around using modulo math: `rear = (rear + 1) % MAX`.",
+            "whatIsIt": "A circular queue connects the last position of an array back to the first position like a ring using modulo arithmetic `(index + 1) % SIZE`. This eliminates the 'false overflow' problem of linear queues by reusing empty slots vacated by dequeue operations.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Wrap index",
-                    "description": "rear = (rear + 1) % MAX; front = (front + 1) % MAX;"
+                    "title": "Initialize indices",
+                    "description": "Set `front = -1` and `rear = -1` to represent an empty circular queue."
+                },
+                {
+                    "step": 2,
+                    "title": "Check full condition",
+                    "description": "Queue is full when `(rear + 1) % SIZE == front`."
+                },
+                {
+                    "step": 3,
+                    "title": "Enqueue with wrap-around",
+                    "description": "Advance `rear = (rear + 1) % SIZE`, insert data; if first element, also set `front = 0`."
+                },
+                {
+                    "step": 4,
+                    "title": "Dequeue with wrap-around",
+                    "description": "Extract item; if `front == rear`, queue becomes empty (reset both to -1); else `front = (front + 1) % SIZE`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Modulo Indexing",
-                    "definition": "Using index % MAX to wrap around array boundaries."
+                    "term": "Ring Buffer",
+                    "definition": "A circular memory structure that wraps around seamlessly using modular arithmetic."
+                },
+                {
+                    "term": "Modulo Arithmetic ((i + 1) % SIZE)",
+                    "definition": "Ensures array indices wrap back to index 0 after reaching index `SIZE - 1`."
+                },
+                {
+                    "term": "Full Condition ((rear + 1) % SIZE == front)",
+                    "definition": "Identifies when the rear has caught up to the front pointer in the ring."
+                },
+                {
+                    "term": "False Overflow Elimination",
+                    "definition": "Reusing vacated slots at the front of the array."
                 }
             ],
-            "realWorldExample": "Traffic light timers repeating stages sequentially.",
+            "realWorldExample": "Audio ring buffers in music players and streaming services, continuously buffering playback data.",
             "timeComplexity": "O(1) operations",
             "spaceComplexity": "O(MAX)",
             "whenToUse": "When buffer memory size must be static and recycled constantly.",
             "commonMistakes": [
-                "Incorrect full condition check: `(rear + 1) % MAX == front`."
+                "Confusing the full condition `(rear + 1) % SIZE == front` with the empty condition `front == -1`.",
+                "Forgetting to reset both `front = -1` and `rear = -1` when the last remaining element is dequeued.",
+                "Using linear increment `rear++` instead of modulo arithmetic `(rear + 1) % SIZE`.",
+                "Off-by-one error in ring size calculation."
             ],
             "diagramType": null
         },
@@ -8675,8 +10244,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Initialize front = -1, rear = -1. Wrap indices using % MAX.",
             "keySteps": [
-                "rear = (rear + 1) % MAX",
-                "front = (front + 1) % MAX"
+                "front = -1, rear = -1, array of size SIZE",
+                "enqueue(x): if (rear + 1) % SIZE == front: error full",
+                "  if front == -1: front = 0",
+                "  rear = (rear + 1) % SIZE; queue[rear] = x",
+                "dequeue(): if front == -1: error empty; val = queue[front]",
+                "  if front == rear: front = rear = -1; else front = (front + 1) % SIZE; return val"
             ],
             "pseudocode": "ENQUEUE(val):\n  IF (rear + 1) % MAX == front: ERROR \"Full\""
         },
@@ -8688,29 +10261,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Double-Ended Queue (Deque)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "12 min",
+        "levelNum": 5,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "A Deque allows insertion and deletion at both the front and rear ends.",
-            "whatIsIt": "Combines behavior of Stack and Queue. Can insertFront, insertRear, deleteFront, deleteRear.",
+            "whatIsIt": "A double-ended queue (deque) is a generalized queue where insertion and deletion of elements can be performed at both the front and rear ends. It can function as both a FIFO queue and a LIFO stack, or a hybrid of both.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Manage endpoints",
-                    "description": "Manipulate pointers to insert/remove at both sides."
+                    "title": "Insert at front",
+                    "description": "Decrement front circularly `front = (front - 1 + SIZE) % SIZE` and insert data."
+                },
+                {
+                    "step": 2,
+                    "title": "Insert at rear",
+                    "description": "Increment rear circularly `rear = (rear + 1) % SIZE` and insert data."
+                },
+                {
+                    "step": 3,
+                    "title": "Delete from front",
+                    "description": "Extract data and increment front circularly `front = (front + 1) % SIZE`."
+                },
+                {
+                    "step": 4,
+                    "title": "Delete from rear",
+                    "description": "Extract data and decrement rear circularly `rear = (rear - 1 + SIZE) % SIZE`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Deque",
-                    "definition": "Double-Ended Queue."
+                    "term": "Double-Ended Queue (Deque)",
+                    "definition": "A sequence allowing insertion and removal at both extremities in O(1) time."
+                },
+                {
+                    "term": "Circular Wrap-around",
+                    "definition": "Using modulo arithmetic with `+ SIZE` to safely handle negative pointer decrements in C."
+                },
+                {
+                    "term": "Input-Restricted Deque",
+                    "definition": "A deque variation allowing insertion at only one end, but deletion at both ends."
+                },
+                {
+                    "term": "Output-Restricted Deque",
+                    "definition": "A deque variation allowing deletion at only one end, but insertion at both ends."
                 }
             ],
-            "realWorldExample": "Browser undo stack combined with server scheduling history.",
+            "realWorldExample": "Web browser undo/redo history where items are added/removed from both ends, or sliding window maximum algorithms.",
             "timeComplexity": "O(1) operations",
             "spaceComplexity": "O(n)",
             "whenToUse": "A/B priority task processing.",
             "commonMistakes": [
-                "Managing complex pointer boundaries on both ends."
+                "Negative modulo bug: in C, `(-1) % SIZE` evaluates to `-1`; you must write `(front - 1 + SIZE) % SIZE`.",
+                "Failing to check full condition before inserting at either end.",
+                "Forgetting to handle single-element reset (`front = rear = -1`) upon deleting the last item.",
+                "Inconsistent front and rear pointer boundaries."
             ],
             "diagramType": null
         },
@@ -8784,7 +10388,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Track both endpoints and create wrappers for all 4 operations.",
             "keySteps": [
-                "Implement insertFront, deleteRear, etc."
+                "Initialize front = -1, rear = -1",
+                "insertFront(x): check full; front = (front - 1 + SIZE) % SIZE; arr[front] = x",
+                "insertRear(x): check full; rear = (rear + 1) % SIZE; arr[rear] = x",
+                "deleteFront(): check empty; val = arr[front]; update front; return val",
+                "deleteRear(): check empty; val = arr[rear]; update rear; return val"
             ],
             "pseudocode": "INSERT_FRONT(val):\n  front = (front - 1 + MAX) % MAX"
         },
@@ -8796,38 +10404,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Binary Tree",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "A Binary Tree is a non-linear data structure where each node has at most two children.",
-            "whatIsIt": "Nodes contain data, a pointer to left child, and a pointer to right child.",
+            "whatIsIt": "A binary tree is a hierarchical non-linear data structure where each node has at most two children, referred to as the left child and right child. The topmost node is the root, and nodes with no children are leaf nodes.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Define Node structure",
-                    "description": "struct Node { int data; struct Node* left; struct Node* right; };"
+                    "title": "Define binary node struct",
+                    "description": "Declare `struct Node { int data; struct Node *left; struct Node *right; };`."
                 },
                 {
                     "step": 2,
-                    "title": "Recursive allocation",
-                    "description": "Allocate left and right nodes recursively."
+                    "title": "Create root node",
+                    "description": "Allocate memory with `malloc()` and initialize child pointers `left = right = NULL`."
+                },
+                {
+                    "step": 3,
+                    "title": "Attach child nodes",
+                    "description": "Link child node addresses to parent node's `left` and `right` pointer fields."
+                },
+                {
+                    "step": 4,
+                    "title": "Hierarchical recursion",
+                    "description": "Traverse or operate on subtrees recursively using the root reference."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Root",
-                    "definition": "The top node of the tree."
+                    "term": "Root Node",
+                    "definition": "The single ancestor node at the top of the tree with no parent."
                 },
                 {
                     "term": "Leaf Node",
-                    "definition": "Node with no children (left and right pointers are NULL)."
+                    "definition": "A terminal node with both `left == NULL` and `right == NULL`."
+                },
+                {
+                    "term": "Left & Right Subtrees",
+                    "definition": "The binary child trees rooted at a node's left and right pointers."
+                },
+                {
+                    "term": "Tree Depth & Height",
+                    "definition": "Depth is distance from root; height is number of edges on the longest path down to a leaf."
                 }
             ],
-            "realWorldExample": "Organization charts (CEO -> VPs -> Directors) or family tree lineages.",
+            "realWorldExample": "An organizational hierarchy chart or family ancestry tree branching into paternal and maternal lineages.",
             "timeComplexity": "O(n) traversal",
             "spaceComplexity": "O(n)",
             "whenToUse": "Representing hierarchical relationships.",
             "commonMistakes": [
-                "Losing node pointers during tree manipulations, causing memory leaks."
+                "Not initializing child pointers to `NULL`, creating wild pointers that cause segmentation faults.",
+                "Confusing a general binary tree with a binary search tree (general binary trees do not enforce sorted order).",
+                "Losing subtree references when modifying parent links.",
+                "Stack overflow when processing deeply unbalanced trees using naive recursion."
             ],
             "diagramType": "binary-tree"
         },
@@ -8901,8 +10531,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Define struct Node with left and right children. Create helper to construct nodes.",
             "keySteps": [
-                "struct Node with left and right pointers",
-                "Write createNode() returning allocated struct"
+                "Define struct Node with data, left, right",
+                "createNode(val): node = malloc(); node->data = val; node->left = node->right = NULL; return node",
+                "Build tree by linking root->left and root->right",
+                "Traverse recursively"
             ],
             "pseudocode": "STRUCT Node:\n  data: Integer\n  left: Pointer to Node\n  right: Pointer to Node"
         },
@@ -8914,24 +10546,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Binary Search Tree (BST)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "18 min",
+        "levelNum": 5,
+        "estimatedTime": "18 min",
         "concept": {
             "summary": "A Binary Search Tree orders nodes such that left values are smaller than parent, and right values are larger.",
-            "whatIsIt": "This key property enables binary search speeds for dynamic insertions and lookups.",
+            "whatIsIt": "A Binary Search Tree (BST) is a binary tree with the ordering invariant: every node in the left subtree has a value less than the root, and every node in the right subtree has a value greater than the root. This allows O(log n) search, insert, and delete.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Insert rules",
-                    "description": "If val < root->data, recurse left. If val > root->data, recurse right."
+                    "title": "Search operation",
+                    "description": "Compare key with current node: if equal found; if smaller go `curr->left`; if larger go `curr->right`."
+                },
+                {
+                    "step": 2,
+                    "title": "Insert operation",
+                    "description": "Traverse down comparing key until reaching `NULL`, then attach new node in the empty slot."
+                },
+                {
+                    "step": 3,
+                    "title": "Inorder sorted property",
+                    "description": "Inorder traversal (Left, Root, Right) of any valid BST always yields sorted ascending values."
+                },
+                {
+                    "step": 4,
+                    "title": "Delete cases",
+                    "description": "Handle 3 deletion cases: leaf node (free directly), 1 child (bypass to child), or 2 children (replace with inorder successor)."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "BST Property",
-                    "definition": "Left subtree < Root < Right subtree."
+                    "term": "BST Invariant",
+                    "definition": "For every node X: `all keys in left subtree < X < all keys in right subtree`."
+                },
+                {
+                    "term": "Inorder Successor",
+                    "definition": "The smallest node in the right subtree, used to replace a deleted node with two children."
+                },
+                {
+                    "term": "O(log n) Average Search",
+                    "definition": "Balanced BST halves the search space at each level, similar to binary search."
+                },
+                {
+                    "term": "Skewed Tree Degradation",
+                    "definition": "Inserting pre-sorted keys degrades BST into a linear linked list of O(n) height."
                 }
             ],
-            "realWorldExample": "Maintaining an ordered list of items that changes frequently (database index directories).",
+            "realWorldExample": "Database indexing engines (B-Trees) and fast auto-complete dictionary lookups.",
             "timeComplexity": {
                 "best": "O(log n) search",
                 "average": "O(log n) search",
@@ -8940,7 +10600,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(n)",
             "whenToUse": "Dynamic sorting and quick searching applications.",
             "commonMistakes": [
-                "Not returning the updated node pointer in insertion/deletion recursions."
+                "Inserting into a sorted sequence resulting in a degenerate tree of height n (worst case O(n)).",
+                "Deleting a node with two children without properly replacing it with its inorder successor.",
+                "Allowing duplicate keys without a consistent policy (e.g. all duplicates placed in right subtree).",
+                "Forgetting to update parent pointers when deleting child nodes."
             ],
             "diagramType": "binary-tree"
         },
@@ -9014,7 +10677,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Recursively search the correct side (left or right) to insert or search.",
             "keySteps": [
-                "Insert: root->left = insert(root->left, val) if val < root->data"
+                "insert(root, val): if root == NULL: return createNode(val)",
+                "  if val < root->data: root->left = insert(root->left, val)",
+                "  else if val > root->data: root->right = insert(root->right, val); return root",
+                "search(root, key): if root == NULL or root->data == key: return root",
+                "  return key < root->data ? search(root->left, key) : search(root->right, key)"
             ],
             "pseudocode": "FUNCTION insert(root, val):\n  IF root == NULL: RETURN Node(val)\n  IF val < root.data: root.left = insert(root.left, val)\n  ELSE: root.right = insert(root.right, val)\n  RETURN root"
         },
@@ -9026,39 +10693,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Tree Traversals",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "Traverse a binary tree recursively in Pre-order, In-order, or Post-order.",
-            "whatIsIt": "Determines the visiting sequence of nodes. In-order traversal of a BST prints elements in sorted order.",
+            "whatIsIt": "Tree traversal visits every node in a binary tree exactly once. Depth-first traversals include Inorder (Left-Root-Right), Preorder (Root-Left-Right), and Postorder (Left-Right-Root), each serving distinct compiler, serialization, and evaluation purposes.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "In-order",
-                    "description": "Left, Root, Right."
+                    "title": "Inorder (Left-Root-Right)",
+                    "description": "Traverse left subtree, visit root, traverse right subtree (yields sorted output in a BST)."
                 },
                 {
                     "step": 2,
-                    "title": "Pre-order",
-                    "description": "Root, Left, Right."
+                    "title": "Preorder (Root-Left-Right)",
+                    "description": "Visit root first, traverse left, traverse right (used to serialize or duplicate tree structures)."
                 },
                 {
                     "step": 3,
-                    "title": "Post-order",
-                    "description": "Left, Right, Root."
+                    "title": "Postorder (Left-Right-Root)",
+                    "description": "Traverse left, traverse right, visit root last (essential for bottom-up tasks like deleting/freeing tree nodes)."
+                },
+                {
+                    "step": 4,
+                    "title": "Base termination",
+                    "description": "Base case for all traversals: `if (root == NULL) return;`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "In-order",
-                    "definition": "Left -> Root -> Right."
+                    "term": "Inorder Traversal",
+                    "definition": "Left -> Root -> Right traversal producing sorted keys in a Binary Search Tree."
+                },
+                {
+                    "term": "Preorder Traversal",
+                    "definition": "Root -> Left -> Right traversal commonly used to clone or serialize tree hierarchies."
+                },
+                {
+                    "term": "Postorder Traversal",
+                    "definition": "Left -> Right -> Root traversal used for bottom-up evaluation and freeing allocated memory."
+                },
+                {
+                    "term": "Depth-First Traversal",
+                    "definition": "Exploring deeply down branches before backtracking to sibling subtrees."
                 }
             ],
-            "realWorldExample": "Converting mathematical ASTs into postfix/infix outputs.",
+            "realWorldExample": "Evaluating mathematical expression trees: inorder gives standard formula, postorder gives postfix calculator input.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(n) recursion stack",
             "whenToUse": "Evaluating/copying trees and sorting.",
             "commonMistakes": [
-                "Missing NULL checks as base cases in recursion."
+                "Omitting base condition `if (root == NULL) return;`, causing instant crash on leaf children.",
+                "Attempting to free tree nodes with preorder instead of postorder (freeing parent before visiting children).",
+                "Confusing traversal print order (e.g. printing root before left subtree in inorder).",
+                "Printing newlines inside recursive traversal steps, scattering traversal output vertically."
             ],
             "diagramType": "binary-tree"
         },
@@ -9132,7 +10820,9 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Implement recursive functions following traversal orders.",
             "keySteps": [
-                "Inorder: print(left); print(root); print(right)"
+                "inorder(root): if root == NULL: return; inorder(root->left); print root->data; inorder(root->right)",
+                "preorder(root): if root == NULL: return; print root->data; preorder(root->left); preorder(root->right)",
+                "postorder(root): if root == NULL: return; postorder(root->left); postorder(root->right); print root->data"
             ],
             "pseudocode": "FUNCTION inorder(root):\n  IF root == NULL: RETURN\n  inorder(root.left)\n  PRINT root.data\n  inorder(root.right)"
         },
@@ -9144,29 +10834,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Tree Height",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "10 min",
+        "levelNum": 5,
+        "estimatedTime": "10 min",
         "concept": {
             "summary": "Find the height (maximum path length from root to leaf) of a binary tree.",
-            "whatIsIt": "Recursively calculates height as 1 + max(leftHeight, rightHeight).",
+            "whatIsIt": "The height of a binary tree is the number of edges (or levels) on the longest path from the root down to the deepest leaf node. Calculating height is a fundamental recursive divide-and-conquer problem used to evaluate tree balance.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Recurse",
-                    "description": "Get height of left and right subtrees. Return max + 1."
+                    "title": "Base case for empty tree",
+                    "description": "If `root == NULL`, return 0 (or -1 depending on whether height counts nodes or edges)."
+                },
+                {
+                    "step": 2,
+                    "title": "Compute left subtree height",
+                    "description": "Recursively call `leftHeight = height(root->left)`."
+                },
+                {
+                    "step": 3,
+                    "title": "Compute right subtree height",
+                    "description": "Recursively call `rightHeight = height(root->right)`."
+                },
+                {
+                    "step": 4,
+                    "title": "Combine with current root",
+                    "description": "Return `1 + max(leftHeight, rightHeight)`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Height",
-                    "definition": "Max depth of tree."
+                    "term": "Tree Height",
+                    "definition": "Length of the longest downward path from root to leaf node."
+                },
+                {
+                    "term": "Divide and Conquer Recursion",
+                    "definition": "Calculating subtree heights independently and combining with `1 + max(left, right)`."
+                },
+                {
+                    "term": "Balance Factor",
+                    "definition": "Difference between left and right subtree heights (`leftH - rightH`), used in AVL trees."
+                },
+                {
+                    "term": "Tree Depth vs Height",
+                    "definition": "Depth is distance from root to a node; height is distance from node to deepest leaf."
                 }
             ],
-            "realWorldExample": "Calculating tree depth for self-balancing AVL indexes.",
+            "realWorldExample": "Measuring tree balance in database indexes: a shallow tree requires fewer disk lookups than a tall skinny tree.",
             "timeComplexity": "O(n)",
             "spaceComplexity": "O(n)",
             "whenToUse": "Evaluating tree balance.",
             "commonMistakes": [
-                "Incorrect base case: returning 0 instead of -1 for empty trees in edge cases depending on definition."
+                "Calling `height()` multiple times inside `max()` instead of storing in variables, causing exponential O(2^n) slowdown.",
+                "Base case returning 1 instead of 0 for `NULL` node, skewing total height by +1.",
+                "Confusing node count height (root has height 1) with edge count height (root has height 0).",
+                "Stack overflow on completely unbalanced degenerate trees."
             ],
             "diagramType": "binary-tree"
         },
@@ -9240,7 +10961,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Find max depth recursively.",
             "keySteps": [
-                "Height = max(height(left), height(right)) + 1"
+                "height(root):",
+                "  If root == NULL: return 0",
+                "  leftH = height(root->left)",
+                "  rightH = height(root->right)",
+                "  return 1 + (leftH > rightH ? leftH : rightH)"
             ],
             "pseudocode": "FUNCTION height(root):\n  IF root == NULL: RETURN -1\n  RETURN max(height(root.left), height(root.right)) + 1"
         },
@@ -9252,34 +10977,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Adjacency Matrix",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "12 min",
+        "levelNum": 5,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "Represent a graph using a 2D array matrix.",
-            "whatIsIt": "A 2D array of size V x V (where V is vertices count). mat[i][j] = 1 indicates an edge exists from i to j.",
+            "whatIsIt": "An adjacency matrix represents a graph with V vertices using a 2D array `adj[V][V]`. An entry `adj[u][v] = 1` indicates an edge exists from vertex `u` to vertex `v`, providing instant O(1) edge lookups at the cost of O(V^2) memory.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Build matrix",
-                    "description": "Declare int adj[V][V] initialized to 0."
+                    "title": "Initialize matrix to zero",
+                    "description": "Declare `int adj[V][V]` and initialize all entries to 0 (no edges)."
                 },
                 {
                     "step": 2,
-                    "title": "Add edges",
-                    "description": "Set adj[u][v] = 1; (and adj[v][u] = 1 for undirected graph)."
+                    "title": "Add directed edge",
+                    "description": "For directed edge from `u` to `v`, set `adj[u][v] = 1`."
+                },
+                {
+                    "step": 3,
+                    "title": "Add undirected edge",
+                    "description": "For undirected graph, set both `adj[u][v] = 1` and `adj[v][u] = 1` symmetrically."
+                },
+                {
+                    "step": 4,
+                    "title": "Check edge existence",
+                    "description": "Query if vertices `u` and `v` are connected by checking `adj[u][v] == 1` in O(1) time."
                 }
             ],
             "keyTerms": [
                 {
                     "term": "Adjacency Matrix",
-                    "definition": "V x V binary matrix representing edge networks."
+                    "definition": "A V x V square matrix where entry (u, v) indicates the presence or weight of an edge."
+                },
+                {
+                    "term": "Symmetric Matrix",
+                    "definition": "In undirected graphs, `adj[u][v] == adj[v][u]`, making the matrix symmetric across the diagonal."
+                },
+                {
+                    "term": "O(1) Edge Lookup",
+                    "definition": "Determining whether an edge exists between any two vertices in constant time."
+                },
+                {
+                    "term": "Dense vs Sparse Graph",
+                    "definition": "Adjacency matrix is optimal for dense graphs (many edges) but wastes space on sparse graphs."
                 }
             ],
-            "realWorldExample": "Social network graph showing direct friend pairings.",
+            "realWorldExample": "Airline flight network matrix: rows and columns represent airport cities; 1 indicates a direct non-stop flight exists.",
             "timeComplexity": "O(1) edge check",
             "spaceComplexity": "O(V²)",
             "whenToUse": "Dense graphs with many edges.",
             "commonMistakes": [
-                "Wasting memory on sparse graphs."
+                "Setting only `adj[u][v] = 1` for undirected graphs instead of both `(u, v)` and `(v, u)`.",
+                "Forgetting to initialize the matrix to 0, leaving garbage values that masquerade as edges.",
+                "Index out of bounds: accessing vertex indices >= V.",
+                "Using an adjacency matrix for graphs with millions of vertices, exceeding available system RAM."
             ],
             "diagramType": null
         },
@@ -9353,7 +11104,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create a V x V grid initialized to 0, write an addEdge function to set indices to 1.",
             "keySteps": [
-                "adj[u][v] = 1"
+                "Initialize adj[V][V] = 0",
+                "addEdge(u, v, isDirected):",
+                "  adj[u][v] = 1",
+                "  if not isDirected: adj[v][u] = 1",
+                "Print matrix with row/col headers"
             ],
             "pseudocode": "FUNCTION addEdge(u, v):\n  adj[u][v] = 1\n  adj[v][u] = 1"
         },
@@ -9365,34 +11120,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Breadth First Search (BFS)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "Traverse a graph level by level from a source node using a queue.",
-            "whatIsIt": "Explores neighbors first before moving to deeper layers.",
+            "whatIsIt": "Breadth-First Search (BFS) explores a graph level-by-level starting from a source vertex. It visits all immediate neighbors first before advancing to neighbors at distance 2, 3, and so on, using a queue and visited array to find shortest paths in unweighted graphs.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Use queue and visited list",
-                    "description": "Enqueue source, mark visited."
+                    "title": "Initialize visited and queue",
+                    "description": "Declare `visited[V] = {0}` and create a FIFO queue."
                 },
                 {
                     "step": 2,
-                    "title": "Loop",
-                    "description": "Dequeue node, print, enqueue all its unvisited neighbors, marking them visited."
+                    "title": "Enqueue start vertex",
+                    "description": "Mark `visited[start] = 1` and enqueue `start`."
+                },
+                {
+                    "step": 3,
+                    "title": "Process queue",
+                    "description": "While queue is not empty, dequeue `curr` and process/print it."
+                },
+                {
+                    "step": 4,
+                    "title": "Enqueue unvisited neighbors",
+                    "description": "For each neighbor `v` of `curr`: if `!visited[v]`, mark `visited[v] = 1` and enqueue `v`."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "BFS Queue",
-                    "definition": "Stores active nodes to expand."
+                    "term": "Level-Order Exploration",
+                    "definition": "Visiting vertices strictly in increasing order of their distance from the source vertex."
+                },
+                {
+                    "term": "FIFO Queue Traversal",
+                    "definition": "Using a queue ensures vertices discovered first are expanded first."
+                },
+                {
+                    "term": "Visited Array",
+                    "definition": "A boolean tracking array preventing infinite loops in cyclic graphs."
+                },
+                {
+                    "term": "Shortest Path Guarantee",
+                    "definition": "In unweighted graphs, BFS is guaranteed to discover the shortest path in minimum edges."
                 }
             ],
-            "realWorldExample": "GPS maps finding shortest route (hop count) to nearby locations.",
+            "realWorldExample": "GPS navigation finding the fewest metro stops between two stations, or LinkedIn finding 1st, 2nd, and 3rd-degree connections.",
             "timeComplexity": "O(V + E)",
             "spaceComplexity": "O(V)",
             "whenToUse": "Finding shortest paths in unweighted graphs.",
             "commonMistakes": [
-                "Not marking nodes visited when enqueuing, causing infinite loops."
+                "Marking a vertex as visited when dequeuing instead of when enqueuing, causing duplicate enqueues and memory blowup.",
+                "Omitting the visited array check, causing infinite loops in cyclic graphs.",
+                "Not handling disconnected graph components where some vertices are unreachable from start.",
+                "Using a stack instead of a queue, which turns the search into DFS."
             ],
             "diagramType": null
         },
@@ -9466,7 +11247,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Enqueue root, mark visited. While queue is not empty, pop and add unvisited neighbors.",
             "keySteps": [
-                "Initialize queue and visited array"
+                "Initialize visited[V] = {0}, create queue",
+                "visited[start] = 1, enqueue(start)",
+                "While queue not empty:",
+                "  curr = dequeue(); print curr",
+                "  For each neighbor v of curr:",
+                "    If !visited[v]: visited[v] = 1; enqueue(v)"
             ],
             "pseudocode": "BFS(source):\n  PUSH source to Queue, MARK visited\n  WHILE Queue not empty:\n    curr = DEQUEUE\n    FOR each neighbor n of curr:\n      IF n unvisited: PUSH n to Queue, MARK visited"
         },
@@ -9478,29 +11264,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Depth First Search (DFS)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "Traverse a graph depth-wise along branches recursively using a stack.",
-            "whatIsIt": "Explores as far as possible down each branch before backtracking.",
+            "whatIsIt": "Depth-First Search (DFS) explores a graph by traversing as deep as possible along each branch before backtracking. It uses recursion (or an explicit stack) and a visited array, serving as the core algorithm for cycle detection, topological sorting, and pathfinding.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Visit and Recurse",
-                    "description": "Mark current node visited. For each unvisited neighbor, call DFS recursively."
+                    "title": "Mark current vertex visited",
+                    "description": "Set `visited[u] = 1` and print/process vertex `u`."
+                },
+                {
+                    "step": 2,
+                    "title": "Iterate adjacent neighbors",
+                    "description": "Examine all neighbors `v` connected to `u` via graph edges."
+                },
+                {
+                    "step": 3,
+                    "title": "Recurse on unvisited",
+                    "description": "If `!visited[v]`, immediately make recursive call `DFS(v)`."
+                },
+                {
+                    "step": 4,
+                    "title": "Automatic backtracking",
+                    "description": "When a vertex has no unvisited neighbors, the call stack unwinds back to previous branch points."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Backtracking",
-                    "definition": "Returning to previous nodes when a branch ends."
+                    "term": "Backtracking Exploration",
+                    "definition": "Exploring down a path until a dead end is reached, then reversing to the latest branch point."
+                },
+                {
+                    "term": "System Call Stack (LIFO)",
+                    "definition": "Using recursion relies on the call stack to remember the traversal trail."
+                },
+                {
+                    "term": "Cycle Detection",
+                    "definition": "Encountering a neighbor currently on the recursion stack indicates a cycle in the graph."
+                },
+                {
+                    "term": "Connected Component",
+                    "definition": "A subgraph in which every vertex is reachable from any other vertex via edges."
                 }
             ],
-            "realWorldExample": "Solving a maze by walking down paths and backtracking from dead ends.",
+            "realWorldExample": "Solving a maze: walk forward as far as possible down each passage; if blocked, turn around and try the next hallway.",
             "timeComplexity": "O(V + E)",
             "spaceComplexity": "O(V) recursion stack",
             "whenToUse": "Detecting cycles, finding connected components, solving mazes.",
             "commonMistakes": [
-                "Stack overflow on extremely deep graphs if recursion depth exceeds compiler limits."
+                "Missing visited check causing infinite recursive loops in graphs containing cycles.",
+                "Stack overflow on large or deep graphs due to recursive function limits.",
+                "Not traversing all vertices when the graph has multiple disconnected components.",
+                "Forgetting to pass the visited array by pointer/reference across recursive calls."
             ],
             "diagramType": null
         },
@@ -9574,7 +11391,11 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Visit node, mark visited, loop neighbors and recurse.",
             "keySteps": [
-                "DFS recursion function"
+                "DFS(u, visited):",
+                "  visited[u] = 1",
+                "  print u",
+                "  For each neighbor v of u:",
+                "    If !visited[v]: DFS(v, visited)"
             ],
             "pseudocode": "DFS(curr):\n  MARK curr visited\n  PRINT curr\n  FOR each neighbor n of curr:\n    IF n unvisited: DFS(n)"
         },
@@ -9586,33 +11407,52 @@ export const TUTOR_CURRICULUM = {
         "title": "Hash Table (Chaining)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "15 min",
+        "levelNum": 5,
+        "estimatedTime": "15 min",
         "concept": {
             "summary": "A hash table storing key-value pairs, resolving collisions by linking collided keys into a linked list at each index (chaining).",
-            "whatIsIt": "Uses a hash function to map keys to indices. If two keys hash to the same index, they are appended to a singly linked list at that index.",
+            "whatIsIt": "A hash table with separate chaining handles hash collisions by storing multiple key-value pairs that hash to the same bucket index in a linked list. If two keys produce identical hash indices, the new entry is appended to that bucket's list in O(1) time.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Hash function",
-                    "description": "index = key % table_size;"
+                    "title": "Hash function calculation",
+                    "description": "Compute bucket index using `index = key % TABLE_SIZE`."
                 },
                 {
                     "step": 2,
-                    "title": "Chain node",
-                    "description": "Insert newNode at head of linked list located at table[index]."
+                    "title": "Inspect target bucket",
+                    "description": "Access the linked list head pointer at `hashTable[index]`."
+                },
+                {
+                    "step": 3,
+                    "title": "Insert node into chain",
+                    "description": "Allocate node, set `node->data = key`, and link at head: `node->next = hashTable[index]; hashTable[index] = node`."
+                },
+                {
+                    "step": 4,
+                    "title": "Search via chain traversal",
+                    "description": "To search, compute index and traverse linked list comparing keys."
                 }
             ],
             "keyTerms": [
                 {
-                    "term": "Collision",
-                    "definition": "When different keys produce the same hash index."
+                    "term": "Hash Collision",
+                    "definition": "When two distinct keys produce the identical hash index via the hash function."
                 },
                 {
-                    "term": "Chaining",
-                    "definition": "Resolving collisions by storing elements in a linked list bucket."
+                    "term": "Separate Chaining",
+                    "definition": "Resolving collisions by attaching a linked list of collided items to each array bucket."
+                },
+                {
+                    "term": "Bucket Array",
+                    "definition": "An array of pointers where each entry points to the head of a collision chain."
+                },
+                {
+                    "term": "Load Factor (α = n / m)",
+                    "definition": "Ratio of total elements n to table size m; lower load factor maintains O(1) average lookup."
                 }
             ],
-            "realWorldExample": "Sorting files alphabetically into folders. Folder \"A\" contains a list of all files starting with \"A\".",
+            "realWorldExample": "Filing folders in a cabinet by first letter of last name: folder 'S' contains all files for Smith, Scott, and Singh.",
             "timeComplexity": {
                 "best": "O(1) search",
                 "average": "O(1) search",
@@ -9621,7 +11461,10 @@ export const TUTOR_CURRICULUM = {
             "spaceComplexity": "O(V + E)",
             "whenToUse": "Fast dictionary/indexing tables.",
             "commonMistakes": [
-                "Bad hash function distributing all elements to a single index."
+                "Not allocating node memory dynamically causing overwrites of previous entries.",
+                "Forgetting to traverse the chain to check for existing duplicate keys.",
+                "Memory leaks when deleting items from a chained bucket list without freeing nodes.",
+                "Using a poor hash function that clusters all elements into a single bucket, degrading performance to O(n)."
             ],
             "diagramType": null
         },
@@ -9695,8 +11538,10 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Create array of Node pointers. Compute index using key % tableSize. Insert node.",
             "keySteps": [
-                "array of struct Node* heads",
-                "Insert at chain head"
+                "Initialize array of Node pointers to NULL",
+                "hash(key): return key % TABLE_SIZE",
+                "insert(key): idx = hash(key); node = malloc(); node->data = key; node->next = table[idx]; table[idx] = node",
+                "search(key): idx = hash(key); curr = table[idx]; while curr: if curr->data == key: return 1; curr = curr->next; return 0"
             ],
             "pseudocode": "FUNCTION insert(key):\n  idx = hash(key)\n  insertAtHead(table[idx], key)"
         },
@@ -9708,29 +11553,60 @@ export const TUTOR_CURRICULUM = {
         "title": "Hash Table (Linear Probing)",
         "category": "Data Structures",
         "level": "advanced",
-        "levelNum": 5,"estimatedTime": "12 min",
+        "levelNum": 5,
+        "estimatedTime": "12 min",
         "concept": {
             "summary": "An open-addressing hash table resolving collisions by probing sequential array positions (index + 1) % SIZE.",
-            "whatIsIt": "If slot index is taken, check index+1, index+2, and so on until an empty slot is found.",
+            "whatIsIt": "Linear probing is an open-addressing collision resolution strategy where colliding keys search sequentially for the next available empty slot in the array using `(hash + i) % TABLE_SIZE`. All entries are stored directly in the primary array without linked lists.",
             "howItWorks": [
                 {
                     "step": 1,
-                    "title": "Probing",
-                    "description": "index = (hash(key) + i) % SIZE until empty slot found."
+                    "title": "Compute initial hash index",
+                    "description": "Calculate primary index `idx = key % TABLE_SIZE`."
+                },
+                {
+                    "step": 2,
+                    "title": "Check slot availability",
+                    "description": "If `table[idx]` is empty (-1), store key immediately."
+                },
+                {
+                    "step": 3,
+                    "title": "Probe sequentially on collision",
+                    "description": "If occupied, increment probe `i = 1, 2, 3...` and test `(idx + i) % TABLE_SIZE`."
+                },
+                {
+                    "step": 4,
+                    "title": "Wrap around and stop",
+                    "description": "Insert at first empty slot; stop search when key is found or an empty slot confirms absence."
                 }
             ],
             "keyTerms": [
                 {
+                    "term": "Open Addressing",
+                    "definition": "Storing all keys directly within the hash table array without auxiliary pointer nodes."
+                },
+                {
                     "term": "Linear Probing",
-                    "definition": "Probing consecutive array indices."
+                    "definition": "Searching consecutive slots `(h(k) + i) % m` when a collision occurs."
+                },
+                {
+                    "term": "Primary Clustering",
+                    "definition": "Tendency for occupied slots to form long contiguous blocks, increasing average search times."
+                },
+                {
+                    "term": "Tombstone Marker",
+                    "definition": "A special deleted flag (-2) allowing search probes to continue past deleted entries."
                 }
             ],
-            "realWorldExample": "Finding a parking space by parking in the first open spot next to your preferred location.",
+            "realWorldExample": "Parking a car in an assigned lot: if your assigned space is taken, you park in the very next open space down the row.",
             "timeComplexity": "O(1) average lookup",
             "spaceComplexity": "O(SIZE)",
             "whenToUse": "Small table sizes without dynamic allocations.",
             "commonMistakes": [
-                "Infinite loops when table is full and no empty slot exists."
+                "Infinite loop when probing in a completely full table without an empty slot sentinel.",
+                "Breaking search prematurely: deleting an item by setting it to empty (-1) breaks search paths for later keys; must use a tombstone.",
+                "Missing modulo wrap: index overflow without `(idx + i) % TABLE_SIZE`.",
+                "Load factor > 0.7 causing severe primary clustering and performance degradation."
             ],
             "diagramType": null
         },
@@ -9804,7 +11680,12 @@ export const TUTOR_CURRICULUM = {
         "logicHints": {
             "approach": "Wrap index around using % SIZE during linear probes.",
             "keySteps": [
-                "Find empty slot: (idx + i) % SIZE"
+                "Initialize table with -1 (empty)",
+                "insert(key): idx = key % SIZE; i = 0",
+                "  While table[(idx + i) % SIZE] != -1: i++; if i == SIZE: error full",
+                "  table[(idx + i) % SIZE] = key",
+                "search(key): idx = key % SIZE; i = 0",
+                "  While table[(idx + i) % SIZE] != -1: if table[(idx + i) % SIZE] == key: return true; i++; if i == SIZE: break; return false"
             ],
             "pseudocode": "FUNCTION insert(key):\n  i = 0\n  WHILE table[(hash(key) + i) % SIZE] is occupied:\n    i = i + 1\n  table[(hash(key) + i) % SIZE] = key"
         },
