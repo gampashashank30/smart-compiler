@@ -191,8 +191,16 @@ export default function LeaderboardPanel({ onClose, currentUser }) {
   const aboveMe = myRow ? rows.find(r => Number(r.rank) === Number(myRow.rank) - 1) : null;
   const xpGap   = myRow && aboveMe ? aboveMe.xp - myRow.xp : null;
 
-  // For podium: only our own avatar is available from client-side auth
-  const getAvatar = (row) => (row?.user_id === myId ? myAvatarUrl : null);
+  // For podium: use avatar_url returned from the leaderboard API (populated from auth.users in SQL)
+  // Falls back to currentUser avatar for the logged-in user if the SQL hasn't been updated yet
+  const getAvatar = (row) => {
+    if (!row) return null;
+    // Use the avatar_url returned by the DB function (works for ALL users after SQL update)
+    if (row.avatar_url) return row.avatar_url;
+    // Fallback: use the current user's own Google photo if it's their row
+    if (row.user_id === myId && myAvatarUrl) return myAvatarUrl;
+    return null;
+  };
 
   // Podium slots — fill with real data, pad with null for placeholders
   const podSlots = [top3[0] || null, top3[1] || null, top3[2] || null];
