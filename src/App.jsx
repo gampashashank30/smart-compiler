@@ -812,7 +812,7 @@ export default function App() {
 
       {/* Leaderboard — modal overlay, available to all logged-in users */}
       {leaderboardOpen && (
-        <LeaderboardPanel onClose={() => setLeaderboardOpen(false)} />
+        <LeaderboardPanel onClose={() => setLeaderboardOpen(false)} currentUser={user} />
       )}
 
       {/* Mobile Account Sheet */}
