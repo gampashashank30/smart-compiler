@@ -13,6 +13,7 @@ import PythonTutorPanel from './components/PythonTutorPanel.jsx';
 import JavaTutorPanel from './components/JavaTutorPanel.jsx';
 import { TutorErrorBoundary } from './components/TutorErrorBoundary.jsx';
 import AdminDashboard from './components/AdminDashboard.jsx';
+import LeaderboardPanel from './components/LeaderboardPanel.jsx';
 import { bugTrackerStore } from './bugTracker.js';
 import { compilationHistoryStore } from './compilationHistory.js';
 import {
@@ -177,6 +178,12 @@ export default function App() {
   const [adminDashboardOpen, setAdminDashboardOpen] = useState(false);
   const handleAdminToggle = useCallback(() => {
     setAdminDashboardOpen(prev => !prev);
+  }, []);
+
+  // ── Leaderboard state ──────────────────────────────────────────
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const handleLeaderboardToggle = useCallback(() => {
+    setLeaderboardOpen(prev => !prev);
   }, []);
 
   // ── Mobile Account sheet ─────────────────────────────────────────
@@ -608,6 +615,8 @@ export default function App() {
         onAdminToggle={handleAdminToggle}
         adminDashboardOpen={adminDashboardOpen}
         isAdmin={isAdmin}
+        onLeaderboardToggle={handleLeaderboardToggle}
+        leaderboardOpen={leaderboardOpen}
         user={user}
         onSignIn={signInWithGoogle}
         onSignOut={signOut}
@@ -799,6 +808,11 @@ export default function App() {
       {/* Admin Dashboard — only rendered for admin email, modal overlay */}
       {adminDashboardOpen && (
         <AdminDashboard onClose={() => setAdminDashboardOpen(false)} />
+      )}
+
+      {/* Leaderboard — modal overlay, available to all logged-in users */}
+      {leaderboardOpen && (
+        <LeaderboardPanel onClose={() => setLeaderboardOpen(false)} />
       )}
 
       {/* Mobile Account Sheet */}

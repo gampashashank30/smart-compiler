@@ -135,17 +135,22 @@ async function verifySupabaseToken(token) {
 /**
  * Record a user code run server-side via Supabase RPC.
  * Calls the `record_user_run` PostgreSQL function which atomically:
- *   - Increments total_runs in user_stats
+ *   - Increments total_runs + per-language XP in user_stats
  *   - Updates streak in user_stats
  *   - Updates last_activity_date in user_analytics
  * Uses the service role key (bypasses RLS) so the user cannot manipulate results.
  * Fire-and-forget — does not delay the compile response.
+ * @param {string} userId
+ * @param {string} userEmail
+ * @param {string} language  - 'c' | 'java' | 'python'
+ * @param {boolean} isCleanRun - true if exit code was 0 (no compile/runtime errors)
  */
-function recordUserRun(userId, userEmail) {
+function recordUserRun(userId, userEmail, language = 'c', isCleanRun = false) {
   if (!SUPABASE_URL || !userId) return;
   const bearerKey = SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
-  // Get today's date in YYYY-MM-DD format (UTC — consistent with server location)
   const today = new Date().toISOString().slice(0, 10);
+  const lang = ['c', 'java', 'python'].includes((language || '').toLowerCase())
+    ? language.toLowerCase() : 'c';
   fetch(
     `${SUPABASE_URL}/rest/v1/rpc/record_user_run`,
     {
@@ -156,9 +161,11 @@ function recordUserRun(userId, userEmail) {
         'Content-Type':  'application/json',
       },
       body: JSON.stringify({
-        p_user_id:    userId,
-        p_user_email: userEmail || '',
-        p_local_date: today,
+        p_user_id:      userId,
+        p_user_email:   userEmail || '',
+        p_local_date:   today,
+        p_language:     lang,
+        p_is_clean_run: !!isCleanRun,
       }),
     }
   ).catch(err => console.error('[recordUserRun] Failed to record run:', err.message));
@@ -724,6 +731,61 @@ app.post('/api/ws-ticket', apiLimiter, async (req, res) => {
   return res.json({ ticket: ticketId, expiresIn: 30 });
 });
 
+// ── GET /api/leaderboard ──────────────────────────────────────────────────────
+// Public endpoint — no auth required (returns only masked display names).
+// Query params:
+//   language  : 'all' | 'c' | 'java' | 'python'  (default: 'all')
+//   timeframe : 'weekly' | 'alltime'              (default: 'weekly')
+// Caches result for 60 seconds to reduce DB load.
+const _lbCache = new Map(); // key → { data, expiresAt }
+app.get('/api/leaderboard', async (req, res) => {
+  const language  = ['all','c','java','python'].includes(req.query.language)
+    ? req.query.language : 'all';
+  const timeframe = ['weekly','alltime'].includes(req.query.timeframe)
+    ? req.query.timeframe : 'weekly';
+
+  const cacheKey = `${language}:${timeframe}`;
+  const cached   = _lbCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return res.json({ data: cached.data, cached: true });
+  }
+
+  if (!SUPABASE_URL) {
+    return res.json({ data: [], cached: false });
+  }
+
+  try {
+    const bearerKey = SUPABASE_ANON_KEY || SUPABASE_SERVICE_KEY;
+    const response  = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/get_leaderboard`,
+      {
+        method:  'POST',
+        headers: {
+          'Authorization': `Bearer ${bearerKey}`,
+          'apikey':        bearerKey,
+          'Content-Type':  'application/json',
+        },
+        body: JSON.stringify({ p_language: language, p_timeframe: timeframe }),
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('[/api/leaderboard] Supabase error:', errText);
+      return res.status(502).json({ error: 'Failed to fetch leaderboard', detail: errText });
+    }
+
+    const data = await response.json();
+    _lbCache.set(cacheKey, { data, expiresAt: Date.now() + 60_000 });
+    return res.json({ data, cached: false });
+  } catch (err) {
+    console.error('[/api/leaderboard] Unexpected error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
 
 // ── POST /api/compile  (legacy batch mode) ────────────────────────────────────
 // 🔒 PROTECTED: Requires a valid Supabase JWT — unauthenticated users cannot run code.
@@ -766,9 +828,10 @@ app.post('/api/compile', compileLimiter, async (req, res) => {
       ? queue.add(() => execute(code, stdin, language))
       : execute(code, stdin, language)
     );
-    // Record the run server-side (increments total_runs and updates streak via RPC).
-    // Fire-and-forget — does not block or delay the response.
-    recordUserRun(compileUser.id, compileUser.email);
+    // Record the run server-side — pass language and whether it was a clean run.
+    // isCleanRun = exit code 0 AND no compile error flag in result.
+    const isCleanRun = result && result.exitCode === 0 && !result.compileError;
+    recordUserRun(compileUser.id, compileUser.email, language || 'c', !!isCleanRun);
     return res.json(result);
   } catch (err) {
     console.error('[/api/compile] Unexpected error:', err);

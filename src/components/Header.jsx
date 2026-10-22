@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import styles from './Header.module.css';
-import { BookOpen, Presentation, BarChart2, Clock, Bug, X, Menu, User, ChevronDown } from 'lucide-react';
+import { BookOpen, Presentation, BarChart2, Clock, Bug, X, Menu, User, ChevronDown, Trophy } from 'lucide-react';
 import { LANGUAGE_META } from '../constants.js';
 
 /**
@@ -27,6 +27,8 @@ export default function Header({
   onAdminToggle,
   adminDashboardOpen = false,
   isAdmin = false,
+  onLeaderboardToggle,
+  leaderboardOpen = false,
   user = null,
   onSignIn,
   onSignOut,
@@ -145,6 +147,19 @@ export default function Header({
           >
             <BarChart2 size={16} aria-hidden="true" />
             <span className={styles.analyticsBtnLabel}>Analytics</span>
+          </button>
+
+          {/* Leaderboard button */}
+          <button
+            id="leaderboard-toggle-btn"
+            className={`${styles.analyticsBtn} ${leaderboardOpen ? styles.analyticsBtnActive : ''}`}
+            onClick={onLeaderboardToggle}
+            aria-label="Open Leaderboard"
+            title="Leaderboard"
+            style={leaderboardOpen ? { borderColor: '#f59e0b', color: '#f59e0b', background: 'rgba(245,158,11,0.08)' } : {}}
+          >
+            <Trophy size={15} aria-hidden="true" />
+            <span className={styles.analyticsBtnLabel}>Leaderboard</span>
           </button>
 
           {/* History button */}
@@ -344,6 +359,14 @@ export default function Header({
           >
             <BarChart2 size={18} />
             <span>Analytics</span>
+          </button>
+
+          <button
+            className={`${styles.drawerActionBtn} ${leaderboardOpen ? styles.drawerActionActive : ''}`}
+            onClick={() => handleDrawerAction(onLeaderboardToggle)}
+          >
+            <Trophy size={18} />
+            <span>Leaderboard</span>
           </button>
 
           <button

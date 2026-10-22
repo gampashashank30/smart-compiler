@@ -64,11 +64,13 @@ const SUPABASE_URL     = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_U
 const SUPABASE_SVC_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
 
-function recordWsRun(userId, userEmail, language = 'c') {
+function recordWsRun(userId, userEmail, language = 'c', isCleanRun = false) {
   if (!SUPABASE_URL || !userId || userId === 'local-dev-user') return;
   const bearerKey = SUPABASE_SVC_KEY || SUPABASE_ANON_KEY;
   if (!bearerKey) return;
   const today = new Date().toISOString().slice(0, 10);
+  const lang = ['c', 'java', 'python'].includes((language || '').toLowerCase())
+    ? language.toLowerCase() : 'c';
   fetch(`${SUPABASE_URL}/rest/v1/rpc/record_user_run`, {
     method:  'POST',
     headers: {
@@ -77,10 +79,11 @@ function recordWsRun(userId, userEmail, language = 'c') {
       'Content-Type':  'application/json',
     },
     body: JSON.stringify({
-      p_user_id:    userId,
-      p_user_email: userEmail || '',
-      p_local_date: today,
-      p_language:   language,
+      p_user_id:      userId,
+      p_user_email:   userEmail || '',
+      p_local_date:   today,
+      p_language:     lang,
+      p_is_clean_run: !!isCleanRun,
     }),
   }).catch(err => console.error('[ws-executor] recordWsRun failed:', err.message));
 }
@@ -545,10 +548,13 @@ function attachWebSocketServer(httpServer) {
     }
 
     // sendDone — records the run in Supabase then sends { type:'done', ... }.
-    // Pass the active language so per-language stats are tracked correctly.
+    // isCleanRun = exitCode 0 (program completed without errors) AND not killed.
     function sendDone(payload, currentLang) {
       const u = req._wsUser;
-      if (u?.id) recordWsRun(u.id, u.email, currentLang || 'c');
+      if (u?.id) {
+        const isCleanRun = payload.exitCode === 0 && !payload.killed;
+        recordWsRun(u.id, u.email, currentLang || 'c', isCleanRun);
+      }
       send(payload);
     }
 
