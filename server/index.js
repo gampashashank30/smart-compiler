@@ -755,7 +755,7 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 
   try {
-    const bearerKey = SUPABASE_ANON_KEY || SUPABASE_SERVICE_KEY;
+    const bearerKey = SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
     const response  = await fetch(
       `${SUPABASE_URL}/rest/v1/rpc/get_leaderboard`,
       {
@@ -770,9 +770,15 @@ app.get('/api/leaderboard', async (req, res) => {
     );
 
     if (!response.ok) {
-      const errText = await response.text();
+      let errText = await response.text();
+      // Try to parse Supabase JSON error for a nicer detail message
+      let detail = errText;
+      try {
+        const parsed = JSON.parse(errText);
+        detail = parsed.message || parsed.hint || parsed.details || errText;
+      } catch (_) { /* leave as raw text */ }
       console.error('[/api/leaderboard] Supabase error:', errText);
-      return res.status(502).json({ error: 'Failed to fetch leaderboard', detail: errText });
+      return res.status(502).json({ error: 'Failed to fetch leaderboard', detail });
     }
 
     const data = await response.json();
@@ -780,7 +786,7 @@ app.get('/api/leaderboard', async (req, res) => {
     return res.json({ data, cached: false });
   } catch (err) {
     console.error('[/api/leaderboard] Unexpected error:', err.message);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', detail: err.message });
   }
 });
 
