@@ -214,3 +214,17 @@ export function highlightCode(code, lang = 'c') {
 export function highlightC(code) {
   return highlightCode(code, 'c');
 }
+
+/**
+ * Tokenize and highlight Python source code.
+ */
+export function highlightPython(code) {
+  return highlightCode(code, 'python');
+}
+
+/**
+ * Tokenize and highlight Java source code.
+ */
+export function highlightJava(code) {
+  return highlightCode(code, 'java');
+}

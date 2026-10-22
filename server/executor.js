@@ -270,17 +270,31 @@ function runDockerCommand(mountDir, command, stdin, timeoutMs) {
   });
 }
 
-// ── Wandbox fallback execution (free, no API key needed) ──────────────────────
-async function runWithWandbox(code, stdin) {
+async function runWithWandbox(code, stdin, language = 'c') {
   const startTime = Date.now();
+  let compiler = WANDBOX_COMPILER;
+  let payloadCode = code;
+  let options = 'warning,optimize';
+  let compilerRaw = '-lm';
+
+  if (language === 'python') {
+    compiler = 'cpython-3.12.7';
+    options = '';
+    compilerRaw = '';
+  } else if (language === 'java') {
+    compiler = 'openjdk-jdk-21+35';
+    payloadCode = code.replace(/\bpublic\s+class\b/g, 'class');
+    options = '';
+    compilerRaw = '';
+  }
 
   const body = {
-    compiler: WANDBOX_COMPILER,
-    code,
+    compiler,
+    code: payloadCode,
     stdin:   stdin || '',
-    options: 'warning,optimize',
-    'compiler-option-raw': '-lm',   // link math library (sin, cos, sqrt, etc.)
   };
+  if (options) body.options = options;
+  if (compilerRaw) body['compiler-option-raw'] = compilerRaw;
 
   let data;
   try {
@@ -480,7 +494,58 @@ const DANGEROUS_PATTERNS = [
  * Returns a blocked result object if dangerous, or null if safe to run.
  * Ignores content inside single-line (//) and multi-line (/* *\/) comments.
  */
-function checkDangerousCode(code) {
+function checkDangerousCode(code, language = 'c') {
+  if (language === 'python') {
+    let stripped = code.replace(/#.*/g, '');
+    stripped = stripped.replace(/"""[\s\S]*?"""/g, '').replace(/'''[\s\S]*?'''/g, '');
+    stripped = stripped.replace(/"(?:[^"\\]|\\.)*"/g, '""').replace(/'(?:[^'\\]|\\.)*'/g, "''");
+    const pyDangerous = [
+      { re: /\b(os\.system|os\.popen|os\.exec|os\.spawn|subprocess\.)/, label: 'system/subprocess' },
+      { re: /\b(__import__\s*\(\s*['"](os|subprocess|shutil)['"])/, label: 'dynamic system import' },
+      { re: /\b(shutil\.rmtree)/, label: 'shutil.rmtree' },
+    ];
+    for (const { re, label } of pyDangerous) {
+      if (re.test(stripped)) {
+        return {
+          success:      false,
+          stdout:       '',
+          stderr:       `This environment does not support \`${label}\`. System-level calls that spawn shell commands or delete system files are not allowed in this sandbox.\n\nNote: This is an intentional security restriction — not a bug in your code.`,
+          exitCode:     1,
+          signal:       null,
+          killed:       false,
+          compileError: false,
+          timeMs:       0,
+          engine:       'blocked',
+        };
+      }
+    }
+    return null;
+  }
+
+  if (language === 'java') {
+    let stripped = code.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    stripped = stripped.replace(/"(?:[^"\\]|\\.)*"/g, '""').replace(/'(?:[^'\\]|\\.)*'/g, "''");
+    const javaDangerous = [
+      { re: /\b(Runtime\.getRuntime\(\)\.exec|ProcessBuilder)\b/, label: 'Process execution' },
+    ];
+    for (const { re, label } of javaDangerous) {
+      if (re.test(stripped)) {
+        return {
+          success:      false,
+          stdout:       '',
+          stderr:       `This environment does not support \`${label}\`. Process execution is not allowed in this sandbox.\n\nNote: This is an intentional security restriction — not a bug in your code.`,
+          exitCode:     1,
+          signal:       null,
+          killed:       false,
+          compileError: false,
+          timeMs:       0,
+          engine:       'blocked',
+        };
+      }
+    }
+    return null;
+  }
+
   // Strip single-line comments
   let stripped = code.replace(/\/\/.*/g, '');
   // Strip multi-line comments
@@ -507,23 +572,138 @@ function checkDangerousCode(code) {
   return null;
 }
 
+// ── Local Python Execution ───────────────────────────────────────────────────
+let _localPythonReady = null;
+let _localPythonBin   = 'python';
+
+async function isLocalPythonReady() {
+  if (_localPythonReady !== null) return _localPythonReady;
+  for (const candidate of ['python3', 'python']) {
+    try {
+      await execFileAsync(candidate, ['--version'], { timeout: 3000 });
+      _localPythonBin   = candidate;
+      _localPythonReady = true;
+      return true;
+    } catch {
+      // try next
+    }
+  }
+  _localPythonReady = false;
+  return false;
+}
+
+async function runWithLocalPython(code, stdin) {
+  const startTime = Date.now();
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sc-py-'));
+  const pyFile = path.join(tmpDir, 'prog.py');
+
+  try {
+    fs.writeFileSync(pyFile, code, 'utf8');
+
+    let runStdout = '';
+    let runStderr = '';
+    let runExit   = 1;
+    let runKilled = false;
+    let runSignal = null;
+
+    await new Promise((resolve) => {
+      const proc = spawn(_localPythonBin, ['-u', pyFile], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: tmpDir,
+      });
+
+      if (stdin) proc.stdin.write(stdin);
+      proc.stdin.end();
+
+      const MAX_OUTPUT = 512 * 1024;
+      proc.stdout.on('data', d => {
+        if (runStdout.length < MAX_OUTPUT) runStdout += d.toString();
+      });
+      proc.stderr.on('data', d => {
+        if (runStderr.length < MAX_OUTPUT) runStderr += d.toString();
+      });
+
+      const t = setTimeout(() => {
+        runKilled = true;
+        runSignal = 'SIGKILL';
+        proc.kill('SIGKILL');
+        resolve();
+      }, EXEC_TIMEOUT_MS);
+
+      proc.on('close', (code, sig) => {
+        clearTimeout(t);
+        runExit   = code ?? 1;
+        runSignal = sig ?? null;
+        if (code === 137 || sig === 'SIGKILL') runKilled = true;
+        resolve();
+      });
+      proc.on('error', err => {
+        clearTimeout(t);
+        runStderr += `\nPython error: ${err.message}`;
+        resolve();
+      });
+    });
+
+    const isSyntaxError = runExit !== 0 && runStderr.includes('SyntaxError');
+    return {
+      success:      runExit === 0 && !runKilled,
+      stdout:       runStdout.trimEnd(),
+      stderr:       runStderr.replace(new RegExp(tmpDir.replace(/\\/g, '\\\\'), 'g'), '').trim(),
+      exitCode:     runExit,
+      signal:       runSignal,
+      killed:       runKilled,
+      compileError: isSyntaxError,
+      timeMs:       Date.now() - startTime,
+      engine:       'local-python',
+    };
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+  }
+}
+
 // ── Public API ───────────────────────────────────────────────────────────────
 /**
- * Execute C code.
+ * Execute C, Python, or Java code.
  *
- * Engine priority (permanent fix for the 24-hour docker image loss bug):
+ * For C:
  *   1. Local GCC  — always available in production (baked into Dockerfile Stage 3)
  *   2. Docker     — used only if docker socket is mounted AND gcc-runner image exists
  *   3. Wandbox    — last resort (batch mode, no interactive stdin)
  *
+ * For Python:
+ *   1. Local Python (if available)
+ *   2. Wandbox API fallback
+ *
+ * For Java:
+ *   1. Wandbox API
+ *
  * @param {string} code
  * @param {string} stdin
+ * @param {string} [language='c']
  * @returns {Promise<ExecutionResult>}
  */
-async function execute(code, stdin = '') {
+async function execute(code, stdin = '', language = 'c') {
+  const lang = (language || 'c').toLowerCase();
+
   // Block dangerous system-level calls before they reach any engine
-  const blocked = checkDangerousCode(code);
+  const blocked = checkDangerousCode(code, lang);
   if (blocked) return blocked;
+
+  if (lang === 'python') {
+    const pyReady = await isLocalPythonReady();
+    if (pyReady) {
+      try {
+        return await runWithLocalPython(code, stdin);
+      } catch (err) {
+        console.warn('[executor] Local python failed, falling back to Wandbox:', err.message);
+      }
+    }
+    return runWithWandbox(code, stdin, 'python');
+  }
+
+  if (lang === 'java') {
+    return runWithWandbox(code, stdin, 'java');
+  }
 
   // 1. Try local GCC first — always available in production container
   const localGcc = await isLocalGccReady();
@@ -546,13 +726,13 @@ async function execute(code, stdin = '') {
     ) {
       console.warn('[executor] Docker runner image missing. Falling back to Wandbox API.');
       resetDockerCache();
-      return runWithWandbox(code, stdin);
+      return runWithWandbox(code, stdin, 'c');
     }
     return result;
   }
 
   // 3. Last resort: Wandbox batch API
-  return runWithWandbox(code, stdin);
+  return runWithWandbox(code, stdin, 'c');
 }
 
 /**

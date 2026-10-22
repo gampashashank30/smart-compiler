@@ -126,11 +126,13 @@ export default function Header({
             id="ai-tutor-toggle-btn"
             className={`${styles.aiTutorBtn} ${aiTutorOpen ? styles.aiTutorBtnActive : ''}`}
             onClick={onAiTutorToggle}
-            aria-label="Open AI Tutor overlay"
-            title="AI Tutor"
+            aria-label={`Open ${selectedLanguage === 'python' ? 'Python' : selectedLanguage === 'java' ? 'Java' : 'C'} AI Tutor`}
+            title={`${selectedLanguage === 'python' ? 'Python' : selectedLanguage === 'java' ? 'Java' : 'C'} AI Tutor`}
           >
             <BookOpen size={16} aria-hidden="true" />
-            <span className={styles.aiTutorBtnLabel}>AI Tutor</span>
+            <span className={styles.aiTutorBtnLabel}>
+              {selectedLanguage === 'python' ? 'Python Tutor' : selectedLanguage === 'java' ? 'Java Tutor' : 'AI Tutor'}
+            </span>
           </button>
 
           {/* Analytics button */}
@@ -333,7 +335,7 @@ export default function Header({
             onClick={() => handleDrawerAction(onAiTutorToggle)}
           >
             <BookOpen size={18} />
-            <span>AI Tutor</span>
+            <span>{selectedLanguage === 'python' ? 'Python Tutor' : selectedLanguage === 'java' ? 'Java Tutor' : 'AI Tutor'}</span>
           </button>
 
           <button

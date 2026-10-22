@@ -9,6 +9,9 @@ import BugTrackerPanel from './components/BugTrackerPanel.jsx';
 import CompilationHistoryPanel from './components/CompilationHistoryPanel.jsx';
 import AnalyticsPanel from './components/AnalyticsPanel.jsx';
 import AiTutorPanel from './components/AiTutorPanel.jsx';
+import PythonTutorPanel from './components/PythonTutorPanel.jsx';
+import JavaTutorPanel from './components/JavaTutorPanel.jsx';
+import { TutorErrorBoundary } from './components/TutorErrorBoundary.jsx';
 import AdminDashboard from './components/AdminDashboard.jsx';
 import { bugTrackerStore } from './bugTracker.js';
 import { compilationHistoryStore } from './compilationHistory.js';
@@ -774,10 +777,24 @@ export default function App() {
         />
       )}
 
-      {/* AI Tutor Panel — full screen overlay */}
-      {aiTutorOpen && (
-        <AiTutorPanel onClose={() => setAiTutorOpen(false)} />
-      )}
+      {/* AI Tutor Panel — distinct independent panel per language (no merge) */}
+      <TutorErrorBoundary onClose={() => setAiTutorOpen(false)}>
+        {aiTutorOpen && selectedLanguage === 'python' && (
+          <PythonTutorPanel
+            onClose={() => setAiTutorOpen(false)}
+            onApplyToEditor={(code) => { setCode(code); setAiTutorOpen(false); }}
+          />
+        )}
+        {aiTutorOpen && selectedLanguage === 'java' && (
+          <JavaTutorPanel
+            onClose={() => setAiTutorOpen(false)}
+            onApplyToEditor={(code) => { setCode(code); setAiTutorOpen(false); }}
+          />
+        )}
+        {aiTutorOpen && (selectedLanguage === 'c' || !selectedLanguage) && (
+          <AiTutorPanel onClose={() => setAiTutorOpen(false)} />
+        )}
+      </TutorErrorBoundary>
 
       {/* Admin Dashboard — only rendered for admin email, modal overlay */}
       {adminDashboardOpen && (

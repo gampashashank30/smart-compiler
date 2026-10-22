@@ -668,22 +668,29 @@ function RadarChart({ byType, totalRuns, language = 'c' }) {
 }
 
 // ─── 6. Milestones ────────────────────────────────────────────────────────────
-function Milestones({ sessions, stats }) {
-  const { totalRuns, successes } = stats;
+function Milestones({ sessions, cloudStreak }) {
+  const today = toLocalDateStr(Date.now());
+  const todaySessions = sessions.filter(s => toLocalDateStr(s.timestamp) === today);
+  const totalRuns = todaySessions.length;
+  const successes = todaySessions.filter(s => {
+    const sev = getEventSeverity(s);
+    return sev === 'success' || sev === 'warning';
+  }).length;
+
   const ms = {
-    firstRun:  totalRuns >= 1,
-    ten:       totalRuns >= 10,
-    firstClean: successes >= 1,
-    fiveConsec: checkFiveConsecutiveSuccesses(sessions),
-    errorFreeDay: checkErrorFreeDay(sessions),
+    firstRun:     totalRuns >= 1,
+    ten:          totalRuns >= 10,
+    firstClean:   successes >= 1,
+    fiveConsec:   checkFiveConsecutiveSuccesses(todaySessions),
+    errorFreeDay: checkErrorFreeDay(todaySessions),
   };
-  const streak = computeStreak(sessions);
+  const streak = cloudStreak ?? computeStreak(sessions);
 
   const badges = [
-    { id: 'firstRun', emoji: '✓', label: 'First Run', desc: 'Compiled your first program', unlocked: ms.firstRun, color: '#3b82f6' },
-    { id: 'ten', emoji: '🎖️', label: '10 Compiles', desc: 'Ran 10 programs', unlocked: ms.ten, color: '#f59e0b' },
-    { id: 'firstClean', emoji: '🌟', label: 'Clean Run', desc: 'First successful execution', unlocked: ms.firstClean, color: '#059669' },
-    { id: 'fiveConsec', emoji: '🏆', label: '5 in a Row', desc: 'Five consecutive successes', unlocked: ms.fiveConsec, color: '#7c3aed' },
+    { id: 'firstRun', emoji: '✓', label: 'First Run', desc: 'Compiled a program today', unlocked: ms.firstRun, color: '#3b82f6' },
+    { id: 'ten', emoji: '🎖️', label: '10 Compiles', desc: 'Ran 10 programs today', unlocked: ms.ten, color: '#f59e0b' },
+    { id: 'firstClean', emoji: '🌟', label: 'Clean Run', desc: 'First successful execution today', unlocked: ms.firstClean, color: '#059669' },
+    { id: 'fiveConsec', emoji: '🏆', label: '5 in a Row', desc: 'Five consecutive successes today', unlocked: ms.fiveConsec, color: '#7c3aed' },
     { id: 'errorFreeDay', emoji: '💎', label: 'Error-Free Day', desc: 'All runs today successful', unlocked: ms.errorFreeDay, color: '#06b6d4' },
   ];
 
@@ -717,11 +724,25 @@ function Milestones({ sessions, stats }) {
 
 // ─── 7. Learning Velocity ─────────────────────────────────────────────────────
 function VelocityGraph({ sessions }) {
-  if (sessions.length < 2) return <div className={styles.emptySmall}>Need 2+ runs to show velocity</div>;
+  const today = toLocalDateStr(Date.now());
+  const todaySessions = sessions.filter(s => toLocalDateStr(s.timestamp) === today);
 
-  const points = sessions.map((_, i, arr) => {
+  if (todaySessions.length < 2) {
+    return (
+      <div className={styles.emptySmall}>
+        {todaySessions.length === 0
+          ? 'No runs today yet. Run code to track today’s learning velocity!'
+          : 'Need 2+ runs today to calculate learning velocity.'}
+      </div>
+    );
+  }
+
+  const points = todaySessions.map((_, i, arr) => {
     const win = arr.slice(Math.max(0, i - 4), i + 1);
-    return (win.filter(s => s.subtype === 'Successful Run').length / win.length) * 100;
+    return (win.filter(s => {
+      const sev = getEventSeverity(s);
+      return sev === 'success' || sev === 'warning';
+    }).length / win.length) * 100;
   });
 
   const W = 440, H = 90, PAD = 10;
@@ -1266,7 +1287,7 @@ export default function AnalyticsPanel({ onClose, selectedLanguage = 'c' }) {
 
               {/* 6 — Streak & Milestones */}
               <Section title="Streak & Milestones">
-                <Milestones sessions={sessions} stats={stats} />
+                <Milestones sessions={sessions} cloudStreak={cloudStats.current_streak} />
               </Section>
 
               {/* 7 — Velocity */}

@@ -79,6 +79,8 @@ const ALLOWED_ORIGINS = [
   'https://smartcompiler.maadiotsolutions.co.in',
   'http://localhost:5173',
   'http://localhost:3001',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3001',
 ];
 
 // Add specific Render external URL if configured (avoid wildcard subdomains for CORS safety)
@@ -737,7 +739,7 @@ app.post('/api/compile', compileLimiter, async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized: Invalid or expired session. Please log in again.' });
   }
 
-  const { code = '', stdin = '' } = req.body ?? {};
+  const { code = '', stdin = '', language = 'c' } = req.body ?? {};
 
   if (typeof code !== 'string' || !code.trim()) {
     return res.status(400).json({ error: 'code is required and must be a non-empty string' });
@@ -761,8 +763,8 @@ app.post('/api/compile', compileLimiter, async (req, res) => {
 
   try {
     const result = await (queue
-      ? queue.add(() => execute(code, stdin))
-      : execute(code, stdin)
+      ? queue.add(() => execute(code, stdin, language))
+      : execute(code, stdin, language)
     );
     // Record the run server-side (increments total_runs and updates streak via RPC).
     // Fire-and-forget — does not block or delay the response.

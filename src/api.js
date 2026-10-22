@@ -23,7 +23,20 @@ export async function callClaude(systemPrompt, userMessage, opts = {}) {
 
   // Attach the Supabase JWT so the server can verify the user is logged in
   const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token || '';
+  let token = session?.access_token || '';
+
+  // In local development or guest mode, fallback to mock session or dummy token so AI works without full Supabase login
+  if (!token) {
+    try {
+      const mockStr = localStorage.getItem('supabase-mock-session');
+      if (mockStr) {
+        token = JSON.parse(mockStr)?.access_token || '';
+      }
+    } catch {}
+  }
+  if (!token && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    token = 'dummy-access-token';
+  }
 
   const body = {
     systemPrompt,
@@ -270,6 +283,116 @@ export async function compileC(code, stdin = '') {
 
   const result = await response.json();
   // Backend already returns the normalised result — pass it straight through
+  return result;
+}
+
+/**
+ * Execute Python code via the smart-compiler backend.
+ *
+ * @param {string} code   - Full Python source code
+ * @param {string} stdin  - Program input (may be empty string)
+ * @returns {Promise<ExecutionResult>}
+ */
+export async function compilePython(code, stdin = '') {
+  const startTime = performance.now();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token || '';
+
+  let response;
+  try {
+    response = await fetch(COMPILE_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ code, stdin, language: 'python' }),
+    });
+  } catch (err) {
+    const msg = err.message.includes('fetch')
+      ? 'Cannot connect to the compiler server. Make sure it is running:\n  cd server && npm install && node index.js'
+      : `Network error: ${err.message}`;
+    return {
+      success: false, stdout: '', stderr: msg,
+      exitCode: -1, signal: null, killed: false,
+      compileError: false,
+      timeMs: Math.round(performance.now() - startTime),
+      engine: 'unknown',
+    };
+  }
+
+  if (!response.ok) {
+    let errorMsg = `Server error ${response.status}`;
+    try {
+      const body = await response.json();
+      errorMsg = body.message || body.error || errorMsg;
+    } catch { /* ignore parse error */ }
+
+    return {
+      success: false, stdout: '', stderr: errorMsg,
+      exitCode: -1, signal: null, killed: false,
+      compileError: false,
+      timeMs: Math.round(performance.now() - startTime),
+      engine: 'unknown',
+    };
+  }
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * Compile and execute Java code via the smart-compiler backend.
+ *
+ * @param {string} code   - Full Java source code
+ * @param {string} stdin  - Program input (may be empty string)
+ * @returns {Promise<ExecutionResult>}
+ */
+export async function compileJava(code, stdin = '') {
+  const startTime = performance.now();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token || '';
+
+  let response;
+  try {
+    response = await fetch(COMPILE_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ code, stdin, language: 'java' }),
+    });
+  } catch (err) {
+    const msg = err.message.includes('fetch')
+      ? 'Cannot connect to the compiler server. Make sure it is running:\n  cd server && npm install && node index.js'
+      : `Network error: ${err.message}`;
+    return {
+      success: false, stdout: '', stderr: msg,
+      exitCode: -1, signal: null, killed: false,
+      compileError: false,
+      timeMs: Math.round(performance.now() - startTime),
+      engine: 'unknown',
+    };
+  }
+
+  if (!response.ok) {
+    let errorMsg = `Server error ${response.status}`;
+    try {
+      const body = await response.json();
+      errorMsg = body.message || body.error || errorMsg;
+    } catch { /* ignore parse error */ }
+
+    return {
+      success: false, stdout: '', stderr: errorMsg,
+      exitCode: -1, signal: null, killed: false,
+      compileError: false,
+      timeMs: Math.round(performance.now() - startTime),
+      engine: 'unknown',
+    };
+  }
+
+  const result = await response.json();
   return result;
 }
 
