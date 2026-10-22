@@ -1,93 +1,86 @@
 /* ══════════════════════════════════════════════════════════════════════════════
-   LeaderboardPanel.module.css — Trivia / Champions board style
-   White card, coloured podium, clean table rows
+   LeaderboardPanel.module.css
+   Premium LeetCode-style leaderboard — same layout as AiTutorPanel
    ══════════════════════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 
-/* ── Backdrop ─────────────────────────────────────────────────────────────── */
+/* ── Backdrop — same as AiTutor ─────────────────────────────────────────────── */
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.35);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 5000;
-  animation: fadeIn 0.18s ease;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1999;
+  animation: fadeIn 280ms ease-out forwards;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* ── Panel — full screen below header (same pattern as AdminDashboard) ─────── */
+/* ── Panel — same as AiTutor: inset:20px ────────────────────────────────────── */
 .panel {
   position: fixed;
-  top: 66px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5001;
-  width: min(1080px, calc(100vw - 32px));
-  height: calc(100vh - 82px);
+  inset: 20px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  z-index: 2000;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: 0 8px 48px rgba(15, 23, 42, 0.13), 0 2px 12px rgba(15, 23, 42, 0.06);
-  overflow: hidden;
-  animation: slideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  animation: scaleUp 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-@keyframes slideUp {
-  from { opacity: 0; transform: translateX(-50%) translateY(14px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
 
-/* ── Header bar ───────────────────────────────────────────────────────────── */
-.header {
+/* ── Top header bar ──────────────────────────────────────────────────────────── */
+.topBar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
-  border-bottom: 1px solid #f3f4f6;
+  gap: 16px;
+  padding: 0 28px;
+  height: 60px;
+  border-bottom: 1px solid #f1f5f9;
   flex-shrink: 0;
   background: #fff;
 }
 
-.headerLeft {
+.topBarLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.trophyIcon { color: #f59e0b; flex-shrink: 0; }
+
+.topBarTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Segmented control for This Week / All Time */
+.segmented {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
   flex-shrink: 0;
 }
-
-.trophyIcon { color: #f59e0b; }
-
-.headerTitle {
-  font-size: 18px;
-  font-weight: 800;
-  color: #111827;
-  letter-spacing: -0.01em;
-}
-
-/* Timeframe tabs — pill style */
-.timeTabs {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-  justify-content: center;
-  background: #f3f4f6;
-  border-radius: 10px;
-  padding: 4px;
-  max-width: 300px;
-  margin: 0 auto;
-}
-
-.timeTab {
-  flex: 1;
-  padding: 6px 14px;
+.segBtn {
+  padding: 6px 18px;
   border: none;
   border-radius: 7px;
   background: transparent;
-  color: #6b7280;
+  color: #64748b;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -95,79 +88,30 @@
   font-family: inherit;
   white-space: nowrap;
 }
-.timeTab:hover { color: #374151; }
-.timeTabActive {
-  background: #ffffff;
-  color: #111827;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+.segBtn:hover { color: #334155; }
+.segBtnActive {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
 }
 
-.headerRight {
+/* Language pills — right side of topbar */
+.langPills {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.refreshBtn {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  color: #6b7280;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+  gap: 6px;
+  flex: 1;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-.refreshBtn:hover {
-  background: #f3f4f6;
-  color: #374151;
-  transform: rotate(90deg);
-}
-
-.closeBtn {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  color: #6b7280;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-.closeBtn:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #ef4444;
-}
-
-/* ── Language filter pills ────────────────────────────────────────────────── */
-.langBar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  border-bottom: 1px solid #f3f4f6;
-  flex-shrink: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
-.langBar::-webkit-scrollbar { display: none; }
+.langPills::-webkit-scrollbar { display: none; }
 
-.langPill {
+.pill {
   padding: 5px 14px;
   border-radius: 20px;
-  border: 1.5px solid #e5e7eb;
-  background: #fff;
-  color: #6b7280;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
+  color: #64748b;
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -176,63 +120,83 @@
   flex-shrink: 0;
   font-family: inherit;
 }
-.langPill:hover {
-  border-color: #d1d5db;
-  color: #374151;
-  background: #f9fafb;
-}
-.langPillActive {
-  background: #111827 !important;
-  border-color: #111827 !important;
-  color: #ffffff !important;
-}
+.pill:hover { border-color: #cbd5e1; color: #334155; background: #f8fafc; }
+.pillActive  { background: #0f172a !important; border-color: #0f172a !important; color: #fff !important; }
 
-/* ── XP rule strip ────────────────────────────────────────────────────────── */
-.xpStrip {
+.topBarActions {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 24px;
-  background: #fffbeb;
-  border-bottom: 1px solid #fde68a;
+  flex-shrink: 0;
+  min-width: 80px;
+  justify-content: flex-end;
+}
+
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.iconBtn:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+.iconBtnClose:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+
+/* ── XP info banner ──────────────────────────────────────────────────────────── */
+.xpBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 28px;
+  background: linear-gradient(90deg, #fffbeb 0%, #fefce8 100%);
+  border-bottom: 1px solid #fef08a;
   font-size: 12.5px;
   color: #78716c;
   flex-shrink: 0;
   flex-wrap: wrap;
 }
-.xpStrip strong { color: #16a34a; font-weight: 700; }
-.dot { color: #d1d5db; }
+.xpBanner strong { color: #15803d; font-weight: 700; }
+.xpSep { color: #d4d4d4; }
 
-/* ── Scrollable body ──────────────────────────────────────────────────────── */
+/* ── Body — scrolls ─────────────────────────────────────────────────────────── */
 .body {
   flex: 1;
   overflow-y: auto;
-  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
   scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
+  scrollbar-color: #e2e8f0 transparent;
 }
 .body::-webkit-scrollbar { width: 5px; }
-.body::-webkit-scrollbar-track { background: transparent; }
-.body::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+.body::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
-/* ── State boxes ──────────────────────────────────────────────────────────── */
+/* ── State boxes ─────────────────────────────────────────────────────────────── */
 .stateBox {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 64px 32px;
+  gap: 14px;
+  padding: 60px 32px;
   text-align: center;
 }
-.errorIcon { font-size: 48px; }
-.errorTitle { font-size: 16px; font-weight: 700; color: #374151; margin: 0; }
-.errorSub   { font-size: 13px; color: #9ca3af; margin: 0; max-width: 360px; line-height: 1.5; }
+.stateEmoji { font-size: 52px; }
+.stateTitle { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0; }
+.stateSub   { font-size: 14px; color: #94a3b8; margin: 0; max-width: 360px; line-height: 1.6; }
 
 .spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid #e5e7eb;
+  width: 38px;
+  height: 38px;
+  border: 3px solid #f1f5f9;
   border-top-color: #6366f1;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -240,7 +204,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .retryBtn {
-  padding: 9px 22px;
+  padding: 10px 24px;
   background: #6366f1;
   border: none;
   border-radius: 10px;
@@ -249,57 +213,90 @@
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   box-shadow: 0 2px 8px rgba(99,102,241,0.3);
 }
-.retryBtn:hover { background: #4f46e5; transform: translateY(-1px); }
+.retryBtn:hover { background: #4f46e5; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
 
-/* ── Podium section ───────────────────────────────────────────────────────── */
-.podiumWrap {
-  background: linear-gradient(180deg, #f0f4ff 0%, #f9fafb 100%);
-  padding: 28px 32px 0;
-  border-bottom: 1px solid #e5e7eb;
+/* ── Main layout: left podium, right table ─────────────────────────────────── */
+.mainLayout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
+/* ── LEFT: Podium panel ──────────────────────────────────────────────────────── */
+.podiumPanel {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #fafbff 0%, #f0f4ff 50%, #f8fafc 100%);
+  border-right: 1px solid #f1f5f9;
+  padding: 32px 20px 0;
+  overflow: hidden;
+}
+
+.podiumTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* Three podium cards: silver, gold, bronze from left to right */
 .podium {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 16px;
-  max-width: 600px;
-  margin: 0 auto;
+  gap: 8px;
+  flex: 1;
 }
 
-/* Individual podium card */
-.podiumCard {
+/* Individual card */
+.podCard {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex: 1;
-  min-width: 120px;
-  max-width: 180px;
-  position: relative;
 }
 
-.podiumCenter {
-  /* Gold card is slightly taller via pedestal height */
-}
+.podCardGold   { order: 2; }
+.podCardSilver { order: 1; }
+.podCardBronze { order: 3; }
 
-.crown {
-  font-size: 24px;
+/* Crown above gold */
+.crownWrap {
+  font-size: 28px;
   line-height: 1;
-  animation: crownFloat 2.4s ease-in-out infinite;
+  animation: float 3s ease-in-out infinite;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-@keyframes crownFloat {
-  0%,100% { transform: translateY(0) rotate(-4deg); }
-  50%      { transform: translateY(-5px) rotate(4deg); }
+.crownPlaceholder { min-height: 36px; }
+@keyframes float {
+  0%, 100% { transform: translateY(0);   }
+  50%       { transform: translateY(-6px); }
 }
 
-/* Avatar components */
+/* Avatar */
+.podAvatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .avatarImg {
   object-fit: cover;
-  flex-shrink: 0;
+  border-radius: 50%;
+  display: block;
 }
 .avatarCircle {
   border-radius: 50%;
@@ -309,182 +306,235 @@
   font-weight: 800;
   color: #fff;
   flex-shrink: 0;
-  letter-spacing: 0.01em;
+  font-family: inherit;
 }
 
-/* XP badge that sits below the avatar */
-.xpBadge {
-  font-size: 13px;
+/* XP chip below the avatar */
+.xpChip {
+  font-size: 12px;
   font-weight: 800;
-  padding: 2px 12px;
+  padding: 2px 11px;
   border-radius: 20px;
+  border-width: 2px;
+  border-style: solid;
   letter-spacing: 0.01em;
 }
+.xpChipGold   { background: #fffbeb; border-color: #fde68a; color: #d97706; }
+.xpChipSilver { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+.xpChipBronze { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
 
-.podiumName {
-  font-size: 13px;
+.podName {
+  font-size: 12.5px;
   font-weight: 700;
-  color: #111827;
+  color: #1e293b;
   text-align: center;
-  line-height: 1.2;
   word-break: break-word;
+  line-height: 1.3;
 }
 
-.podiumStreak {
+.podStreak {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #f97316;
 }
 
+/* Podium pedestal block */
 .pedestal {
   width: 100%;
-  border-radius: 8px 8px 0 0;
+  border-radius: 10px 10px 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  padding: 10px 6px;
+  position: relative;
+  overflow: hidden;
 }
-.pedestalMedal { font-size: 20px; }
+.pedestalGold   { background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%); height: 96px; }
+.pedestalSilver { background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 100%); height: 70px; }
+.pedestalBronze { background: linear-gradient(180deg, #fed7aa 0%, #f97316 100%); height: 52px; }
 
-/* ── Section label ("Your Performance" row) ──────────────────────────────── */
-.sectionLabel {
+.pedestalMedal { font-size: 22px; }
+.pedestalRank  {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.02em;
+}
+
+/* Placeholder podium card (empty slot) */
+.podPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.placeholderCircle {
+  border-radius: 50%;
+  border: 2.5px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 18px;
+  background: #f8fafc;
+}
+
+.placeholderText {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ── RIGHT: Ranked list ──────────────────────────────────────────────────────── */
+.rankPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.rankPanelHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 24px 8px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-.sectionTag {
-  background: #eff6ff;
-  color: #3b82f6;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 10px;
-  border-radius: 20px;
-  border: 1px solid #bfdbfe;
-  text-transform: none;
-  letter-spacing: 0;
+  padding: 16px 28px 12px;
+  flex-shrink: 0;
 }
 
-/* ── Table ────────────────────────────────────────────────────────────────── */
-.table {
-  margin: 0 16px 16px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-
-.tableHeader {
-  display: grid;
-  grid-template-columns: 52px 1fr 90px 90px 120px;
-  padding: 10px 16px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 10.5px;
+.rankPanelTitle {
+  font-size: 13px;
   font-weight: 700;
-  color: #9ca3af;
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
+.rankTag {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #eff6ff;
+  color: #3b82f6;
+  border: 1px solid #bfdbfe;
+}
+
+/* Table header */
+.tableHead {
+  display: grid;
+  grid-template-columns: 60px 1fr 100px 90px 130px;
+  padding: 8px 28px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+/* Scrollable rows */
+.rowsScroll {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+.rowsScroll::-webkit-scrollbar { width: 4px; }
+.rowsScroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
 .tableRow {
   display: grid;
-  grid-template-columns: 52px 1fr 90px 90px 120px;
+  grid-template-columns: 60px 1fr 100px 90px 130px;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 13px 28px;
+  border-bottom: 1px solid #f8fafc;
   transition: background 0.12s ease;
-  background: #fff;
+  cursor: default;
 }
-.tableRow:last-child { border-bottom: none; }
-.tableRow:hover { background: #f9fafb; }
-
+.tableRow:hover { background: #fafbff; }
 .tableRowMe {
-  background: linear-gradient(90deg, #eff6ff 0%, #fff 100%) !important;
+  background: linear-gradient(90deg, #f0f4ff 0%, #fafbff 100%) !important;
   border-left: 3px solid #6366f1;
 }
 
-/* Columns */
-.colRank {
-  display: flex;
-  align-items: center;
-}
+/* Rank number */
 .rankNum {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  color: #9ca3af;
+  color: #94a3b8;
 }
+.rankNum4 { color: #0f172a; }
 
-.colName {
+/* User col */
+.userCol {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
-.nameBlock {
+.userInfo {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
-.nameText {
-  font-size: 13.5px;
+.userName {
+  font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.youBadge {
+.youTag {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   background: #6366f1;
   color: #fff;
   padding: 1px 6px;
   border-radius: 4px;
-  width: fit-content;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
 }
 
-.colStat {
+/* Score col */
+.scoreCol {
   display: flex;
   flex-direction: column;
   gap: 1px;
 }
-.scoreVal {
-  font-size: 14px;
-  font-weight: 800;
-  color: #111827;
-}
-.scoreLabel {
-  font-size: 10px;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.streakVal {
+.scoreVal   { font-size: 15px; font-weight: 800; color: #0f172a; }
+.scoreLabel { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Streak col */
+.streakCol {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 13px;
+  gap: 4px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #f97316;
 }
 
-.colBadges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
+/* Lang badges */
+.badgesCol { display: flex; flex-wrap: wrap; gap: 4px; }
 .langBadge {
   font-size: 10.5px;
   font-weight: 700;
@@ -494,45 +544,59 @@
   white-space: nowrap;
 }
 
-/* ── Sticky "Your Position" bar ───────────────────────────────────────────── */
+/* Empty row panel */
+.emptyRows {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 48px;
+  text-align: center;
+}
+
+/* ── Sticky "Your Position" bar ──────────────────────────────────────────────── */
 .stickyBar {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
-  padding: 12px 24px;
-  background: #1f2937;
-  border-top: 3px solid #6366f1;
-  font-size: 13px;
-  color: #f9fafb;
+  gap: 6px 12px;
+  padding: 13px 28px;
+  background: #0f172a;
+  border-top: 2px solid #6366f1;
+  font-size: 13.5px;
+  color: #f1f5f9;
   flex-shrink: 0;
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
 }
-.stickyRank  { font-weight: 900; font-size: 15px; color: #fbbf24; }
-.stickyName  { font-weight: 600; color: #a5b4fc; }
-.stickyXp    { font-weight: 800; color: #4ade80; }
-.stickyGap   { font-size: 12px; color: #9ca3af; }
-.stickyGap strong { color: #fb923c; font-weight: 800; }
+.stickyBar .stickyRank { font-weight: 900; font-size: 15px; color: #fbbf24; }
+.stickyBar .stickyName { font-weight: 600; color: #a5b4fc; }
+.stickyBar .stickyXp   { font-weight: 800; color: #4ade80; }
+.stickyBar .stickyGap  { font-size: 12.5px; color: #64748b; }
+.stickyBar .stickyGap strong { color: #fb923c; font-weight: 800; }
 
-/* ── Responsive ───────────────────────────────────────────────────────────── */
-@media (max-width: 700px) {
-  .panel {
-    width: calc(100vw - 16px);
-    height: calc(100vh - 76px);
-    top: 60px;
-    border-radius: 12px;
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 820px) {
+  .panel { inset: 10px; border-radius: 14px; }
+  .mainLayout { flex-direction: column; }
+  .podiumPanel {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 20px 16px 0;
+    max-height: 280px;
   }
-  .header { padding: 12px 16px; }
-  .langBar, .sectionLabel { padding-left: 14px; padding-right: 14px; }
-  .table { margin: 0 10px 14px; }
-  .tableHeader,
+  .tableHead,
   .tableRow {
-    grid-template-columns: 42px 1fr 70px 70px;
+    grid-template-columns: 48px 1fr 80px 80px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
-  /* Hide language badges column on very small screens */
-  .tableHeader > :last-child,
-  .tableRow > .colBadges { display: none; }
-  .podiumWrap { padding: 20px 16px 0; }
-  .stickyBar { padding: 10px 14px; }
-  .xpStrip   { padding: 8px 14px; }
+  .tableHead > :last-child,
+  .tableRow > .badgesCol { display: none; }
+  .topBar  { padding: 0 16px; gap: 10px; }
+  .xpBanner, .rankPanelHeader { padding-left: 16px; padding-right: 16px; }
+  .stickyBar { padding: 11px 16px; }
 }

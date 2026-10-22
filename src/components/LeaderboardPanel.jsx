@@ -1,35 +1,16 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Trophy, Flame, RefreshCw, Zap } from 'lucide-react';
 import { supabase } from '../supabaseClient.js';
 import styles from './LeaderboardPanel.module.css';
 
-// ── Language config ───────────────────────────────────────────────────────────
+/* ── Constants ────────────────────────────────────────────────────────────── */
 const LANG_COLORS = { c: '#3b82f6', java: '#f97316', python: '#10b981' };
 const LANG_LABELS = { c: 'C', java: 'Java', python: 'Python' };
 
-function LangBadge({ lang }) {
-  const key = lang.toLowerCase();
-  return (
-    <span className={styles.langBadge} style={{ background: LANG_COLORS[key] || '#6b7280' }}>
-      {LANG_LABELS[key] || lang}
-    </span>
-  );
-}
-
-function getBadges(row) {
-  if (!row.runs_by_lang) return [];
-  const badges = [];
-  if ((row.runs_by_lang.c      || 0) > 0) badges.push('c');
-  if ((row.runs_by_lang.java   || 0) > 0) badges.push('java');
-  if ((row.runs_by_lang.python || 0) > 0) badges.push('python');
-  return badges;
-}
-
-// ── Avatar: Google photo if available, else styled initial circle ────────────
 const AVATAR_PALETTE = [
-  '#6366f1','#f59e0b','#10b981','#3b82f6',
-  '#ec4899','#f97316','#14b8a6','#a855f7',
-  '#ef4444','#06b6d4',
+  '#6366f1','#0ea5e9','#10b981','#f59e0b',
+  '#ec4899','#f97316','#14b8a6','#8b5cf6',
+  '#ef4444','#06b6d4','#84cc16','#a78bfa',
 ];
 
 function getColor(name = '') {
@@ -38,36 +19,51 @@ function getColor(name = '') {
   return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
 }
 
-function Avatar({ name = '?', avatarUrl, size = 40, ring = '' }) {
-  const [imgError, setImgError] = useState(false);
+/* ── Avatar component ─────────────────────────────────────────────────────── */
+function Avatar({ name = '?', avatarUrl, size = 40, ringClass = '' }) {
+  const [imgErr, setImgErr] = useState(false);
   const letter = name[0]?.toUpperCase() || '?';
   const color  = getColor(name);
 
-  const ringStyle = ring === 'gold'   ? { boxShadow: `0 0 0 3px #f59e0b, 0 0 0 5px #fde68a` }
-                  : ring === 'silver' ? { boxShadow: `0 0 0 3px #9ca3af, 0 0 0 5px #e5e7eb` }
-                  : ring === 'bronze' ? { boxShadow: `0 0 0 3px #f97316, 0 0 0 5px #fed7aa` }
-                  : {};
+  const shared = {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    flexShrink: 0,
+  };
 
-  if (avatarUrl && !imgError) {
+  // Ring styles via inline (gold/silver/bronze)
+  const rings = {
+    gold:   { boxShadow: '0 0 0 3px #f59e0b, 0 0 0 6px rgba(245,158,11,0.2)' },
+    silver: { boxShadow: '0 0 0 3px #94a3b8, 0 0 0 6px rgba(148,163,184,0.2)' },
+    bronze: { boxShadow: '0 0 0 3px #f97316, 0 0 0 6px rgba(249,115,22,0.2)' },
+    '':     {},
+  };
+
+  if (avatarUrl && !imgErr) {
     return (
       <img
         src={avatarUrl}
         alt={name}
         className={styles.avatarImg}
-        style={{ width: size, height: size, borderRadius: '50%', ...ringStyle }}
-        onError={() => setImgError(true)}
+        style={{ ...shared, ...rings[ringClass] }}
+        onError={() => setImgErr(true)}
       />
     );
   }
-
   return (
     <div
       className={styles.avatarCircle}
       style={{
-        width: size, height: size,
+        ...shared,
         background: color,
-        fontSize: Math.round(size * 0.38),
-        ...ringStyle,
+        fontSize: Math.round(size * 0.39),
+        fontWeight: 800,
+        color: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...rings[ringClass],
       }}
     >
       {letter}
@@ -75,46 +71,83 @@ function Avatar({ name = '?', avatarUrl, size = 40, ring = '' }) {
   );
 }
 
-// ── Podium card (top 3) ───────────────────────────────────────────────────────
-function PodiumCard({ row, position, avatarUrl }) {
-  const isGold   = position === 0;
-  const isSilver = position === 1;
-  const isBronze = position === 2;
+/* ── Language badge ───────────────────────────────────────────────────────── */
+function LangBadge({ lang }) {
+  const key = lang.toLowerCase();
+  return (
+    <span className={styles.langBadge} style={{ background: LANG_COLORS[key] || '#64748b' }}>
+      {LANG_LABELS[key] || lang}
+    </span>
+  );
+}
 
-  const xpColor    = isGold ? '#f59e0b' : isSilver ? '#9ca3af' : '#f97316';
-  const xpBg       = isGold ? '#fffbeb' : isSilver ? '#f3f4f6' : '#fff7ed';
-  const xpBorder   = isGold ? '#fde68a' : isSilver ? '#e5e7eb' : '#fed7aa';
-  const pedestalH  = isGold ? 90 : isSilver ? 65 : 50;
-  const pedestalBg = isGold
-    ? 'linear-gradient(180deg,#fde68a,#f59e0b)'
-    : isSilver
-    ? 'linear-gradient(180deg,#e5e7eb,#9ca3af)'
-    : 'linear-gradient(180deg,#fed7aa,#f97316)';
-  const ring = isGold ? 'gold' : isSilver ? 'silver' : 'bronze';
-  const avatarSize = isGold ? 64 : 52;
-  const medals     = ['🥇','🥈','🥉'];
+function getBadges(row) {
+  if (!row.runs_by_lang) return [];
+  return ['c','java','python'].filter(k => (row.runs_by_lang[k] || 0) > 0);
+}
+
+/* ── Podium card (real player) ────────────────────────────────────────────── */
+function PodCard({ row, pos, avatarUrl }) {
+  // pos: 0=gold, 1=silver, 2=bronze
+  const cfg = [
+    { ring: 'gold',   chipCls: styles.xpChipGold,   pedestalCls: styles.pedestalGold,   medal: '🥇', cardCls: styles.podCardGold,   size: 64 },
+    { ring: 'silver', chipCls: styles.xpChipSilver, pedestalCls: styles.pedestalSilver, medal: '🥈', cardCls: styles.podCardSilver, size: 52 },
+    { ring: 'bronze', chipCls: styles.xpChipBronze, pedestalCls: styles.pedestalBronze, medal: '🥉', cardCls: styles.podCardBronze, size: 48 },
+  ][pos];
 
   return (
-    <div className={`${styles.podiumCard} ${isGold ? styles.podiumCenter : ''}`}>
-      {isGold && <div className={styles.crown}>👑</div>}
-      <Avatar name={row.display_name} avatarUrl={avatarUrl} size={avatarSize} ring={ring} />
-      {/* XP badge overlaid on avatar */}
-      <div className={styles.xpBadge} style={{ background: xpBg, border: `2px solid ${xpBorder}`, color: xpColor }}>
-        {row.xp}
+    <div className={`${styles.podCard} ${cfg.cardCls}`}>
+      {pos === 0
+        ? <div className={styles.crownWrap}>👑</div>
+        : <div className={styles.crownPlaceholder} />}
+
+      <div className={styles.podAvatar}>
+        <Avatar name={row.display_name} avatarUrl={avatarUrl} size={cfg.size} ringClass={cfg.ring} />
       </div>
-      <div className={styles.podiumName}>{row.display_name}</div>
-      <div className={styles.podiumStreak}>
-        <Flame size={12} style={{ color: '#f97316' }} /> {row.current_streak}d
+
+      <div className={`${styles.xpChip} ${cfg.chipCls}`}>{row.xp} XP</div>
+      <div className={styles.podName}>{row.display_name}</div>
+      <div className={styles.podStreak}>
+        <Flame size={11} style={{ color: '#f97316' }} />
+        {row.current_streak}d
       </div>
-      {/* Pedestal */}
-      <div className={styles.pedestal} style={{ height: pedestalH, background: pedestalBg }}>
-        <span className={styles.pedestalMedal}>{medals[position]}</span>
+      <div className={`${styles.pedestal} ${cfg.pedestalCls}`}>
+        <span className={styles.pedestalMedal}>{cfg.medal}</span>
+        <span className={styles.pedestalRank}>#{row.rank}</span>
       </div>
     </div>
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+/* ── Placeholder podium slot (empty) ─────────────────────────────────────── */
+function PodPlaceholder({ pos }) {
+  const sizes  = [64, 52, 48];
+  const labels = ['1st Place', '2nd Place', '3rd Place'];
+  const clses  = [styles.podCardGold, styles.podCardSilver, styles.podCardBronze];
+  const pCls   = [styles.pedestalGold, styles.pedestalSilver, styles.pedestalBronze];
+  const medals = ['🥇','🥈','🥉'];
+
+  return (
+    <div className={`${styles.podPlaceholder} ${clses[pos]}`}>
+      {pos === 0
+        ? <div className={styles.crownWrap}>👑</div>
+        : <div className={styles.crownPlaceholder} />}
+      <div
+        className={styles.placeholderCircle}
+        style={{ width: sizes[pos], height: sizes[pos], fontSize: sizes[pos] * 0.36 }}
+      >
+        ?
+      </div>
+      <div className={styles.placeholderText}>{labels[pos]}</div>
+      <div className={styles.placeholderText} style={{ color: '#cbd5e1', fontSize: 11 }}>Be the first!</div>
+      <div className={`${styles.pedestal} ${pCls[pos]}`} style={{ opacity: 0.4 }}>
+        <span className={styles.pedestalMedal}>{medals[pos]}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main panel ───────────────────────────────────────────────────────────── */
 export default function LeaderboardPanel({ onClose, currentUser }) {
   const [language,  setLanguage]  = useState('all');
   const [timeframe, setTimeframe] = useState('weekly');
@@ -122,8 +155,6 @@ export default function LeaderboardPanel({ onClose, currentUser }) {
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState(null);
 
-  // Map user_id → avatar_url for Google users (from Supabase auth)
-  // We can only get the current user's own avatar reliably from client-side
   const myId        = currentUser?.id || null;
   const myAvatarUrl = currentUser?.user_metadata?.avatar_url || null;
 
@@ -131,7 +162,7 @@ export default function LeaderboardPanel({ onClose, currentUser }) {
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch(`/api/leaderboard?language=${language}&timeframe=${timeframe}`);
+      const res = await fetch(`/api/leaderboard?language=${language}&timeframe=${timeframe}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.detail || body.error || `Error ${res.status}`);
@@ -139,7 +170,7 @@ export default function LeaderboardPanel({ onClose, currentUser }) {
       const json = await res.json();
       setRows(Array.isArray(json.data) ? json.data : []);
     } catch (err) {
-      setError(err.message || 'Failed to load leaderboard');
+      setError(err.message || 'Failed to load');
       setRows([]);
     } finally {
       setLoading(false);
@@ -160,195 +191,210 @@ export default function LeaderboardPanel({ onClose, currentUser }) {
   const aboveMe = myRow ? rows.find(r => Number(r.rank) === Number(myRow.rank) - 1) : null;
   const xpGap   = myRow && aboveMe ? aboveMe.xp - myRow.xp : null;
 
-  // For podium avatars — only current user's avatar is available client-side
-  const getAvatar = (row) => row.user_id === myId ? myAvatarUrl : null;
+  // For podium: only our own avatar is available from client-side auth
+  const getAvatar = (row) => (row?.user_id === myId ? myAvatarUrl : null);
+
+  // Podium slots — fill with real data, pad with null for placeholders
+  const podSlots = [top3[0] || null, top3[1] || null, top3[2] || null];
+
+  // Language active pill class
+  const pillClass = (key) =>
+    `${styles.pill} ${language === key ? styles.pillActive : ''}`;
 
   return (
     <>
       <div className={styles.backdrop} onClick={onClose} aria-hidden="true" />
       <div className={styles.panel} role="dialog" aria-label="Leaderboard" aria-modal="true">
 
-        {/* ── Header ── */}
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
+        {/* ── Top bar ── */}
+        <div className={styles.topBar}>
+          <div className={styles.topBarLeft}>
             <Trophy size={20} className={styles.trophyIcon} />
-            <span className={styles.headerTitle}>Champions</span>
+            <span className={styles.topBarTitle}>Leaderboard</span>
           </div>
 
-          {/* Timeframe tabs */}
-          <div className={styles.timeTabs}>
+          {/* Segmented timeframe toggle */}
+          <div className={styles.segmented}>
             <button
-              className={`${styles.timeTab} ${timeframe === 'weekly'  ? styles.timeTabActive : ''}`}
+              className={`${styles.segBtn} ${timeframe === 'weekly'  ? styles.segBtnActive : ''}`}
               onClick={() => setTimeframe('weekly')}
             >
               This Week
             </button>
             <button
-              className={`${styles.timeTab} ${timeframe === 'alltime' ? styles.timeTabActive : ''}`}
+              className={`${styles.segBtn} ${timeframe === 'alltime' ? styles.segBtnActive : ''}`}
               onClick={() => setTimeframe('alltime')}
             >
               All Time
             </button>
           </div>
 
-          <div className={styles.headerRight}>
-            <button className={styles.refreshBtn} onClick={fetchLeaderboard} title="Refresh">
+          {/* Language pills */}
+          <div className={styles.langPills}>
+            {[
+              { key:'all', label:'All' },
+              { key:'c',   label:'C' },
+              { key:'java',label:'Java' },
+              { key:'python', label:'Python' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                className={pillClass(key)}
+                style={language === key && key !== 'all'
+                  ? { background: LANG_COLORS[key], borderColor: LANG_COLORS[key], color: '#fff' }
+                  : {}}
+                onClick={() => setLanguage(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className={styles.topBarActions}>
+            <button className={styles.iconBtn} onClick={fetchLeaderboard} title="Refresh">
               <RefreshCw size={14} />
             </button>
-            <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+            <button className={`${styles.iconBtn} ${styles.iconBtnClose}`} onClick={onClose} aria-label="Close">
               <X size={16} />
             </button>
           </div>
         </div>
 
-        {/* ── Language pills ── */}
-        <div className={styles.langBar}>
-          {[
-            { key: 'all',    label: 'All Languages', emoji: '🌐' },
-            { key: 'c',      label: 'C',             emoji: '⚙️' },
-            { key: 'java',   label: 'Java',          emoji: '☕' },
-            { key: 'python', label: 'Python',        emoji: '🐍' },
-          ].map(({ key, label, emoji }) => (
-            <button
-              key={key}
-              className={`${styles.langPill} ${language === key ? styles.langPillActive : ''}`}
-              style={language === key && key !== 'all'
-                ? { background: LANG_COLORS[key], borderColor: LANG_COLORS[key], color: '#fff' }
-                : {}}
-              onClick={() => setLanguage(key)}
-            >
-              {emoji} {label}
-            </button>
-          ))}
-        </div>
-
-        {/* ── XP rule strip ── */}
-        <div className={styles.xpStrip}>
-          <Zap size={12} style={{ color: '#f59e0b', flexShrink: 0 }} />
+        {/* ── XP banner ── */}
+        <div className={styles.xpBanner}>
+          <Zap size={12} style={{ color: '#f59e0b' }} />
           <span>✅ Clean Run <strong>+10 XP</strong></span>
-          <span className={styles.dot}>·</span>
+          <span className={styles.xpSep}>·</span>
           <span>🔥 Daily Streak <strong>+20 XP</strong> per active day</span>
         </div>
 
-        {/* ── Body ── */}
-        <div className={styles.body}>
+        {/* ── Loading / Error states ── */}
+        {loading && (
+          <div className={styles.stateBox}>
+            <div className={styles.spinner} />
+            <p className={styles.stateTitle}>Loading champions…</p>
+          </div>
+        )}
 
-          {loading && (
-            <div className={styles.stateBox}>
-              <div className={styles.spinner} />
-              <p>Loading champions…</p>
+        {!loading && error && (
+          <div className={styles.stateBox}>
+            <div className={styles.stateEmoji}>😕</div>
+            <p className={styles.stateTitle}>Couldn't load the leaderboard</p>
+            <p className={styles.stateSub}>
+              {error.includes('42883') || error.includes('does not exist')
+                ? 'The database function is missing. Please run the SQL migration in Supabase.'
+                : error}
+            </p>
+            <button className={styles.retryBtn} onClick={fetchLeaderboard}>Try Again</button>
+          </div>
+        )}
+
+        {/* ── Main two-column layout ── */}
+        {!loading && !error && (
+          <div className={styles.mainLayout}>
+
+            {/* LEFT: Podium */}
+            <div className={styles.podiumPanel}>
+              <div className={styles.podiumTitle}>🏆 Top Performers</div>
+              <div className={styles.podium}>
+                {/* Silver (#2) — left */}
+                {podSlots[1]
+                  ? <PodCard row={podSlots[1]} pos={1} avatarUrl={getAvatar(podSlots[1])} />
+                  : <PodPlaceholder pos={1} />}
+
+                {/* Gold (#1) — centre */}
+                {podSlots[0]
+                  ? <PodCard row={podSlots[0]} pos={0} avatarUrl={getAvatar(podSlots[0])} />
+                  : <PodPlaceholder pos={0} />}
+
+                {/* Bronze (#3) — right */}
+                {podSlots[2]
+                  ? <PodCard row={podSlots[2]} pos={2} avatarUrl={getAvatar(podSlots[2])} />
+                  : <PodPlaceholder pos={2} />}
+              </div>
             </div>
-          )}
 
-          {!loading && error && (
-            <div className={styles.stateBox}>
-              <div className={styles.errorIcon}>😕</div>
-              <p className={styles.errorTitle}>Couldn't load the leaderboard</p>
-              <p className={styles.errorSub}>
-                {error.includes('42883') || error.includes('does not exist')
-                  ? 'Please run the SQL migration in Supabase to enable the leaderboard.'
-                  : error}
-              </p>
-              <button className={styles.retryBtn} onClick={fetchLeaderboard}>Try Again</button>
-            </div>
-          )}
+            {/* RIGHT: Ranked list */}
+            <div className={styles.rankPanel}>
+              <div className={styles.rankPanelHeader}>
+                <span className={styles.rankPanelTitle}>Rankings</span>
+                <span className={styles.rankTag}>
+                  {timeframe === 'weekly' ? 'This Week' : 'All Time'}
+                </span>
+              </div>
 
-          {!loading && !error && rows.length === 0 && (
-            <div className={styles.stateBox}>
-              <div className={styles.errorIcon}>🏆</div>
-              <p className={styles.errorTitle}>No students yet</p>
-              <p className={styles.errorSub}>Run code to earn XP and appear here!</p>
-            </div>
-          )}
+              {/* Table header */}
+              <div className={styles.tableHead}>
+                <span>#</span>
+                <span>Student</span>
+                <span>Score</span>
+                <span>Streak</span>
+                <span>Languages</span>
+              </div>
 
-          {!loading && !error && rows.length > 0 && (
-            <>
-              {/* Podium */}
-              {top3.length > 0 && (
-                <div className={styles.podiumWrap}>
-                  <div className={styles.podium}>
-                    {top3.length >= 2 && <PodiumCard row={top3[1]} position={1} avatarUrl={getAvatar(top3[1])} />}
-                    {top3.length >= 1 && <PodiumCard row={top3[0]} position={0} avatarUrl={getAvatar(top3[0])} />}
-                    {top3.length >= 3 && <PodiumCard row={top3[2]} position={2} avatarUrl={getAvatar(top3[2])} />}
+              {/* Rows */}
+              <div className={styles.rowsScroll}>
+                {rows.length === 0 && (
+                  <div className={styles.emptyRows}>
+                    <span style={{ fontSize: 40 }}>🏅</span>
+                    <p style={{ margin: 0, fontWeight: 700, color: '#475569' }}>No entries yet</p>
+                    <p style={{ margin: 0, color: '#94a3b8', fontSize: 13 }}>
+                      Run code to earn XP and appear here!
+                    </p>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Divider with label */}
-              {rest.length > 0 && (
-                <div className={styles.sectionLabel}>
-                  <span>Your Performance</span>
-                  <div className={styles.sectionTag}>{timeframe === 'weekly' ? 'This Week' : 'All Time'}</div>
-                </div>
-              )}
+                {rows.map((row) => {
+                  const isMe   = row.user_id === myId;
+                  const badges = getBadges(row);
+                  return (
+                    <div
+                      key={row.rank}
+                      className={`${styles.tableRow} ${isMe ? styles.tableRowMe : ''}`}
+                    >
+                      <span className={styles.rankNum}>{row.rank <= 3 ? ['🥇','🥈','🥉'][row.rank-1] : `#${row.rank}`}</span>
 
-              {/* Ranked list */}
-              {rest.length > 0 && (
-                <div className={styles.table}>
-                  {/* Header */}
-                  <div className={styles.tableHeader}>
-                    <span className={styles.colRank}>#</span>
-                    <span className={styles.colName}>Student</span>
-                    <span className={styles.colStat}>Score</span>
-                    <span className={styles.colStat}>Streak</span>
-                    <span className={styles.colBadges}>Languages</span>
-                  </div>
-
-                  {rest.map((row) => {
-                    const isMe   = row.user_id === myId;
-                    const badges = getBadges(row);
-                    return (
-                      <div key={row.rank} className={`${styles.tableRow} ${isMe ? styles.tableRowMe : ''}`}>
-                        <span className={styles.colRank}>
-                          <span className={styles.rankNum}>#{row.rank}</span>
-                        </span>
-
-                        <div className={styles.colName}>
-                          <Avatar
-                            name={row.display_name}
-                            avatarUrl={getAvatar(row)}
-                            size={36}
-                          />
-                          <div className={styles.nameBlock}>
-                            <span className={styles.nameText}>{row.display_name}</span>
-                            {isMe && <span className={styles.youBadge}>You</span>}
-                          </div>
-                        </div>
-
-                        <div className={styles.colStat}>
-                          <span className={styles.scoreVal}>{row.xp}</span>
-                          <span className={styles.scoreLabel}>XP</span>
-                        </div>
-
-                        <div className={styles.colStat}>
-                          <span className={styles.streakVal}>
-                            <Flame size={13} style={{ color: '#f97316' }} />
-                            {row.current_streak}d
+                      <div className={styles.userCol}>
+                        <Avatar name={row.display_name} avatarUrl={getAvatar(row)} size={36} />
+                        <div className={styles.userInfo}>
+                          <span className={styles.userName}>
+                            {row.display_name}
+                            {isMe && <span className={styles.youTag}>You</span>}
                           </span>
                         </div>
-
-                        <div className={styles.colBadges}>
-                          {badges.map(b => <LangBadge key={b} lang={b} />)}
-                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </>
-          )}
-        </div>
+
+                      <div className={styles.scoreCol}>
+                        <span className={styles.scoreVal}>{row.xp}</span>
+                        <span className={styles.scoreLabel}>XP</span>
+                      </div>
+
+                      <div className={styles.streakCol}>
+                        <Flame size={13} style={{ color: '#f97316', flexShrink: 0 }} />
+                        <span>{row.current_streak}d</span>
+                      </div>
+
+                      <div className={styles.badgesCol}>
+                        {badges.map(b => <LangBadge key={b} lang={b} />)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Sticky "Your Position" bar ── */}
-        {myRow && (
+        {!loading && !error && myRow && (
           <div className={styles.stickyBar}>
-            <Avatar name={myRow.display_name} avatarUrl={myAvatarUrl} size={28} />
+            <Avatar name={myRow.display_name} avatarUrl={myAvatarUrl} size={26} />
             <span className={styles.stickyRank}>#{myRow.rank}</span>
             <span className={styles.stickyName}>{myRow.display_name}</span>
             <span className={styles.stickyXp}>{myRow.xp} XP</span>
             {xpGap !== null && xpGap > 0 && (
               <span className={styles.stickyGap}>
-                🎯 <strong>{xpGap} XP</strong> to overtake #{Number(myRow.rank) - 1}
+                · 🎯 <strong>{xpGap} XP</strong> to overtake #{Number(myRow.rank) - 1}
               </span>
             )}
           </div>
