@@ -260,12 +260,22 @@ export default function LeaderboardPanel({ onClose, currentUser }) {
           </div>
         </div>
 
-        {/* ── XP banner ── */}
+{/* ── XP banner: two styled info cards ── */}
         <div className={styles.xpBanner}>
-          <Zap size={12} style={{ color: '#f59e0b' }} />
-          <span>✅ Clean Run <strong>+10 XP</strong></span>
-          <span className={styles.xpSep}>·</span>
-          <span>🔥 Daily Streak <strong>+20 XP</strong> per active day</span>
+          <div className={`${styles.xpCard} ${styles.xpCardClean}`}>
+            <span className={styles.xpCardIcon}>✅</span>
+            <div className={styles.xpCardText}>
+              <span className={styles.xpCardLabel}>Clean Run</span>
+              <span className={styles.xpCardValue}>+10 XP</span>
+            </div>
+          </div>
+          <div className={`${styles.xpCard} ${styles.xpCardStreak}`}>
+            <span className={styles.xpCardIcon}>🔥</span>
+            <div className={styles.xpCardText}>
+              <span className={styles.xpCardLabel}>Daily Streak Bonus</span>
+              <span className={styles.xpCardValue}>+20 XP / day</span>
+            </div>
+          </div>
         </div>
 
         {/* ── Loading / Error states ── */}
@@ -385,17 +395,52 @@ export default function LeaderboardPanel({ onClose, currentUser }) {
           </div>
         )}
 
-        {/* ── Sticky "Your Position" bar ── */}
+        {/* ── Sticky bar ── */}
         {!loading && !error && myRow && (
           <div className={styles.stickyBar}>
-            <Avatar name={myRow.display_name} avatarUrl={myAvatarUrl} size={26} />
-            <span className={styles.stickyRank}>#{myRow.rank}</span>
-            <span className={styles.stickyName}>{myRow.display_name}</span>
-            <span className={styles.stickyXp}>{myRow.xp} XP</span>
-            {xpGap !== null && xpGap > 0 && (
-              <span className={styles.stickyGap}>
-                · 🎯 <strong>{xpGap} XP</strong> to overtake #{Number(myRow.rank) - 1}
-              </span>
+            {/* Left: who you are */}
+            <div className={styles.stickyLeft}>
+              <Avatar name={myRow.display_name} avatarUrl={myAvatarUrl} size={28} />
+              <span className={styles.stickyRank}>#{myRow.rank}</span>
+              <span className={styles.stickyName}>{myRow.display_name}</span>
+              <div className={styles.stickyXpPill}>
+                <Zap size={12} />
+                {myRow.xp} XP
+              </div>
+            </div>
+
+            {/* Divider */}
+            {xpGap !== null && xpGap > 0 && aboveMe && (
+              <>
+                <div className={styles.stickyDivider} />
+
+                {/* Right: overtake instructions */}
+                <div className={styles.stickyOvertakeBox}>
+                  <span className={styles.stickyOvertakeLabel}>🎯 How to overtake</span>
+                  <div className={styles.stickyOvertakeDetail}>
+                    <span>You need</span>
+                    <span className={styles.stickyOvertakeXp}>+{xpGap} XP</span>
+                    <span>to overtake</span>
+                    <span className={styles.stickyOvertakeTarget}>
+                      {aboveMe.display_name} (#{aboveMe.rank})
+                    </span>
+                  </div>
+                  <span className={styles.stickyHowTo}>
+                    Run {Math.ceil(xpGap / 10)} more clean program{Math.ceil(xpGap / 10) !== 1 ? 's' : ''} with 0 errors — each earns +10 XP
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* If already #1 */}
+            {myRow.rank === 1 && (
+              <>
+                <div className={styles.stickyDivider} />
+                <div className={styles.stickyTop}>
+                  <span className={styles.stickyTopLabel}>👑 You're #1!</span>
+                  <span className={styles.stickyTopText}>Keep running clean code to hold your lead</span>
+                </div>
+              </>
             )}
           </div>
         )}
